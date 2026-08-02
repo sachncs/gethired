@@ -18,6 +18,7 @@ from gethired.description import analyze as analyze_description
 from gethired.exceptions import (
     ConfigurationError,
     JobDescriptionRetrievalError,
+    PdfCompilationError,
     ResumeTailoringError,
 )
 from gethired.fetcher import JobDescriptionRetriever
@@ -40,6 +41,7 @@ from gethired.renderer import (
     render_tex,
     render_text,
 )
+from gethired.render_pdf import compile_pdf
 from gethired.validator import ats_check
 from gethired.writer import Writer
 
@@ -162,6 +164,22 @@ class Tailor:
             jobs=all_jobs,
         )
         tailored_with_jobs = replace(tailored_with_jobs, run_result=run_result)
+
+        pdf_path = self.__compile_pdf_best_effort(tailored_with_jobs, tex_source)
+        if pdf_path is not None:
+            ats_report, critic_jobs = critic.evaluate(
+                tailored=tailored_with_jobs,
+                master=master,
+                jds=jds,
+                tex_source=tex_source,
+                txt_source=txt_source,
+                pdf_path=pdf_path,
+            )
+            tailored_with_jobs = replace(
+                tailored_with_jobs,
+                jobs=tuple(j for j in tailored_with_jobs.jobs if j.type.value != "validate_ats")
+                + critic_jobs,
+            )
 
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
         return tailored_with_jobs
@@ -342,6 +360,24 @@ class Tailor:
         if not runs:
             raise ResumeTailoringError("No runs found")
         return (runs[-1] / "match_report.md").read_text()
+
+    def __compile_pdf_best_effort(
+        self, tailored: TailoredResume, tex_source: str
+    ) -> Path | None:
+        """Compile the tailored TeX into a PDF if a LaTeX engine is available.
+
+        Returns ``None`` when the engine is missing or compilation fails, so the
+        pipeline still completes and ATS gates report the missing PDF rather
+        than aborting.
+        """
+        run_dir = self._tailored_dir / tailored.run.id
+        try:
+            pdf_path = compile_pdf(tex_source, run_dir)
+            self._logger.info("PDF compiled", path=str(pdf_path))
+            return pdf_path
+        except PdfCompilationError as exc:
+            self._logger.warning("PDF compilation skipped", reason=str(exc))
+            return None
 
 
 # ---------------------------------------------------------------------------
