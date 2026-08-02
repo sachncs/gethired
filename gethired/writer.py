@@ -11,7 +11,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import asdict
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from gethired.streaming import ProgressCallback, ProgressEvent
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
@@ -106,6 +109,7 @@ class Writer:
         analysis: DescriptionAnalysis,
         voice: VoiceProfile,
         previous_violations: tuple[str, ...] = (),
+        on_progress: Callable[["ProgressEvent"], None] | None = None,
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
         """Produce a tailored resume and the Job trail.
 
@@ -114,6 +118,8 @@ class Writer:
             analysis: Structured JD analysis.
             voice: Voice profile for fingerprint preservation.
             previous_violations: Style violations from prior retry (if any).
+            on_progress: Optional callable invoked with each ``ProgressEvent``
+                emitted during the tailoring run.
 
         Returns:
             Tuple of ``(TailoredResume, jobs)``.
@@ -125,7 +131,9 @@ class Writer:
                 "(or ANTHROPIC_API_KEY / OPENAI_API_KEY), or pass "
                 "model_instance=TestModel() for offline tests."
             )
-        return self.__llm_tailor(master, analysis, voice, previous_violations)
+        return self.__llm_tailor(
+            master, analysis, voice, previous_violations, on_progress
+        )
 
     # ------------------------------------------------------------------
     # LLM-backed tailoring
@@ -137,6 +145,7 @@ class Writer:
         analysis: DescriptionAnalysis,
         voice: VoiceProfile,
         previous_violations: tuple[str, ...],
+        on_progress: Callable[["ProgressEvent"], None] | None = None,
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
         """Run the Pydantic AI Agent against the configured model.
 
@@ -145,6 +154,7 @@ class Writer:
             analysis: Structured JD analysis.
             voice: Voice profile for fingerprint preservation.
             previous_violations: Style violations from prior retry (if any).
+            on_progress: Optional callable invoked with each ProgressEvent.
 
         Returns:
             Tuple of ``(TailoredResume, jobs)``.
@@ -155,6 +165,14 @@ class Writer:
             resolved = resolve_model(self._model_string)
             model = resolved.model
         deps = WriterDeps(master, analysis, voice, previous_violations)
+
+        if on_progress is not None:
+            on_progress(
+                ProgressEvent(
+                    step="writer",
+                    message=f"Invoking agent for {analysis.role}",
+                )
+            )
 
         agent = Agent(
             model,
@@ -204,6 +222,14 @@ class Writer:
             jobs=all_jobs,
             run_result=None,
         )
+        if on_progress is not None:
+            on_progress(
+                ProgressEvent(
+                    step="writer",
+                    message=f"Produced {len(writer_output.tailored_bullets)} rewritten bullets",
+                    job_type="tailor",
+                )
+            )
         return tailored, all_jobs
 
     # ------------------------------------------------------------------
