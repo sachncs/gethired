@@ -300,7 +300,7 @@ class EvalHarness:
                         score=getattr(result, "score", 1.0 if result.passed else 0.0),
                     )
                 )
-            except Exception as exc:  # noqa: BLE001 — graders must not crash evals
+            except Exception as exc:
                 grader_results.append(
                     GraderResultRecord(
                         name=spec.name,

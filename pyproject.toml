@@ -62,11 +62,13 @@ ignore = [
     "PLR0912",
     "RET504",
     "SIM117",
+    "BLE001",
 ]
 
 [tool.ruff.lint.per-file-ignores]
 "gethired/cli.py" = ["B008", "ARG001", "B904"]
 "tests/**/*.py" = ["PLR0913", "PLR2004", "ARG001", "PLR0915", "SIM117"]
+"evals/harness.py" = ["BLE001"]
 
 [tool.mypy]
 python_version = "3.12"
