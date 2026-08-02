@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Final
 
 import pymupdf
-from pydantic_ai import Agent
+from pydantic_ai import Agent, BinaryContent
 
 from gethired.exceptions import MasterParsingError
 from gethired.models import (
@@ -508,7 +508,7 @@ def parse_image(path: Path) -> MasterResume:
         )
     resolved = resolve_model(image_model)
 
-    agent: Agent[None, str] = Agent(
+    agent: Agent[None, str] = Agent(  # type: ignore[call-overload]
         resolved.model,
         system_prompt=(
             "Extract every section, bullet, employer, role, date, project, "
@@ -523,7 +523,9 @@ def parse_image(path: Path) -> MasterResume:
         "Return plain LaTeX-flavored text ready for the TeX parser."
     )
     try:
-        extracted = asyncio.run(agent.run(prompt, images=[image_bytes]))
+        extracted = asyncio.run(
+            agent.run([prompt, BinaryContent(data=image_bytes, media_type="image/png")])
+        )
         raw_text = extracted.output
     except Exception as exc:
         raise MasterParsingError(

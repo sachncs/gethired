@@ -107,3 +107,4 @@ Desktop.ini
 
 # ── Type-checker / linter scratch ─────────────────────────────────────
 *.tsbuildinfo
+evals/traces/
