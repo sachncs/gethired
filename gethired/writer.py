@@ -18,6 +18,7 @@ from pydantic_ai import Agent, RunContext
 
 from gethired.constants import MODEL_ENV_VAR
 from gethired.description import DescriptionAnalysis
+from gethired.exceptions import ConfigurationError
 from gethired.models import (
     Bullet,
     DropReason,
@@ -83,9 +84,9 @@ class WriterOutput(BaseModel):
 class Writer:
     """Main tailoring agent.
 
-    With no LLM configured, falls back to a deterministic identity-style
-    transform suitable for tests. With a model configured, delegates to
-    Pydantic AI's Agent with read-only tools and Anthropic-compatible API.
+    Delegates to Pydantic AI's Agent with read-only tools and
+    Anthropic-compatible API. Either ``model`` or ``model_instance`` must be
+    provided; otherwise ``ConfigurationError`` is raised at ``tailor()`` time.
     """
 
     def __init__(
@@ -117,83 +118,14 @@ class Writer:
         Returns:
             Tuple of ``(TailoredResume, jobs)``.
         """
-        if self._model_instance is not None or self._model_string is None:
-            if self._model_instance is None:
-                return self._deterministic_tailor(master, analysis, voice)
         if self._model_string is None and self._model_instance is None:
-            return self._deterministic_tailor(master, analysis, voice)
+            raise ConfigurationError(
+                "MODEL is required. Set the MODEL env var (e.g. 'MiniMax-M3', "
+                "'anthropic:claude-sonnet-4-5', 'openai:gpt-5') and API_KEY "
+                "(or ANTHROPIC_API_KEY / OPENAI_API_KEY), or pass "
+                "model_instance=TestModel() for offline tests."
+            )
         return self.__llm_tailor(master, analysis, voice, previous_violations)
-
-    # ------------------------------------------------------------------
-    # Deterministic fallback
-    # ------------------------------------------------------------------
-
-    def _deterministic_tailor(
-        self,
-        master: MasterResume,
-        analysis: DescriptionAnalysis,
-        voice: VoiceProfile,
-    ) -> tuple[TailoredResume, tuple[Job, ...]]:
-        """Deterministic fallback: rewrite summary, reorder by JD keywords."""
-        jobs: list[Job] = []
-
-        jobs.append(
-            job(
-                JobType.TAILOR,
-                outputs=("tailored.summary",),
-                rationale=f"Rewrote summary to emphasise {analysis.role}",
-                model=self._model_string or "deterministic",
-            )
-        )
-        summary = self._rewrite_summary(master, analysis)
-
-        jobs.append(
-            job(
-                JobType.TAILOR,
-                outputs=("tailored.experiences",),
-                rationale="Re-ordered experiences by JD keyword match",
-                model=self._model_string or "deterministic",
-            )
-        )
-        ranked = rank_experiences(master, analysis)
-
-        jobs.append(
-            job(
-                JobType.TAILOR,
-                outputs=("tailored.skills",),
-                rationale="Re-ordered skills to mirror JD keyword order",
-                model=self._model_string or "deterministic",
-            )
-        )
-        skills = reorder_skills(master.skills, analysis.keywords_to_mirror)
-
-        tailored = TailoredResume(
-            contact=master.contact,
-            summary=summary,
-            skills=skills,
-            experiences=ranked,
-            projects=master.projects,
-            education=master.education,
-            awards=master.awards,
-            dropped=(),
-            rationale=(
-                f"Tailored for {analysis.role}; "
-                f"{len(analysis.must_have_skills)} must-have keywords mirrored."
-            ),
-            grounding=tuple(
-                GroundedCitation(
-                    tailored_path=f"experiences[{idx}]",
-                    master_path=f"experiences[{idx}]",
-                    verbatim_span=exp.bullets[0].text if exp.bullets else "",
-                    job_id=jobs[-1].id,
-                )
-                for idx, exp in enumerate(ranked)
-                if exp.bullets
-            ),
-            jobs=tuple(jobs),
-            run_result=None,  # type: ignore[arg-type]
-        )
-        return tailored, tuple(jobs)
 
     # ------------------------------------------------------------------
     # LLM-backed tailoring
@@ -335,19 +267,7 @@ class Writer:
                 "responsibilities": list(analysis.responsibilities),
             }
 
-    # ------------------------------------------------------------------
-    # Summary rewriting helper
-    # ------------------------------------------------------------------
-
-    def _rewrite_summary(self, master: MasterResume, analysis: DescriptionAnalysis) -> str:
-        keyword_blob = ", ".join(analysis.keywords_to_mirror[:3])
-        base = master.summary.rstrip(".")
-        if keyword_blob:
-            return f"{base} Focused on {keyword_blob}."
-        return base + "."
-
-
-# ---------------------------------------------------------------------------
+    # ---------------------------------------------------------------------------
 # Helpers (module-level)
 # ---------------------------------------------------------------------------
 
