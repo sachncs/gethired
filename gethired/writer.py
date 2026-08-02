@@ -10,7 +10,10 @@ provider (which works with both Anthropic native and the MiniMax platform).
 from __future__ import annotations
 
 import asyncio
+import contextlib
+import contextvars
 import os
+from collections.abc import Iterator
 from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
 
@@ -41,6 +44,21 @@ from gethired.models import (
 from gethired.observability import step_logger
 from gethired.provider import resolve_model
 from gethired.rubric import ANTI_AI_RULES, BANNED_WORDS, GROUNDING_RULES
+from gethired.tracing import Tracer, _ActiveSpan
+
+_current_tracer: contextvars.ContextVar[Tracer | None] = contextvars.ContextVar(
+    "gethired_current_tracer", default=None
+)
+
+
+def _noop_cm() -> contextlib.AbstractContextManager[_ActiveSpan | None]:
+    """Context manager that yields None — used when no tracer is active."""
+
+    @contextlib.contextmanager
+    def _cm() -> Iterator[_ActiveSpan | None]:
+        yield None
+
+    return _cm()
 
 
 class WriterDeps:
@@ -245,11 +263,23 @@ class Writer:
         ) -> dict[str, Any]:
             """Look up an experience in the master by role or company."""
             master = ctx.deps.master
-            lowered = role_or_company.lower()
-            for exp in master.experiences:
-                if lowered in exp.role.lower() or lowered in exp.company.lower():
-                    return asdict(exp)
-            return {}
+            tracer = _current_tracer.get()
+            span_cm = (
+                tracer.span("lookup_experience", "tool", role_or_company=role_or_company)
+                if tracer is not None
+                else _noop_cm()
+            )
+            with span_cm as span:
+                lowered = role_or_company.lower()
+                for exp in master.experiences:
+                    if lowered in exp.role.lower() or lowered in exp.company.lower():
+                        result = asdict(exp)
+                        if span is not None:
+                            span.set_attribute("matched", True)
+                        return result
+                if span is not None:
+                    span.set_attribute("matched", False)
+                return {}
 
         @agent.tool
         async def lookup_project(

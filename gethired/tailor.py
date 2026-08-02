@@ -55,8 +55,9 @@ from gethired.renderer import (
     render_tex,
     render_text,
 )
+from gethired.tracing import Tracer, tracer_for_run
 from gethired.validator import ats_check
-from gethired.writer import Writer
+from gethired.writer import Writer, _current_tracer
 
 DEFAULT_DATA_DIR: Final[Path] = Path("data")
 DEFAULT_TAILORED_DIR: Final[Path] = Path("tailored")
@@ -130,20 +131,44 @@ class Tailor:
 
     def run(self) -> TailoredResume:
         """Execute the full tailoring pipeline."""
-        master = self.__load_master()
-        jds = self.__load_jds()
-        profile = build_profile(master)
-        analysis = (
-            analyze_description_multiple(jds)
-            if len(jds) > 1
-            else (analyze_description(jds[0]) if jds else None)
-        )
-
         run = Run(
             id=str(new_uuid()),
             started_at=utcnow_iso(),
-            master_hash=master.content_hash(),
-            jd_urls_hash=hash_jd_urls(jds),
+            master_hash="",
+            jd_urls_hash="",
+            model=self._model,
+            draft_model=self._draft_model,
+        )
+        tracer = tracer_for_run(run.id, self._tailored_dir)
+        token = _current_tracer.set(tracer)
+        try:
+            return self.__run_pipeline(tracer, run)
+        finally:
+            tracer.close()
+            _current_tracer.reset(token)
+
+    def __run_pipeline(
+        self, tracer: Tracer, run: Run
+    ) -> TailoredResume:
+        """Inner pipeline implementation; called with an active tracer."""
+        with tracer.span("tailor.run", "agent", run_id=run.id):
+            master = self.__load_master()
+            jds = self.__load_jds()
+            profile = build_profile(master)
+            analysis = (
+                analyze_description_multiple(jds)
+                if len(jds) > 1
+                else (analyze_description(jds[0]) if jds else None)
+            )
+
+        # Refresh the run with hashes once master/jds are loaded.
+        master_hash = master.content_hash() if master else ""
+        jd_hash = hash_jd_urls(jds)
+        run = Run(
+            id=run.id,
+            started_at=run.started_at,
+            master_hash=master_hash,
+            jd_urls_hash=jd_hash,
             model=self._model,
             draft_model=self._draft_model,
         )
