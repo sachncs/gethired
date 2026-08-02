@@ -8,7 +8,7 @@ alongside the run artefacts. Idempotent and offline (no LLM call).
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 
 from gethired.critic import Critic
@@ -25,7 +25,6 @@ from gethired.models import (
     TailoredResume,
 )
 from gethired.validator import (
-    AtsGateReport,
     grounding_check,
     plagiarism_check,
     style_check,
@@ -150,7 +149,7 @@ def __load_tailored_and_master(
 
 
 def __coerce_tailored(raw: dict[str, object]) -> TailoredResume:
-    from gethired.models import Run, RunResult, FinalOutcome
+    from gethired.models import Run, RunResult
 
     contact = ContactInformation(**raw["contact"])
     skills = SkillsByCategory(

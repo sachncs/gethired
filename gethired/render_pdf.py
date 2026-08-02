@@ -13,8 +13,8 @@ from pathlib import Path
 
 from gethired.constants import (
     LATEX_ENGINE_ENV_VAR,
-    PDFLATEX_BINARY,
     PDF_COMPILE_TIMEOUT_SECONDS,
+    PDFLATEX_BINARY,
     TECTONIC_BINARY,
 )
 from gethired.exceptions import PdfCompilationError

@@ -555,7 +555,6 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     applicable") — used for tasks that require the LLM to be meaningful
     (e.g. plagiarism avoidance requires actual rewriting).
     """
-    import os
 
     from gethired.description import DescriptionAnalysis
     from gethired.models import JobDescription
@@ -706,7 +705,6 @@ def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, 
 
 def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for end-to-end tailor tasks: full pipeline run."""
-    import os
 
     from gethired.models import JobDescription
     from gethired.tailor import Tailor

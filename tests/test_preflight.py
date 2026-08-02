@@ -7,7 +7,6 @@ from pydantic_ai.models.test import TestModel
 from gethired.models import JobDescription, PreflightReport
 from gethired.tailor import Tailor
 
-
 SAMPLE_JD = JobDescription(
     url="https://example.com/jd",
     title="Senior ML Engineer",

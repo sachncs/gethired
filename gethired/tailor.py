@@ -37,13 +37,13 @@ from gethired.models import (
 from gethired.observability import configure_logging, step_logger, utcnow_iso
 from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
+from gethired.render_pdf import compile_pdf
 from gethired.renderer import (
     render_json,
     render_match_report,
     render_tex,
     render_text,
 )
-from gethired.render_pdf import compile_pdf
 from gethired.validator import ats_check
 from gethired.writer import Writer
 

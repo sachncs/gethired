@@ -14,7 +14,7 @@ from dataclasses import asdict
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    from gethired.streaming import ProgressCallback, ProgressEvent
+    from gethired.streaming import ProgressEvent
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
@@ -109,7 +109,7 @@ class Writer:
         analysis: DescriptionAnalysis,
         voice: VoiceProfile,
         previous_violations: tuple[str, ...] = (),
-        on_progress: Callable[["ProgressEvent"], None] | None = None,
+        on_progress: Callable[[ProgressEvent], None] | None = None,
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
         """Produce a tailored resume and the Job trail.
 
@@ -145,7 +145,7 @@ class Writer:
         analysis: DescriptionAnalysis,
         voice: VoiceProfile,
         previous_violations: tuple[str, ...],
-        on_progress: Callable[["ProgressEvent"], None] | None = None,
+        on_progress: Callable[[ProgressEvent], None] | None = None,
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
         """Run the Pydantic AI Agent against the configured model.
 

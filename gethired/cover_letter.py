@@ -11,7 +11,6 @@ from dataclasses import dataclass
 
 from gethired.description import DescriptionAnalysis
 from gethired.models import (
-    ContactInformation,
     CoverLetter,
     CoverLetterParagraph,
     MasterResume,
@@ -65,8 +64,8 @@ def tailor_cover_letter(
         f"{analysis.seniority} ownership is expected."
     )
     closing = (
-        f"I would welcome the chance to discuss how my background maps to your "
-        f"needs. Thank you for considering my application."
+        "I would welcome the chance to discuss how my background maps to your "
+        "needs. Thank you for considering my application."
     )
     signoff = f"Sincerely,\n{name}"
     paragraphs = (
