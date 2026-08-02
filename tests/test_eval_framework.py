@@ -5,7 +5,6 @@ from __future__ import annotations
 from pathlib import Path
 
 import pytest
-import yaml
 
 from evals.graders.code import (
     code_equal,
@@ -21,12 +20,9 @@ from evals.graders.code import (
 from evals.graders.registry import GraderRegistry
 from evals.harness import (
     EvalHarness,
-    GraderSpec,
-    TaskDefinition,
     load_suite,
     load_task,
 )
-
 
 # ---------------------------------------------------------------------------
 # Grader tests
@@ -151,7 +147,7 @@ def test_code_no_jd_plagiarism_detects_5gram() -> None:
 
 
 def test_code_numbers_in_master_no_invention() -> None:
-    from gethired.models import MasterResume, SkillsByCategory, ContactInformation
+    from gethired.models import ContactInformation, MasterResume, SkillsByCategory
 
     master = MasterResume(
         contact=ContactInformation(
@@ -172,7 +168,7 @@ def test_code_numbers_in_master_no_invention() -> None:
 
 
 def test_code_numbers_in_master_passes_when_present() -> None:
-    from gethired.models import MasterResume, SkillsByCategory, ContactInformation
+    from gethired.models import ContactInformation, MasterResume, SkillsByCategory
 
     master = MasterResume(
         contact=ContactInformation(
@@ -194,7 +190,9 @@ def test_code_numbers_in_master_passes_when_present() -> None:
 
 def test_code_json_round_trip() -> None:
     from gethired.models import (
-        MasterResume, SkillsByCategory, ContactInformation,
+        ContactInformation,
+        MasterResume,
+        SkillsByCategory,
     )
 
     master = MasterResume(

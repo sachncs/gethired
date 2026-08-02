@@ -20,15 +20,15 @@ from uuid import uuid4
 from gethired.observability import utcnow_iso
 
 
-def _new_uuid() -> str:
+def new_uuid() -> str:
     return str(uuid4())
 
 
-def _now() -> str:
+def now() -> str:
     return utcnow_iso()
 
 
-def _sha256(text: str) -> str:
+def sha256(text: str) -> str:
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 
 
@@ -225,7 +225,7 @@ class MasterResume:
 
     def content_hash(self) -> str:
         """Deterministic sha256 over the resume's text content."""
-        return _sha256(self.to_markdown())
+        return sha256(self.to_markdown())
 
 
 @dataclass(frozen=True, slots=True)
@@ -545,12 +545,12 @@ def job(  # noqa: PLR0913 — factory convenience
         j = job(JobType.FETCH, outputs=("jds[0]",), rationale="...")
         description = j.description()
     """
-    now = _now()
+    timestamp = now()
     return Job(
-        id=job_id if job_id is not None else _new_uuid(),
+        id=job_id if job_id is not None else new_uuid(),
         type=type,
-        started_at=started_at or now,
-        completed_at=completed_at or now,
+        started_at=started_at or timestamp,
+        completed_at=completed_at or timestamp,
         status=status,
         inputs=inputs,
         outputs=outputs,

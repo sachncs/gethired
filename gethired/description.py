@@ -35,24 +35,24 @@ def analyze(description: JobDescription) -> DescriptionAnalysis:
     Returns:
         A ``DescriptionAnalysis`` consumable by the writer agent.
     """
-    sentences = _split_sentences(description.full_text)
+    sentences = split_sentences(description.full_text)
     return DescriptionAnalysis(
         role=description.title or "Unknown role",
-        seniority=_infer_seniority(description.full_text),
+        seniority=infer_seniority(description.full_text),
         must_have_skills=description.must_have_keywords,
         nice_to_have_skills=description.nice_to_have_keywords,
         keywords_to_mirror=description.must_have_keywords + description.nice_to_have_keywords[:5],
-        responsibilities=tuple(s for s in sentences if _looks_like_responsibility(s)),
+        responsibilities=tuple(s for s in sentences if looks_like_responsibility(s)),
         company_context=description.company,
     )
 
 
-def _split_sentences(text: str) -> tuple[str, ...]:
+def split_sentences(text: str) -> tuple[str, ...]:
     parts = [s.strip() for s in text.replace("\n", " ").split(".") if s.strip()]
     return tuple(parts)
 
 
-_RESPONSIBILITY_MARKERS = (
+RESPONSIBILITY_MARKERS = (
     "you will",
     "responsibilities",
     "you'll",
@@ -64,12 +64,12 @@ _RESPONSIBILITY_MARKERS = (
 )
 
 
-def _looks_like_responsibility(sentence: str) -> bool:
+def looks_like_responsibility(sentence: str) -> bool:
     lowered = sentence.lower()
-    return any(marker in lowered for marker in _RESPONSIBILITY_MARKERS)
+    return any(marker in lowered for marker in RESPONSIBILITY_MARKERS)
 
 
-_SENIORITY_KEYWORDS = (
+SENIORITY_KEYWORDS = (
     ("principal", "principal"),
     ("staff", "staff"),
     ("senior", "senior"),
@@ -79,9 +79,9 @@ _SENIORITY_KEYWORDS = (
 )
 
 
-def _infer_seniority(text: str) -> str:
+def infer_seniority(text: str) -> str:
     lowered = text.lower()
-    for keyword, label in _SENIORITY_KEYWORDS:
+    for keyword, label in SENIORITY_KEYWORDS:
         if keyword in lowered:
             return label
     return "unspecified"

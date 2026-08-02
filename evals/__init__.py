@@ -11,8 +11,6 @@ Implements the patterns described in Anthropic's "Demystifying evals for AI agen
 Run via the CLI: ``gethired-eval [--category parser] [--trials 3]``
 """
 
-from gethired.models import TailoredResume
-
 from evals.graders.code import (
     GraderResult,
     code_equal,
@@ -29,14 +27,15 @@ from evals.graders.registry import GraderRegistry
 from evals.harness import (
     EvalHarness,
     EvalSuiteResult,
-    GraderSpec,
     GraderResultRecord,
+    GraderSpec,
     TaskDefinition,
     TaskOutcome,
     TrialRecord,
     load_suite,
     load_task,
 )
+from gethired.models import TailoredResume
 
 __all__ = [
     "EvalHarness",

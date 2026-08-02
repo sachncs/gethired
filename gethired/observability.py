@@ -7,7 +7,7 @@ structured records via ``logger.bind``.
 from __future__ import annotations
 
 import sys
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -19,7 +19,7 @@ _configured: bool = False
 
 def utcnow_iso() -> str:
     """Return current UTC time as ISO-8601 string with millisecond precision."""
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
 def configure_logging(

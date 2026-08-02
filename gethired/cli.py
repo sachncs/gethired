@@ -39,7 +39,7 @@ from gethired.tailor import Tailor
 app = typer.Typer(help="gethired — multi-agent CV tailoring", no_args_is_help=True)
 
 
-def _ensure_consent(force_prompt: bool = False) -> None:
+def ensure_consent(force_prompt: bool = False) -> None:
     consent_file = Path(CONSENT_FILE_PATH).expanduser()
     if consent_file.exists() and not force_prompt:
         try:
@@ -72,10 +72,10 @@ def ingest(
 ) -> None:
     """Parse master resume into data/master.json."""
     configure_logging()
-    _ensure_consent()
+    ensure_consent()
     master = parse_tex(tex_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    snapshot = render_json(_master_to_snapshot(master))
+    snapshot = render_json(master_to_snapshot(master))
     out.write_text(snapshot)
     typer.echo(f"Ingested {tex_path} → {out}")
 
@@ -87,7 +87,7 @@ def fetch(
 ) -> None:
     """Fetch and cache job description URLs."""
     configure_logging()
-    _ensure_consent()
+    ensure_consent()
     retriever = JobDescriptionRetriever(cache_dir)
     for url in urls:
         try:
@@ -135,8 +135,8 @@ def plan(
 ) -> None:
     """Estimate cost without running the agent."""
     configure_logging()
-    _ensure_consent()
-    jd = _fetch_first_jd(urls)
+    ensure_consent()
+    jd = fetch_first_jd(urls)
     tailor = Tailor(resume=resume, job_description=jd, model=model)
     plan_data = tailor.plan()
     typer.echo(json.dumps(plan_data, indent=2))
@@ -152,8 +152,8 @@ def run(
 ) -> None:
     """Run the full tailoring pipeline."""
     configure_logging(debug=debug)
-    _ensure_consent()
-    jd = _fetch_first_jd(urls)
+    ensure_consent()
+    jd = fetch_first_jd(urls)
     tailor = Tailor(
         resume=resume, job_description=jd, model=model, debug=debug, tailored_dir=out_dir
     )
@@ -305,12 +305,12 @@ def diff(
     typer.echo(diff_text)
 
 
-def _fetch_first_jd(urls: list[str]) -> JobDescription:
+def fetch_first_jd(urls: list[str]) -> JobDescription:
     retriever = JobDescriptionRetriever(DEFAULT_DATA_DIR_PATH / "jd_cache")
     return retriever.retrieve(urls[0])
 
 
-def _master_to_snapshot(master) -> object:
+def master_to_snapshot(master) -> object:
     """Wrap a master into a TailoredResume-like snapshot for JSON serialisation."""
     from uuid import uuid4
 

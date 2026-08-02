@@ -9,23 +9,18 @@ provider (which works with both Anthropic native and the MiniMax platform).
 
 from __future__ import annotations
 
-import json
 import os
 from dataclasses import asdict
 from typing import Any
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
-from pydantic_ai.models.anthropic import AnthropicModel
 
-from gethired.constants import MAX_WEBSEARCH_PER_RUN, MODEL_ENV_VAR
+from gethired.constants import MODEL_ENV_VAR
 from gethired.description import DescriptionAnalysis
-from gethired.exceptions import ConfigurationError
 from gethired.models import (
     Bullet,
-    ContactInformation,
     DropReason,
-    Education,
     Experience,
     GroundedCitation,
     Job,
@@ -39,7 +34,7 @@ from gethired.models import (
 )
 from gethired.observability import step_logger
 from gethired.provider import resolve_model
-from gethired.rubric import ANTI_AI_RULES, BANNED_CONSTRUCTIONS, BANNED_WORDS, GROUNDING_RULES
+from gethired.rubric import ANTI_AI_RULES, BANNED_WORDS, GROUNDING_RULES
 
 
 class WriterDeps:
@@ -160,7 +155,7 @@ class Writer:
                 model=self._model_string or "deterministic",
             )
         )
-        ranked = _rank_experiences(master, analysis)
+        ranked = rank_experiences(master, analysis)
 
         jobs.append(
             job(
@@ -170,7 +165,7 @@ class Writer:
                 model=self._model_string or "deterministic",
             )
         )
-        skills = _reorder_skills(master.skills, analysis.keywords_to_mirror)
+        skills = reorder_skills(master.skills, analysis.keywords_to_mirror)
 
         tailored = TailoredResume(
             contact=master.contact,
@@ -229,10 +224,10 @@ class Writer:
             deps_type=WriterDeps,
             output_type=WriterOutput,
             instructions=[
-                _base_instructions(),
-                _rubric_dynamic_instruction(previous_violations),
-                _jd_dynamic_instruction(),
-                _voice_dynamic_instruction(voice),
+                base_instructions(),
+                rubric_dynamic_instruction(previous_violations),
+                jd_dynamic_instruction(),
+                voice_dynamic_instruction(voice),
             ],
         )
 
@@ -240,11 +235,11 @@ class Writer:
 
         import asyncio
 
-        result = asyncio.run(agent.run(_user_prompt(master, analysis), deps=deps))
+        result = asyncio.run(agent.run(user_prompt(master, analysis), deps=deps))
         writer_output = result.output
-        tool_jobs = _jobs_from_tool_calls(result, master)
+        tool_jobs = jobs_from_tool_calls(result, master)
 
-        tailored = _apply_writer_output(master, writer_output, analysis)
+        tailored = apply_writer_output(master, writer_output, analysis)
         model_name = (
             getattr(model, "model_name", None)
             if not isinstance(model, str)
@@ -352,7 +347,7 @@ class Writer:
 # ---------------------------------------------------------------------------
 
 
-def _rank_experiences(master: MasterResume, analysis: DescriptionAnalysis):
+def rank_experiences(master: MasterResume, analysis: DescriptionAnalysis):
     must_have = {kw.lower() for kw in analysis.must_have_skills}
     nice = {kw.lower() for kw in analysis.nice_to_have_skills}
     scored: list[tuple[int, int, object]] = []
@@ -364,7 +359,7 @@ def _rank_experiences(master: MasterResume, analysis: DescriptionAnalysis):
     return tuple(item[2] for item in scored)
 
 
-def _reorder_skills(skills: SkillsByCategory, mirror_keywords):
+def reorder_skills(skills: SkillsByCategory, mirror_keywords):
     mirror = [kw.lower() for kw in mirror_keywords]
     new_categories: dict[str, tuple[str, ...]] = {}
     for category, items in skills.categories.items():
@@ -377,7 +372,7 @@ def _reorder_skills(skills: SkillsByCategory, mirror_keywords):
     return SkillsByCategory(categories=new_categories)
 
 
-def _base_instructions() -> str:
+def base_instructions() -> str:
     banned_words = ", ".join(sorted(BANNED_WORDS)[:10]) + ", ..."
     return f"""You are gethired's writer agent. Your job: produce a TailoredResume
 that matches a job description while staying strictly grounded in the master
@@ -402,7 +397,7 @@ cite its source master path + verbatim span). Do NOT invent companies,
 projects, dates, numbers, or skills."""
 
 
-def _rubric_dynamic_instruction(previous_violations: tuple[str, ...]) -> str:
+def rubric_dynamic_instruction(previous_violations: tuple[str, ...]) -> str:
     if not previous_violations:
         return ""
     return (
@@ -411,7 +406,7 @@ def _rubric_dynamic_instruction(previous_violations: tuple[str, ...]) -> str:
     )
 
 
-def _jd_dynamic_instruction() -> str:
+def jd_dynamic_instruction() -> str:
     return (
         "Use the read_jd_summary tool to retrieve must-have skills, "
         "nice-to-have skills, and responsibilities. Mirror must-have keywords "
@@ -419,7 +414,7 @@ def _jd_dynamic_instruction() -> str:
     )
 
 
-def _voice_dynamic_instruction(voice: VoiceProfile) -> str:
+def voice_dynamic_instruction(voice: VoiceProfile) -> str:
     verbs = ", ".join(voice.opening_verbs[:5]) or "n/a"
     return (
         f"VOICE PROFILE (preserve):\n"
@@ -430,7 +425,7 @@ def _voice_dynamic_instruction(voice: VoiceProfile) -> str:
     )
 
 
-def _user_prompt(master: MasterResume, analysis: DescriptionAnalysis) -> str:
+def user_prompt(master: MasterResume, analysis: DescriptionAnalysis) -> str:
     master_md = master.to_markdown()
     jd_summary = (
         f"Target role: {analysis.role}\n"
@@ -447,7 +442,7 @@ def _user_prompt(master: MasterResume, analysis: DescriptionAnalysis) -> str:
     )
 
 
-def _jobs_from_tool_calls(result: Any, master: MasterResume) -> tuple[Job, ...]:
+def jobs_from_tool_calls(result: Any, master: MasterResume) -> tuple[Job, ...]:
     """Extract Job records from the agent's tool calls.
 
     Best-effort: walks ``result.all_messages`` looking for tool-call parts.
@@ -474,7 +469,7 @@ def _jobs_from_tool_calls(result: Any, master: MasterResume) -> tuple[Job, ...]:
     return tuple(jobs)
 
 
-def _apply_writer_output(
+def apply_writer_output(
     master: MasterResume,
     output: WriterOutput,
     analysis: DescriptionAnalysis,
@@ -554,7 +549,7 @@ def _apply_writer_output(
     return TailoredResume(
         contact=master.contact,
         summary=output.summary,
-        skills=_reorder_skills(master.skills, analysis.keywords_to_mirror),
+        skills=reorder_skills(master.skills, analysis.keywords_to_mirror),
         experiences=tuple(new_experiences),
         projects=tuple(new_projects),
         education=master.education,

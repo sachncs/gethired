@@ -9,13 +9,13 @@ from __future__ import annotations
 import re
 from typing import Final
 
-_NUMBER_PATTERNS: Final[tuple[re.Pattern[str], ...]] = (
+NUMBER_PATTERNS: Final[tuple[re.Pattern[str], ...]] = (
     re.compile(r"(\d[\d,]*)\s*\+?"),
     re.compile(r"\$(\d[\d,]*(?:\.\d+)?)"),
     re.compile(r"(\d+(?:\.\d+)?)\s*%"),
 )
 
-_NUMBER_WORDS: Final[dict[str, int]] = {
+NUMBER_WORDS: Final[dict[str, int]] = {
     "zero": 0,
     "one": 1,
     "two": 2,
@@ -50,15 +50,15 @@ _NUMBER_WORDS: Final[dict[str, int]] = {
     "billion": 1000000000,
 }
 
-_LATEX_COMMAND_RE: Final[re.Pattern[str]] = re.compile(
+LATEX_COMMAND_RE: Final[re.Pattern[str]] = re.compile(
     r"\\(?:textbf|textsc|emph|textit|href)\s*\{([^}]*)\}(?:\{([^}]*)\})?"
 )
 
-_MATH_INLINE_RE: Final[re.Pattern[str]] = re.compile(r"\$([^$]*)\$")
+MATH_INLINE_RE: Final[re.Pattern[str]] = re.compile(r"\$([^$]*)\$")
 
-_ESCAPED_CHARS_RE: Final[re.Pattern[str]] = re.compile(r"\\([&%$#_{}~^])")
+ESCAPED_CHARS_RE: Final[re.Pattern[str]] = re.compile(r"\\([&%$#_{}~^])")
 
-_WORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]*")
+WORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]*")
 
 
 def canonicalize_numeric(text: str) -> set[int]:
@@ -68,7 +68,7 @@ def canonicalize_numeric(text: str) -> set[int]:
     ``5%``, ``5.5``, and ``ten thousand``.
     """
     found: set[int] = set()
-    for pattern in _NUMBER_PATTERNS:
+    for pattern in NUMBER_PATTERNS:
         for match in pattern.finditer(text):
             digits = match.group(1).replace(",", "")
             try:
@@ -98,10 +98,10 @@ def canonicalize_numeric(text: str) -> set[int]:
         current = 0
         matched_any = False
         for token in tokens:
-            if token not in _NUMBER_WORDS:
+            if token not in NUMBER_WORDS:
                 continue
             matched_any = True
-            n = _NUMBER_WORDS[token]
+            n = NUMBER_WORDS[token]
             if n in {100, 1000, 1000000, 1000000000}:
                 current = max(current, 1) * n if current else n
             else:
@@ -115,23 +115,23 @@ def canonicalize_numeric(text: str) -> set[int]:
 
 def strip_latex_commands(text: str) -> str:
     """Remove common LaTeX command wrappers, returning plain text."""
-    working = _LATEX_COMMAND_RE.sub(lambda m: m.group(2) or m.group(1) or "", text)
-    working = _MATH_INLINE_RE.sub(lambda m: m.group(1), working)
-    working = _ESCAPED_CHARS_RE.sub(lambda m: m.group(1), working)
+    working = LATEX_COMMAND_RE.sub(lambda m: m.group(2) or m.group(1) or "", text)
+    working = MATH_INLINE_RE.sub(lambda m: m.group(1), working)
+    working = ESCAPED_CHARS_RE.sub(lambda m: m.group(1), working)
     return working
 
 
-_WHITESPACE_RE: Final[re.Pattern[str]] = re.compile(r"\s+")
+WHITESPACE_RE: Final[re.Pattern[str]] = re.compile(r"\s+")
 
 
 def normalise_whitespace(text: str) -> str:
     """Collapse whitespace and strip; used by the ATS PDF-vs-TXT gate."""
-    return _WHITESPACE_RE.sub(" ", text).strip().lower()
+    return WHITESPACE_RE.sub(" ", text).strip().lower()
 
 
 def tokenize_for_overlap(text: str) -> tuple[str, ...]:
     """Tokenise text into normalised words for n-gram overlap detection."""
-    return tuple(token.lower() for token in _WORD_RE.findall(text))
+    return tuple(token.lower() for token in WORD_RE.findall(text))
 
 
 def is_action_verb(token: str) -> bool:
@@ -143,10 +143,10 @@ def is_action_verb(token: str) -> bool:
     Returns:
         ``True`` if ``token`` looks like an action verb.
     """
-    return _ACTION_VERBS_LOOKUP.match(token) is not None
+    return ACTION_VERBS_LOOKUP.match(token) is not None
 
 
-_ACTION_VERBS_LOOKUP: Final[re.Pattern[str]] = re.compile(
+ACTION_VERBS_LOOKUP: Final[re.Pattern[str]] = re.compile(
     r"^(?:"
     r"a(?:chieved|dded|dministered|dvised|llocated|nalyzed|pplied|ssembled|ssessed|uthored|udited)"
     r"|b(?:uilt|oosted|rought|udgeted)"

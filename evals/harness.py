@@ -9,19 +9,16 @@ for AI agents":
 from __future__ import annotations
 
 import json
-from collections import Counter
 from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import yaml
 
-from gethired.models import MasterResume, TailoredResume
-
 from evals.graders.registry import GraderRegistry
-
+from gethired.models import MasterResume, TailoredResume
 
 # ---------------------------------------------------------------------------
 # Task + Trial types
@@ -167,7 +164,7 @@ class EvalSuiteResult:
 def load_task(path: Path) -> TaskDefinition:
     """Load a single task definition from a YAML file."""
     data = yaml.safe_load(path.read_text())
-    return _parse_task(data, source=str(path))
+    return parse_task(data, source=str(path))
 
 
 def load_suite(suite_dir: Path) -> tuple[TaskDefinition, ...]:
@@ -175,11 +172,11 @@ def load_suite(suite_dir: Path) -> tuple[TaskDefinition, ...]:
     tasks: list[TaskDefinition] = []
     for yaml_path in sorted(suite_dir.glob("tasks/**/*.yaml")):
         data = yaml.safe_load(yaml_path.read_text())
-        tasks.append(_parse_task(data, source=str(yaml_path)))
+        tasks.append(parse_task(data, source=str(yaml_path)))
     return tuple(tasks)
 
 
-def _parse_task(data: dict[str, Any], source: str) -> TaskDefinition:
+def parse_task(data: dict[str, Any], source: str) -> TaskDefinition:
     # Accept either flat (id at root) or wrapped under `task:` key.
     task_data = data.get("task", data)
     graders: list[GraderSpec] = []
@@ -226,12 +223,12 @@ class EvalHarness:
 
     def run_suite(self, tasks: tuple[TaskDefinition, ...]) -> EvalSuiteResult:
         """Run every task ``trials_per_task`` times and aggregate."""
-        started = _utcnow_iso()
+        started = utcnow_iso()
         outcomes: list[TaskOutcome] = []
         for task in tasks:
             outcome = self._run_task(task)
             outcomes.append(outcome)
-        completed = _utcnow_iso()
+        completed = utcnow_iso()
         result = EvalSuiteResult(
             suite_name=self.suite_name,
             started_at=started,
@@ -242,12 +239,12 @@ class EvalHarness:
         return result
 
     def _run_task(self, task: TaskDefinition) -> TaskOutcome:
-        shared_master = _load_shared_master()
+        shared_master = load_shared_master()
         trials: list[TrialRecord] = []
         for trial_index in range(self.trials_per_task):
             trial = self._execute_trial(task, trial_index, shared_master)
             trials.append(trial)
-        return _aggregate_task(task.id, task.category, tuple(trials))
+        return aggregate_task(task.id, task.category, tuple(trials))
 
     def _execute_trial(
         self,
@@ -256,12 +253,12 @@ class EvalHarness:
         shared_master: MasterResume | None = None,
     ) -> TrialRecord:
         """Run the task once, grade the output, record the trial."""
-        started = _utcnow_iso()
-        runner = _REGISTRY.get(task.type, _passthrough_runner)
+        started = utcnow_iso()
+        runner = REGISTRY.get(task.type, passthrough_runner)
         if shared_master is not None:
-            task = _inject_master(task, shared_master)
+            task = inject_master(task, shared_master)
         output, transcript = runner(task)
-        completed = _utcnow_iso()
+        completed = utcnow_iso()
         started_dt = datetime.fromisoformat(started.replace("Z", "+00:00"))
         completed_dt = datetime.fromisoformat(completed.replace("Z", "+00:00"))
         duration_ms = (completed_dt - started_dt).total_seconds() * 1000.0
@@ -270,7 +267,7 @@ class EvalHarness:
         for spec in task.graders:
             grader = self.registry.get(spec.name)
             try:
-                resolved_args = _resolve_args(spec.args, output, task, shared_master)
+                resolved_args = resolve_args(spec.args, output, task, shared_master)
                 # Grader signature uses the first positional arg for the
                 # human-readable name; everything else comes from spec.args.
                 result = grader(spec.name, **resolved_args)
@@ -357,7 +354,7 @@ class EvalHarness:
 # ---------------------------------------------------------------------------
 
 
-def _aggregate_task(
+def aggregate_task(
     task_id: str, category: str, trials: tuple[TrialRecord, ...]
 ) -> TaskOutcome:
     if not trials:
@@ -389,8 +386,8 @@ def _aggregate_task(
     )
 
 
-def _utcnow_iso() -> str:
-    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+def utcnow_iso() -> str:
+    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
 # ---------------------------------------------------------------------------
@@ -398,7 +395,7 @@ def _utcnow_iso() -> str:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_args(
+def resolve_args(
     spec_args: dict[str, Any],
     output: dict[str, Any],
     task: TaskDefinition,
@@ -437,7 +434,7 @@ def _resolve_args(
     return resolved
 
 
-def _load_shared_master() -> MasterResume | None:
+def load_shared_master() -> MasterResume | None:
     """Load the canonical master.json (or parse the canonical resume.tex).
 
     The master is loaded once per eval run and shared across tasks so that
@@ -461,7 +458,7 @@ def _load_shared_master() -> MasterResume | None:
 # ---------------------------------------------------------------------------
 
 
-def _inject_master(task: TaskDefinition, master: MasterResume) -> TaskDefinition:
+def inject_master(task: TaskDefinition, master: MasterResume) -> TaskDefinition:
     """Return a copy of ``task`` with the shared master injected.
 
     Replaces the ``__load_master__`` sentinel so downstream runners
@@ -483,7 +480,7 @@ def _inject_master(task: TaskDefinition, master: MasterResume) -> TaskDefinition
     )
 
 
-def _passthrough_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
+def passthrough_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Default runner: reads the output from task input verbatim.
 
     Used for tasks that pre-compute their own outputs.
@@ -491,7 +488,7 @@ def _passthrough_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str,
     return dict(task.input.get("__output__", {})), {"task_id": task.id}
 
 
-def _parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
+def parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for parser tasks: parse a TeX file and emit the model."""
     from gethired.parser import parse_tex
 
@@ -507,7 +504,7 @@ def _parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
     )
 
 
-def _fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
+def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for fetcher tasks: parse cached JDs without network."""
     from gethired.fetcher import CacheEntry, JobDescriptionRetriever
 
@@ -545,7 +542,7 @@ def _fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any
     )
 
 
-def _writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
+def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for writer tasks: produce a tailored resume against a JD.
 
     When ``task.input["deterministic"]`` is true, the runner unsets
@@ -617,12 +614,11 @@ def _writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
     )
 
 
-def _critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
+def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for critic tasks: run validators against a tailored resume."""
     import os
 
-    from gethired.critic import Critic
-    from gethired.models import FinalOutcome, JobDescription, Run, RunResult, TailoredResume
+    from gethired.models import FinalOutcome, JobDescription, Run, RunResult
 
     if task.input.get("deterministic", False):
         os.environ.pop("MODEL", None)
@@ -690,7 +686,7 @@ def _critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
     )
 
 
-def _description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
+def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for description tasks: analyze a JD."""
     from gethired.description import analyze
     from gethired.models import JobDescription
@@ -712,7 +708,7 @@ def _description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str,
     )
 
 
-def _tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
+def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for end-to-end tailor tasks: full pipeline run."""
     import os
 
@@ -758,15 +754,15 @@ def _tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
     )
 
 
-_REGISTRY: dict[str, Callable[[TaskDefinition], tuple[dict[str, Any], dict[str, Any]]]] = {
-    "code": _passthrough_runner,
-    "model": _passthrough_runner,
-    "parser": _parser_runner,
-    "fetcher": _fetcher_runner,
-    "writer": _writer_runner,
-    "critic": _critic_runner,
-    "description": _description_runner,
-    "tailor": _tailor_runner,
+REGISTRY: dict[str, Callable[[TaskDefinition], tuple[dict[str, Any], dict[str, Any]]]] = {
+    "code": passthrough_runner,
+    "model": passthrough_runner,
+    "parser": parser_runner,
+    "fetcher": fetcher_runner,
+    "writer": writer_runner,
+    "critic": critic_runner,
+    "description": description_runner,
+    "tailor": tailor_runner,
 }
 
 

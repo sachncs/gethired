@@ -94,7 +94,7 @@ def grounding_check(
     master_text = master.to_markdown().lower()
     master_numbers = canonicalize_numeric(master.to_markdown())
 
-    tailored_text = _tailored_to_text(tailored).lower()
+    tailored_text = tailored_to_text(tailored).lower()
 
     for skill_category, skills in tailored.skills.categories.items():
         for skill in skills:
@@ -115,7 +115,7 @@ def grounding_check(
                 )
             )
 
-    tailored_numbers = canonicalize_numeric(_tailored_to_text(tailored))
+    tailored_numbers = canonicalize_numeric(tailored_to_text(tailored))
     for number in tailored_numbers - master_numbers:
         violations.append(
             GroundingViolation(
@@ -137,7 +137,7 @@ def grounding_check(
     return tuple(violations)
 
 
-def _tailored_to_text(tailored: TailoredResume) -> str:
+def tailored_to_text(tailored: TailoredResume) -> str:
     parts = [tailored.summary]
     for exp in tailored.experiences:
         parts.append(f"{exp.role} {exp.company} {exp.start_date} {exp.end_date}")
@@ -163,7 +163,7 @@ def style_check(
     """Check for banned words, parallelism, length variance, and quantification."""
     violations: list[StyleViolation] = []
 
-    full_text = _tailored_to_text(tailored).lower()
+    full_text = tailored_to_text(tailored).lower()
     for word in BANNED_WORDS:
         pattern = re.compile(rf"\b{re.escape(word)}\b", re.IGNORECASE)
         for match in pattern.finditer(full_text):
@@ -197,7 +197,7 @@ def style_check(
             )
 
     for experience in tailored.experiences:
-        violations.extend(_parallelism_violations(experience.role, experience.bullets))
+        violations.extend(parallelism_violations(experience.role, experience.bullets))
         if experience.bullets:
             quantified = sum(
                 1 for bullet in experience.bullets if canonicalize_numeric(bullet.text)
@@ -225,7 +225,7 @@ def style_check(
     return tuple(violations)
 
 
-def _parallelism_violations(role: str, bullets: tuple[Bullet, ...]) -> tuple[StyleViolation, ...]:
+def parallelism_violations(role: str, bullets: tuple[Bullet, ...]) -> tuple[StyleViolation, ...]:
     if len(bullets) < 3:
         return ()
     counter: Counter[str] = Counter()
@@ -261,7 +261,7 @@ def plagiarism_check(
 
     Excludes n-grams in ``TECHNICAL_NGRAMS_ALLOWLIST``.
     """
-    tailored_tokens = tokenize_for_overlap(_tailored_to_text(tailored))
+    tailored_tokens = tokenize_for_overlap(tailored_to_text(tailored))
     tailored_ngrams = set(extract_ngrams(tailored_tokens, ngram_size))
     tailored_ngrams -= TECHNICAL_NGRAMS_ALLOWLIST
 
@@ -308,23 +308,23 @@ def ats_check(
     """
     results: list[AtsGateResult] = []
 
-    results.append(_gate_pdf_compiles(pdf_path))
-    results.append(_gate_pdf_text_extractable(pdf_path))
-    results.append(_gate_pdf_text_matches_txt(pdf_path, txt_source))
-    results.append(_gate_section_headings_standard(tex_source))
-    results.append(_gate_no_tables_for_layout(tex_source))
-    results.append(_gate_no_images(tex_source))
-    results.append(_gate_no_colors(tex_source))
-    results.append(_gate_font_size_10_12(tex_source))
-    results.append(_gate_length_within_limit(tailored, tex_source))
-    results.append(_gate_keywords_covered(tailored, jds))
-    results.append(_gate_bullets_quantified(tailored, quantification_threshold))
-    results.append(_gate_action_verbs_first(tailored))
+    results.append(gate_pdf_compiles(pdf_path))
+    results.append(gate_pdf_text_extractable(pdf_path))
+    results.append(gate_pdf_text_matches_txt(pdf_path, txt_source))
+    results.append(gate_section_headings_standard(tex_source))
+    results.append(gate_no_tables_for_layout(tex_source))
+    results.append(gate_no_images(tex_source))
+    results.append(gate_no_colors(tex_source))
+    results.append(gate_font_size_10_12(tex_source))
+    results.append(gate_length_within_limit(tailored, tex_source))
+    results.append(gate_keywords_covered(tailored, jds))
+    results.append(gate_bullets_quantified(tailored, quantification_threshold))
+    results.append(gate_action_verbs_first(tailored))
 
     return AtsGateReport(results=tuple(results))
 
 
-def _gate_pdf_compiles(pdf_path: Path | None) -> AtsGateResult:
+def gate_pdf_compiles(pdf_path: Path | None) -> AtsGateResult:
     if pdf_path is None:
         return AtsGateResult(AtsGate.PDF_COMPILES, passed=False, detail="PDF not compiled")
     if not pdf_path.exists():
@@ -332,7 +332,7 @@ def _gate_pdf_compiles(pdf_path: Path | None) -> AtsGateResult:
     return AtsGateResult(AtsGate.PDF_COMPILES, passed=True, detail=f"PDF compiled at {pdf_path}")
 
 
-def _gate_pdf_text_extractable(pdf_path: Path | None) -> AtsGateResult:
+def gate_pdf_text_extractable(pdf_path: Path | None) -> AtsGateResult:
     if pdf_path is None or not pdf_path.exists():
         return AtsGateResult(AtsGate.PDF_TEXT_EXTRACTABLE, passed=False, detail="PDF missing")
     try:
@@ -358,7 +358,7 @@ def _gate_pdf_text_extractable(pdf_path: Path | None) -> AtsGateResult:
         )
 
 
-def _gate_pdf_text_matches_txt(pdf_path: Path | None, txt_source: str) -> AtsGateResult:
+def gate_pdf_text_matches_txt(pdf_path: Path | None, txt_source: str) -> AtsGateResult:
     if pdf_path is None or not pdf_path.exists():
         return AtsGateResult(AtsGate.PDF_TEXT_MATCHES_TXT, passed=False, detail="PDF missing")
     try:
@@ -386,7 +386,7 @@ def _gate_pdf_text_matches_txt(pdf_path: Path | None, txt_source: str) -> AtsGat
         )
 
 
-def _gate_section_headings_standard(tex_source: str) -> AtsGateResult:
+def gate_section_headings_standard(tex_source: str) -> AtsGateResult:
     found = set(re.findall(r"\\section\{([^}]+)\}", tex_source))
     required = set(REQUIRED_SECTION_HEADINGS)
     missing = required - found
@@ -401,7 +401,7 @@ def _gate_section_headings_standard(tex_source: str) -> AtsGateResult:
     )
 
 
-def _gate_no_tables_for_layout(tex_source: str) -> AtsGateResult:
+def gate_no_tables_for_layout(tex_source: str) -> AtsGateResult:
     layout_patterns = [
         r"\\begin\{tabularx\}\s*\{\s*\d?\.\d+\\textwidth",
         r"\\begin\{multicols\}",
@@ -417,13 +417,13 @@ def _gate_no_tables_for_layout(tex_source: str) -> AtsGateResult:
     return AtsGateResult(AtsGate.NO_TABLES_FOR_LAYOUT, passed=True, detail="OK")
 
 
-def _gate_no_images(tex_source: str) -> AtsGateResult:
+def gate_no_images(tex_source: str) -> AtsGateResult:
     if re.search(r"\\includegraphics|\\graphic", tex_source):
         return AtsGateResult(AtsGate.NO_IMAGES, passed=False, detail="Image macro detected")
     return AtsGateResult(AtsGate.NO_IMAGES, passed=True, detail="OK")
 
 
-def _gate_no_colors(tex_source: str) -> AtsGateResult:
+def gate_no_colors(tex_source: str) -> AtsGateResult:
     """Allow ``LinkColor`` definition and ``\\color{black}``; flag other color usage."""
     non_link_colors = []
     for pattern in (r"\\color\b", r"\\textcolor\b"):
@@ -443,7 +443,7 @@ def _gate_no_colors(tex_source: str) -> AtsGateResult:
     return AtsGateResult(AtsGate.NO_COLORS, passed=True, detail="OK")
 
 
-def _gate_font_size_10_12(tex_source: str) -> AtsGateResult:
+def gate_font_size_10_12(tex_source: str) -> AtsGateResult:
     match = re.search(r"\\documentclass\[(?:[^]]*,)?(\d+)pt(?:,[^]]*)?\]", tex_source)
     if match is None:
         return AtsGateResult(
@@ -459,7 +459,7 @@ def _gate_font_size_10_12(tex_source: str) -> AtsGateResult:
     )
 
 
-def _gate_length_within_limit(tailored: TailoredResume, tex_source: str) -> AtsGateResult:
+def gate_length_within_limit(tailored: TailoredResume, tex_source: str) -> AtsGateResult:
     # Estimate: count the number of \resumeItem invocations
     item_count = len(re.findall(r"\\resumeItem\b", tex_source))
     # ~4 bullets per page is typical for this template; conservative.
@@ -477,7 +477,7 @@ def _gate_length_within_limit(tailored: TailoredResume, tex_source: str) -> AtsG
     )
 
 
-def _gate_keywords_covered(
+def gate_keywords_covered(
     tailored: TailoredResume, jds: tuple[JobDescription, ...]
 ) -> AtsGateResult:
     must_have: set[str] = set()
@@ -487,7 +487,7 @@ def _gate_keywords_covered(
     if not must_have:
         return AtsGateResult(AtsGate.KEYWORDS_COVERED, passed=True, detail="No must-have keywords")
 
-    tailored_text = _tailored_to_text(tailored).lower()
+    tailored_text = tailored_to_text(tailored).lower()
     missing = sorted(word for word in must_have if word not in tailored_text)
     if not missing:
         return AtsGateResult(AtsGate.KEYWORDS_COVERED, passed=True, detail="All keywords covered")
@@ -498,7 +498,7 @@ def _gate_keywords_covered(
     )
 
 
-def _gate_bullets_quantified(
+def gate_bullets_quantified(
     tailored: TailoredResume, threshold: float
 ) -> AtsGateResult:
     all_bullets: list[Bullet] = []
@@ -523,7 +523,7 @@ def _gate_bullets_quantified(
     )
 
 
-def _gate_action_verbs_first(tailored: TailoredResume) -> AtsGateResult:
+def gate_action_verbs_first(tailored: TailoredResume) -> AtsGateResult:
     bad: list[str] = []
     for exp in tailored.experiences:
         for bullet in exp.bullets:
@@ -555,5 +555,5 @@ __all__ = [
 ]
 
 
-_FINAL_TAILORED_TO_TEXT = _tailored_to_text
-_FINAL_GROUNDING = grounding_check
+FINAL_TAILORED_TO_TEXT = tailored_to_text
+FINAL_GROUNDING = grounding_check

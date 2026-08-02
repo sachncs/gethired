@@ -36,7 +36,7 @@ def code_field_present(
     name: str, resume: MasterResume | TailoredResume, path: str
 ) -> GraderResult:
     """Assert that a dotted path on the resume resolves to a truthy value."""
-    value = _resolve_path(resume, path)
+    value = resolve_path(resume, path)
     passed = bool(value)
     detail = f"{path}={'<missing>' if value is None else value!r}"
     return GraderResult(name=name, passed=passed, detail=detail)
@@ -46,7 +46,7 @@ def code_field_length(
     name: str, resume: MasterResume | TailoredResume, path: str, expected: int
 ) -> GraderResult:
     """Assert that a list path has the expected length."""
-    value = _resolve_path(resume, path)
+    value = resolve_path(resume, path)
     if not hasattr(value, "__len__"):
         return GraderResult(
             name=name, passed=False, detail=f"{path} is not sized"
@@ -175,7 +175,7 @@ def code_json_round_trip(name: str, tailored: TailoredResume) -> GraderResult:
 # ---------------------------------------------------------------------------
 
 
-def _resolve_path(obj: object, dotted: str) -> object:
+def resolve_path(obj: object, dotted: str) -> object:
     """Resolve a dotted path like ``experiences[0].company`` on a dataclass
     or dict (mixed access supported).
     """
@@ -186,11 +186,7 @@ def _resolve_path(obj: object, dotted: str) -> object:
     for token in tokens:
         if token.startswith("[") and token.endswith("]"):
             index = int(token[1:-1])
-            if isinstance(current, (tuple, list)):
-                current = current[index]
-            elif isinstance(current, dict):
-                current = current[index]
-            elif hasattr(current, "__getitem__"):
+            if isinstance(current, (tuple, list)) or isinstance(current, dict) or hasattr(current, "__getitem__"):
                 current = current[index]
             else:
                 return None

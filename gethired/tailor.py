@@ -91,10 +91,10 @@ class Tailor:
         analysis = analyze_description(jds[0]) if jds else None
 
         run = Run(
-            id=str(_new_uuid()),
+            id=str(new_uuid()),
             started_at=utcnow_iso(),
             master_hash=master.content_hash(),
-            jd_urls_hash=_hash_jd_urls(jds),
+            jd_urls_hash=hash_jd_urls(jds),
             model=self._model or "deterministic",
             draft_model=self._draft_model,
         )
@@ -128,7 +128,7 @@ class Tailor:
             total_input_tokens=0,
             total_output_tokens=0,
             retry_attempts=0,
-            final_outcome=_outcome_from_ats(ats_report),
+            final_outcome=outcome_from_ats(ats_report),
             jobs=all_jobs,
         )
         tailored_with_jobs = replace(tailored_with_jobs, run_result=run_result)
@@ -272,10 +272,10 @@ class Tailor:
         if isinstance(self._resume_input, MasterResume):
             return self._resume_input
         if self._master_json.exists():
-            return _read_master_json(self._master_json)
+            return read_master_json(self._master_json)
         master = parse_tex(Path(self._resume_input))
         self._master_json.parent.mkdir(parents=True, exist_ok=True)
-        self._master_json.write_text(render_json(_to_tailored(master)))
+        self._master_json.write_text(render_json(to_tailored(master)))
         return master
 
     def _load_jds(self) -> tuple[JobDescription, ...]:
@@ -319,18 +319,18 @@ class Tailor:
 # ---------------------------------------------------------------------------
 
 
-def _new_uuid() -> str:
+def new_uuid() -> str:
     from uuid import uuid4
 
     return str(uuid4())
 
 
-def _hash_jd_urls(jds: tuple[JobDescription, ...]) -> str:
+def hash_jd_urls(jds: tuple[JobDescription, ...]) -> str:
     blob = "|".join(jd.url for jd in jds)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
-def _outcome_from_ats(report) -> FinalOutcome:
+def outcome_from_ats(report) -> FinalOutcome:
     if report.all_passed:
         return FinalOutcome.SUCCESS
     for gate in report.failed_gates:
@@ -338,7 +338,7 @@ def _outcome_from_ats(report) -> FinalOutcome:
     return FinalOutcome.SUCCESS
 
 
-def _read_master_json(path: Path) -> MasterResume:
+def read_master_json(path: Path) -> MasterResume:
     """Reconstruct a MasterResume from a previously written JSON snapshot.
 
     The JSON snapshot is produced by ``render_json`` against a TailoredResume;
@@ -390,7 +390,7 @@ def _read_master_json(path: Path) -> MasterResume:
     )
 
 
-def _to_tailored(master: MasterResume) -> TailoredResume:
+def to_tailored(master: MasterResume) -> TailoredResume:
     """Wrap a master resume in a TailoredResume for JSON serialisation."""
     from gethired.models import TailoredResume as _TR
 
@@ -408,7 +408,7 @@ def _to_tailored(master: MasterResume) -> TailoredResume:
         jobs=(),
         run_result=RunResult(
             run=Run(
-                id=str(_new_uuid()),
+                id=str(new_uuid()),
                 started_at=utcnow_iso(),
                 master_hash=master.content_hash(),
                 jd_urls_hash="",

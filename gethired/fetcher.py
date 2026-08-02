@@ -22,10 +22,10 @@ from gethired.exceptions import JobDescriptionRetrievalError
 from gethired.models import JobDescription
 from gethired.observability import step_logger
 
-_USER_AGENT: Final[str] = (
+USER_AGENT: Final[str] = (
     "Mozilla/5.0 (compatible; gethired/0.1; +https://github.com/gethired)"
 )
-_FETCH_TIMEOUT_SECONDS: Final[float] = 30.0
+FETCH_TIMEOUT_SECONDS: Final[float] = 30.0
 
 
 @dataclass(frozen=True, slots=True)
@@ -82,8 +82,8 @@ class JobDescriptionRetriever:
         for attempt in range(1, self._max_attempts + 1):
             try:
                 with httpx.Client(
-                    headers={"User-Agent": _USER_AGENT},
-                    timeout=_FETCH_TIMEOUT_SECONDS,
+                    headers={"User-Agent": USER_AGENT},
+                    timeout=FETCH_TIMEOUT_SECONDS,
                     follow_redirects=True,
                 ) as client:
                     response = client.get(url)
@@ -137,17 +137,17 @@ class JobDescriptionRetriever:
         return age <= timedelta(days=CACHE_MAX_AGE_DAYS)
 
     def _parse(self, raw_html: str, url: str, content_hash: str) -> JobDescription:
-        jsonld = _extract_jsonld(raw_html)
+        jsonld = extract_jsonld(raw_html)
         if jsonld is not None:
-            return _build_from_jsonld(jsonld, url, content_hash)
+            return build_from_jsonld(jsonld, url, content_hash)
 
-        text = _extract_text_trafilatura(raw_html)
+        text = extract_text_trafilatura(raw_html)
         if not text:
             raise JobDescriptionRetrievalError(f"No text extracted from {url}")
-        return _build_from_text(text, url, content_hash)
+        return build_from_text(text, url, content_hash)
 
 
-def _extract_jsonld(html: str) -> dict | None:
+def extract_jsonld(html: str) -> dict | None:
     pattern = re.compile(
         r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
         re.DOTALL | re.IGNORECASE,
@@ -166,7 +166,7 @@ def _extract_jsonld(html: str) -> dict | None:
     return None
 
 
-def _extract_text_trafilatura(html: str) -> str:
+def extract_text_trafilatura(html: str) -> str:
     try:
         import trafilatura  # type: ignore[import-not-found]
     except ImportError:
@@ -177,7 +177,7 @@ def _extract_text_trafilatura(html: str) -> str:
         return ""
 
 
-def _build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescription:
+def build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescription:
     title = str(data.get("title", ""))
     company = ""
     hiring_org = data.get("hiringOrganization") or data.get("organization")
@@ -185,8 +185,8 @@ def _build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescriptio
         company = str(hiring_org.get("name", ""))
     description = str(data.get("description", ""))
     full_text = f"{title}\n\n{description}".strip()
-    keywords = _extract_keywords(full_text)
-    must_have, nice_to_have = _categorize_keywords(data, full_text)
+    keywords = extract_keywords(full_text)
+    must_have, nice_to_have = categorize_keywords(data, full_text)
     return JobDescription(
         url=url,
         title=title,
@@ -199,8 +199,8 @@ def _build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescriptio
     )
 
 
-def _build_from_text(text: str, url: str, content_hash: str) -> JobDescription:
-    keywords = _extract_keywords(text)
+def build_from_text(text: str, url: str, content_hash: str) -> JobDescription:
+    keywords = extract_keywords(text)
     return JobDescription(
         url=url,
         title="",
@@ -213,7 +213,7 @@ def _build_from_text(text: str, url: str, content_hash: str) -> JobDescription:
     )
 
 
-_KEYWORD_STOPWORDS: Final[frozenset[str]] = frozenset(
+KEYWORD_STOPWORDS: Final[frozenset[str]] = frozenset(
     {
         "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
         "has", "have", "in", "is", "it", "its", "of", "on", "or", "our",
@@ -225,14 +225,14 @@ _KEYWORD_STOPWORDS: Final[frozenset[str]] = frozenset(
         "over", "under", "between", "through", "during", "before", "after",
     }
 )
-_KEYWORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]{1,}")
+KEYWORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]{1,}")
 
 
-def _extract_keywords(text: str) -> tuple[str, ...]:
+def extract_keywords(text: str) -> tuple[str, ...]:
     counter: Counter[str] = Counter()
-    for match in _KEYWORD_RE.finditer(text):
+    for match in KEYWORD_RE.finditer(text):
         token = match.group(0).lower()
-        if token in _KEYWORD_STOPWORDS:
+        if token in KEYWORD_STOPWORDS:
             continue
         if len(token) < 3:
             continue
@@ -240,13 +240,13 @@ def _extract_keywords(text: str) -> tuple[str, ...]:
     return tuple(word for word, _ in counter.most_common(40))
 
 
-def _categorize_keywords(data: dict, text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def categorize_keywords(data: dict, text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Best-effort tier classification: required skills vs nice-to-have."""
     must_have: set[str] = set()
     nice_to_have: set[str] = set()
     skills_section = data.get("skills")
     if isinstance(skills_section, str):
-        for token in _KEYWORD_RE.finditer(skills_section):
+        for token in KEYWORD_RE.finditer(skills_section):
             nice_to_have.add(token.group(0).lower())
     elif isinstance(skills_section, list):
         for skill in skills_section:
@@ -254,10 +254,10 @@ def _categorize_keywords(data: dict, text: str) -> tuple[tuple[str, ...], tuple[
                 nice_to_have.add(skill.lower())
     requirements = data.get("experienceRequirements") or data.get("qualifications")
     if isinstance(requirements, str):
-        for token in _KEYWORD_RE.finditer(requirements):
+        for token in KEYWORD_RE.finditer(requirements):
             must_have.add(token.group(0).lower())
     if not must_have:
-        for token in _extract_keywords(text)[:15]:
+        for token in extract_keywords(text)[:15]:
             must_have.add(token)
     return tuple(must_have), tuple(nice_to_have)
 

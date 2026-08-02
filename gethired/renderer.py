@@ -20,12 +20,12 @@ from gethired.models import (
 from gethired.normalizer_helpers import strip_latex_commands
 from gethired.validator import AtsGateReport
 
-_TEMPLATE_DIR: Final[Path] = Path(__file__).parent / "templates"
+TEMPLATE_DIR: Final[Path] = Path(__file__).parent / "templates"
 
 
-def _env() -> Environment:
+def env() -> Environment:
     return Environment(
-        loader=FileSystemLoader(str(_TEMPLATE_DIR)),
+        loader=FileSystemLoader(str(TEMPLATE_DIR)),
         autoescape=select_autoescape(disabled_extensions=("tex",), default=False),
         keep_trailing_newline=True,
     )
@@ -33,8 +33,8 @@ def _env() -> Environment:
 
 def render_tex(tailored: TailoredResume) -> str:
     """Render the tailored resume as TeX source."""
-    env = _env()
-    template = env.get_template("resume.tex.j2")
+    jinja_env = env()
+    template = jinja_env.get_template("resume.tex.j2")
     return template.render(resume=tailored)
 
 
@@ -196,6 +196,6 @@ __all__ = [
 ]
 
 
-_TAILORED = TailoredResume
-_STRIP = strip_latex_commands
-_NOW = datetime.now(UTC).isoformat
+TAILORED = TailoredResume
+STRIP = strip_latex_commands
+NOW = datetime.now(UTC).isoformat

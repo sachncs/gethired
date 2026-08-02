@@ -24,7 +24,7 @@ class ModelGrade:
     raw_response: str
 
 
-_MODEL_GRADE_PROMPT = """You are evaluating the output of a resume tailoring system.
+MODEL_GRADE_PROMPT = """You are evaluating the output of a resume tailoring system.
 
 Rubric:
 {rubric}
@@ -70,7 +70,7 @@ def model_grade(
         ),
         output_type=str,
     )
-    prompt = _MODEL_GRADE_PROMPT.format(rubric=rubric, output=output)
+    prompt = MODEL_GRADE_PROMPT.format(rubric=rubric, output=output)
     result = asyncio.run(agent.run(prompt))
     raw = result.output.strip()
 

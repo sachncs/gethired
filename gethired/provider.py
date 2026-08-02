@@ -23,7 +23,7 @@ class ResolvedModel:
     display_name: str
 
 
-def _resolve_api_key(explicit: str | None = None) -> str:
+def resolve_api_key(explicit: str | None = None) -> str:
     """Resolve API key from explicit arg, then ``API_KEY``, then ``ANTHROPIC_API_KEY``."""
     if explicit:
         return explicit
@@ -35,7 +35,7 @@ def _resolve_api_key(explicit: str | None = None) -> str:
     return api_key
 
 
-def _resolve_base_url(explicit: str | None = None) -> str | None:
+def resolve_base_url(explicit: str | None = None) -> str | None:
     """Resolve base URL from explicit arg, then ``BASE_URL``, then ``ANTHROPIC_BASE_URL``."""
     if explicit:
         return explicit
@@ -71,8 +71,6 @@ def resolve_model(
     Returns:
         A ``ResolvedModel`` containing the constructed model and a display name.
     """
-    from pydantic_ai.models.anthropic import AnthropicModel
-    from pydantic_ai.providers.anthropic import AnthropicProvider
 
     raw = model_string or os.environ.get("MODEL", "")
     if not raw:
@@ -85,24 +83,24 @@ def resolve_model(
     provider_name = provider_name.lower() if provider_name else ""
 
     if _is_minimax(model_name, provider_name):
-        resolved_url = _resolve_base_url(base_url) or MINIMAX_BASE_URL
-        return _build_anthropic_model(
+        resolved_url = resolve_base_url(base_url) or MINIMAX_BASE_URL
+        return build_anthropic_model(
             model_name=model_name,
-            api_key=_resolve_api_key(api_key),
+            api_key=resolve_api_key(api_key),
             base_url=resolved_url,
             display_label="MiniMax",
         )
 
     if provider_name in ("anthropic", ""):
-        return _build_anthropic_model(
+        return build_anthropic_model(
             model_name=model_name,
-            api_key=_resolve_api_key(api_key),
-            base_url=_resolve_base_url(base_url),
+            api_key=resolve_api_key(api_key),
+            base_url=resolve_base_url(base_url),
             display_label="Anthropic",
         )
 
     if provider_name == "openai":
-        return _build_openai_model(model_name, api_key)
+        return build_openai_model(model_name, api_key)
 
     raise ValueError(
         f"Unsupported model string {raw!r}. Use 'MiniMax-M3' (MiniMax platform), "
@@ -119,7 +117,7 @@ def _is_minimax(model_name: str, provider_name: str) -> bool:
     return False
 
 
-def _build_anthropic_model(
+def build_anthropic_model(
     model_name: str,
     api_key: str,
     base_url: str | None,
@@ -139,7 +137,7 @@ def _build_anthropic_model(
     )
 
 
-def _build_openai_model(model_name: str, api_key: str | None) -> ResolvedModel:
+def build_openai_model(model_name: str, api_key: str | None) -> ResolvedModel:
     """Construct an OpenAI provider model."""
     from pydantic_ai.models.openai import OpenAIChatModel
     from pydantic_ai.providers.openai import OpenAIProvider
