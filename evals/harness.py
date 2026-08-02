@@ -723,7 +723,8 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     )
     trace_dir.mkdir(parents=True, exist_ok=True)
     run_id_marker = task.input.get("run_id_marker", task.id)
-    trace_path = trace_dir / f"{run_id_marker}.jsonl"
+    # Match the real `Tracer` layout: <trace_dir>/<run_id>/trace.jsonl.
+    trace_path = trace_dir / run_id_marker / "trace.jsonl"
     os.environ["GETHIRED_TRACE_PATH"] = "on"
     tailor = Tailor(
         resume=master,
