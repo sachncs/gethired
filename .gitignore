@@ -1,0 +1,77 @@
+# Build artefacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+
+# uv
+.uv/
+uv.lock.local
+
+# Test / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+.cache/
+.mypy_cache/
+.ruff_cache/
+
+# IDE / editor
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+*~
+.bak
+*.bak
+
+# Secrets / config
+.env
+.env.local
+.env.*.local
+
+# User-personal files (per user directive)
+todo.md
+AGENTS.md
+agents.md
+resume.tex
+
+# Project data and output
+data/master.json
+data/jd_cache/
+tailored/
+
+# Test fixtures generated at runtime
+tests/fixtures/generated/
+
+# Logs
+logs/
+*.log
+
+# CI / build artifacts
+.github/.last-run/

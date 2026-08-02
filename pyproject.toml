@@ -1,0 +1,88 @@
+[project]
+name = "gethired"
+version = "0.1.0"
+description = "Multi-agent Pydantic AI system for crafting CVs against job descriptions, grounded in a master resume and verified against ATS gates."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "Maintainer" }]
+requires-python = ">=3.12"
+dependencies = [
+    "pydantic-ai>=1.0,<2.0",
+    "pydantic>=2.10,<3.0",
+    "httpx>=0.27,<1.0",
+    "trafilatura>=1.12,<2.0",
+    "readability-lxml>=0.8,<1.0",
+    "pymupdf>=1.24,<2.0",
+    "jinja2>=3.1,<4.0",
+    "typer>=0.12,<1.0",
+    "rich>=13.0,<14.0",
+    "loguru>=0.7,<1.0",
+    "python-dotenv>=1.0,<2.0",
+    "tenacity>=9.0,<10.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0,<9.0",
+    "pytest-asyncio>=0.24,<1.0",
+    "pytest-cov>=6.0,<7.0",
+    "mypy>=1.13,<2.0",
+    "ruff>=0.8,<1.0",
+    "types-requests",
+    "respx>=0.21,<1.0",
+]
+logfire = [
+    "logfire>=3.14,<5.0",
+]
+
+[project.scripts]
+gethired = "gethired.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["gethired"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "DTZ", "T10", "EM", "RET", "SIM", "TID", "ARG", "PL", "TRY"]
+ignore = ["PLR0913", "PLR2004"]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**/*.py" = ["PLR0913", "PLR2004", "ARG001"]
+
+[tool.mypy]
+strict = true
+warn_unused_ignores = true
+warn_return_any = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+python_version = "3.12"
+
+[[tool.mypy.overrides]]
+module = ["trafilatura.*", "readability.*", "pymupdf.*", "tectonic.*", "respx.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+minversion = "8.0"
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.coverage.run]
+branch = true
+source = ["gethired"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "raise NotImplementedError",
+    "if TYPE_CHECKING:",
+    "if __name__ == .__main__.:",
+]
+fail_under = 85
