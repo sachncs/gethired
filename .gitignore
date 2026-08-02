@@ -1,5 +1,6 @@
-# Build artefacts
+# ── Python build artefacts ────────────────────────────────────────────
 __pycache__/
+**/__pycache__/
 *.py[cod]
 *$py.class
 *.so
@@ -17,61 +18,92 @@ sdist/
 var/
 wheels/
 *.egg-info/
+*.egg-info/
 .installed.cfg
 *.egg
 
-# Virtual environments
+# ── Virtual environments ──────────────────────────────────────────────
 .venv/
 venv/
 env/
 ENV/
+venv.bak/
 
-# uv
+# ── uv / Python toolchain ──────────────────────────────────────────────
 .uv/
 uv.lock.local
-
-# Test / coverage
-.pytest_cache/
+.python-version
+.tox/
+.nox/
 .coverage
 .coverage.*
 htmlcov/
 coverage.xml
-.cache/
+
+# ── Test / typecheck caches ──────────────────────────────────────────
+.pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.cache/
 
-# IDE / editor
+# ── IDE / editor ──────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
-.DS_Store
 *~
-.bak
+.DS_Store
 *.bak
+*.orig
+*.rej
+.idea_modules/
+.ipynb_checkpoints/
 
-# Secrets / config
+# ── Secrets / local config ───────────────────────────────────────────
 .env
 .env.local
 .env.*.local
 
-# User-personal files (per user directive)
+# ── User-personal files (per user directive) ─────────────────────────
 todo.md
 AGENTS.md
 agents.md
 resume.tex
 
-# Project data and output
+# ── Project runtime data ─────────────────────────────────────────────
 data/master.json
 data/jd_cache/
+data/cache/
 tailored/
+run-output/
 
-# Test fixtures generated at runtime
+# ── Test fixtures generated at runtime ───────────────────────────────
 tests/fixtures/generated/
+tests/fixtures/*.pdf
+tests/fixtures/*.tmp
 
-# Logs
+# ── Logs ──────────────────────────────────────────────────────────────
 logs/
 *.log
+*.log.*
 
-# CI / build artifacts
+# ── OS noise ──────────────────────────────────────────────────────────
+Thumbs.db
+Desktop.ini
+
+# ── CI / build artefacts ──────────────────────────────────────────────
 .github/.last-run/
+
+# ── Tooling caches ────────────────────────────────────────────────────
+.eslintcache
+.stylelintcache
+.mypy_cache
+.parcel-cache
+.rpt2_cache/
+.rts2_cache_cjs/
+.rts2_cache_es/
+.rts2_cache_umd/
+.node_modules/
+
+# ── Type-checker / linter scratch ─────────────────────────────────────
+*.tsbuildinfo
