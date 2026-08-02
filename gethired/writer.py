@@ -14,6 +14,7 @@ import os
 from dataclasses import asdict
 from typing import Any
 
+from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 from pydantic_ai.models.anthropic import AnthropicModel
 
@@ -21,11 +22,16 @@ from gethired.constants import MAX_WEBSEARCH_PER_RUN, MODEL_ENV_VAR
 from gethired.description import DescriptionAnalysis
 from gethired.exceptions import ConfigurationError
 from gethired.models import (
+    Bullet,
+    ContactInformation,
     DropReason,
+    Education,
+    Experience,
     GroundedCitation,
     Job,
     JobType,
     MasterResume,
+    Project,
     SkillsByCategory,
     TailoredResume,
     VoiceProfile,
@@ -50,6 +56,33 @@ class WriterDeps:
         self.analysis = analysis
         self.voice = voice
         self.previous_violations = previous_violations
+
+
+class WriterOutput(BaseModel):
+    """Structured output the writer agent produces.
+
+    Uses flat string lists rather than nested models so Pydantic AI's
+    tool-based output validation works reliably across providers
+    (including the MiniMax Anthropic-compatible API).
+
+    The agent returns a map of master paths (e.g.
+    ``experiences[0].bullets[0]``) to a list of rewritten bullet strings.
+    The writer applies these onto the master, preserving canonical
+    fields (company, dates, urls, contact, education, awards).
+    """
+
+    summary: str = Field(description="Rewritten summary, ≤ 3 sentences")
+    tailored_bullets: dict[str, list[str]] = Field(
+        description=(
+            "Map of master_path (e.g. 'experiences[0].bullets[0]') to a list "
+            "of rewritten bullet strings. The first string replaces the master bullet."
+        )
+    )
+    dropped: list[str] = Field(
+        default_factory=list,
+        description="Master paths to drop, with reason in rationale",
+    )
+    rationale: str = Field(description="One-sentence explanation of tailoring choices")
 
 
 class Writer:
@@ -178,7 +211,12 @@ class Writer:
         voice: VoiceProfile,
         previous_violations: tuple[str, ...],
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
-        """Delegate to a Pydantic AI Agent backed by Anthropic / MiniMax."""
+        """Delegate to a Pydantic AI Agent backed by Anthropic / MiniMax.
+
+        The agent returns a TailoredResume. ``run_result`` is filled in
+        by the orchestrator after the writer returns; the writer just
+        leaves it as None on the produced object.
+        """
         if self._model_instance is not None:
             model: Any = self._model_instance
         else:
@@ -189,7 +227,7 @@ class Writer:
         agent = Agent(
             model,
             deps_type=WriterDeps,
-            output_type=TailoredResume,
+            output_type=WriterOutput,
             instructions=[
                 _base_instructions(),
                 _rubric_dynamic_instruction(previous_violations),
@@ -203,8 +241,10 @@ class Writer:
         import asyncio
 
         result = asyncio.run(agent.run(_user_prompt(master, analysis), deps=deps))
-        tailored = result.output
+        writer_output = result.output
         tool_jobs = _jobs_from_tool_calls(result, master)
+
+        tailored = _apply_writer_output(master, writer_output, analysis)
         model_name = (
             getattr(model, "model_name", None)
             if not isinstance(model, str)
@@ -214,7 +254,7 @@ class Writer:
             job(
                 JobType.TAILOR,
                 outputs=("tailored_resume",),
-                rationale="LLM produced TailoredResume with grounding citations",
+                rationale=f"LLM produced {len(writer_output.tailored_bullets)} rewritten bullets; rationale: {writer_output.rationale[:100]}",
                 model=str(model_name) if model_name else "model",
             ),
         )
@@ -230,7 +270,7 @@ class Writer:
             rationale=tailored.rationale,
             grounding=tailored.grounding,
             jobs=all_jobs,
-            run_result=None,  # type: ignore[arg-type]
+            run_result=None,
         )
         return tailored, all_jobs
 
@@ -432,6 +472,99 @@ def _jobs_from_tool_calls(result: Any, master: MasterResume) -> tuple[Job, ...]:
                     )
                 )
     return tuple(jobs)
+
+
+def _apply_writer_output(
+    master: MasterResume,
+    output: WriterOutput,
+    analysis: DescriptionAnalysis,
+) -> TailoredResume:
+    """Apply the writer agent's output onto the master resume.
+
+    The agent produces a ``WriterOutput`` (Pydantic) with a flat
+    ``tailored_bullets`` map of master paths → rewritten bullet text.
+    This function applies those rewrites onto the master, preserving
+    canonical fields (company, dates, urls, contact, education, awards).
+    """
+    new_experiences: list[Experience] = []
+    new_grounding: list[GroundedCitation] = []
+    for idx, exp in enumerate(master.experiences):
+        rewritten_bullets: list[Bullet] = []
+        for b_idx, bullet in enumerate(exp.bullets):
+            master_path = f"experiences[{idx}].bullets[{b_idx}]"
+            if master_path in output.tailored_bullets:
+                candidates = output.tailored_bullets[master_path]
+                new_text = candidates[0] if candidates else bullet.text
+                rewritten_bullets.append(Bullet(text=new_text))
+                new_grounding.append(
+                    GroundedCitation(
+                        tailored_path=master_path,
+                        master_path=master_path,
+                        verbatim_span=bullet.text,
+                        job_id="writer-agent",
+                    )
+                )
+            else:
+                rewritten_bullets.append(bullet)
+        new_experiences.append(
+            Experience(
+                role=exp.role,
+                company=exp.company,
+                start_date=exp.start_date,
+                end_date=exp.end_date,
+                bullets=tuple(rewritten_bullets),
+            )
+        )
+
+    new_projects: list[Project] = []
+    for p_idx, project in enumerate(master.projects):
+        rewritten_bullets = []
+        for b_idx, bullet in enumerate(project.bullets):
+            master_path = f"projects[{p_idx}].bullets[{b_idx}]"
+            if master_path in output.tailored_bullets:
+                candidates = output.tailored_bullets[master_path]
+                new_text = candidates[0] if candidates else bullet.text
+                rewritten_bullets.append(Bullet(text=new_text))
+                new_grounding.append(
+                    GroundedCitation(
+                        tailored_path=master_path,
+                        master_path=master_path,
+                        verbatim_span=bullet.text,
+                        job_id="writer-agent",
+                    )
+                )
+            else:
+                rewritten_bullets.append(bullet)
+        new_projects.append(
+            Project(
+                name=project.name,
+                url=project.url,
+                bullets=tuple(rewritten_bullets),
+            )
+        )
+
+    dropped = tuple(
+        DropReason(
+            item_id=path,
+            reason=f"Marked for drop by writer agent: {output.rationale[:80]}",
+        )
+        for path in output.dropped
+    )
+
+    return TailoredResume(
+        contact=master.contact,
+        summary=output.summary,
+        skills=_reorder_skills(master.skills, analysis.keywords_to_mirror),
+        experiences=tuple(new_experiences),
+        projects=tuple(new_projects),
+        education=master.education,
+        awards=master.awards,
+        dropped=dropped,
+        rationale=output.rationale,
+        grounding=tuple(new_grounding),
+        jobs=(),
+        run_result=None,
+    )
 
 
 __all__ = ["Writer", "WriterDeps"]

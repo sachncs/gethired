@@ -503,11 +503,19 @@ class TailoredResume:
     rationale: str
     grounding: tuple[GroundedCitation, ...]
     jobs: tuple[Job, ...]
-    run_result: RunResult
+    run_result: RunResult | None = None
 
     @property
     def run(self) -> Run:
-        """Canonical access to the run identity via ``run_result.run``."""
+        """Canonical access to the run identity via ``run_result.run``.
+
+        Raises:
+            ResumeTailoringError: If ``run_result`` was not set.
+        """
+        if self.run_result is None:
+            from gethired.exceptions import ResumeTailoringError
+
+            raise ResumeTailoringError("run_result not set on TailoredResume")
         return self.run_result.run
 
 
