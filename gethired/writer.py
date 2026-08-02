@@ -193,7 +193,7 @@ class Writer:
 
         result = asyncio.run(agent.run(user_prompt(master, analysis), deps=deps))
         writer_output = result.output
-        tool_jobs = jobs_from_tool_calls(result, master)
+        tool_jobs = jobs_from_tool_calls(result)
 
         tailored = apply_writer_output(master, writer_output, analysis)
         model_name = (
@@ -400,13 +400,14 @@ def user_prompt(master: MasterResume, analysis: DescriptionAnalysis) -> str:
     )
 
 
-def jobs_from_tool_calls(
-    result: Any,
-    master: MasterResume,  # noqa: ARG001 — reserved for future master-aware extraction
-) -> tuple[Job, ...]:
+def jobs_from_tool_calls(result: Any) -> tuple[Job, ...]:
     """Extract Job records from the agent's tool calls.
 
     Best-effort: walks ``result.all_messages`` looking for tool-call parts.
+    The ``master`` parameter was previously accepted for a planned
+    master-aware extraction feature; since the walker only needs the
+    result's message tree, the parameter is removed (forward-only,
+    no deprecation shim per user directive).
     """
     jobs: list[Job] = []
     messages = result.all_messages()
