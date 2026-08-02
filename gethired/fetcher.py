@@ -59,14 +59,14 @@ class JobDescriptionRetriever:
         """
         logger = step_logger("fetch_jd")
         url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
-        cached = self._load_cache(url_hash)
-        if cached is not None and self._is_cache_fresh(cached):
+        cached = self.__load_cache(url_hash)
+        if cached is not None and self.__is_cache_fresh(cached):
             logger.info("fetch cache hit", url=url, url_hash=url_hash)
-            return self._parse(cached.raw_html, url, cached.content_hash)
+            return self.__parse(cached.raw_html, url, cached.content_hash)
 
-        raw_html = self._fetch_with_retry(url, logger)
+        raw_html = self.__fetch_with_retry(url, logger)
         content_hash = hashlib.sha256(raw_html.encode()).hexdigest()
-        self._save_cache(
+        self.__save_cache(
             CacheEntry(
                 url=url,
                 url_hash=url_hash,
@@ -75,9 +75,9 @@ class JobDescriptionRetriever:
                 raw_html=raw_html,
             )
         )
-        return self._parse(raw_html, url, content_hash)
+        return self.__parse(raw_html, url, content_hash)
 
-    def _fetch_with_retry(self, url: str, logger) -> str:
+    def __fetch_with_retry(self, url: str, logger) -> str:
         last_exc: Exception | None = None
         for attempt in range(1, self._max_attempts + 1):
             try:
@@ -103,11 +103,11 @@ class JobDescriptionRetriever:
             f"Failed to fetch {url} after {self._max_attempts} attempts: {last_exc}"
         )
 
-    def _cache_path(self, url_hash: str) -> Path:
+    def __cache_path(self, url_hash: str) -> Path:
         return self._cache_dir / f"{url_hash}.json"
 
-    def _load_cache(self, url_hash: str) -> CacheEntry | None:
-        path = self._cache_path(url_hash)
+    def __load_cache(self, url_hash: str) -> CacheEntry | None:
+        path = self.__cache_path(url_hash)
         if not path.exists():
             return None
         try:
@@ -122,11 +122,11 @@ class JobDescriptionRetriever:
         except (json.JSONDecodeError, KeyError):
             return None
 
-    def _save_cache(self, entry: CacheEntry) -> None:
-        path = self._cache_path(entry.url_hash)
+    def __save_cache(self, entry: CacheEntry) -> None:
+        path = self.__cache_path(entry.url_hash)
         path.write_text(json.dumps(entry.__dict__, indent=2))
 
-    def _is_cache_fresh(self, entry: CacheEntry) -> bool:
+    def __is_cache_fresh(self, entry: CacheEntry) -> bool:
         try:
             fetched_at = datetime.fromisoformat(entry.fetched_at)
         except ValueError:
@@ -136,7 +136,7 @@ class JobDescriptionRetriever:
         age = datetime.now(UTC) - fetched_at
         return age <= timedelta(days=CACHE_MAX_AGE_DAYS)
 
-    def _parse(self, raw_html: str, url: str, content_hash: str) -> JobDescription:
+    def __parse(self, raw_html: str, url: str, content_hash: str) -> JobDescription:
         jsonld = extract_jsonld(raw_html)
         if jsonld is not None:
             return build_from_jsonld(jsonld, url, content_hash)
