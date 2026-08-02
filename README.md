@@ -18,9 +18,7 @@ strictly grounded in the master, blocking fabrication, and verifying
 the result against 11 ATS-compliance gates. Every collaborator
 (parser, fetcher, description, writer, critic, search, profiler,
 validator, renderer) is replaceable through small, well-typed
-interfaces; the default wiring uses Anthropic-compatible APIs and
-falls back to a deterministic in-process writer when no model is
-configured, so `uv sync` is enough to be productive.
+interfaces; the default wiring uses Anthropic-compatible APIs.
 
 The framework is fully typed (PEP 484 + PEP 695 modern syntax), fully
 documented (Google-style docstrings on every public function), and
@@ -28,8 +26,7 @@ ships with a loguru-backed central logger plus structured per-step
 trace events. Production defaults: every rewrite is grounded
 against the master via `GroundedCitation`, every batch is traced
 via `Job.id = uuid4()`, every output is run through grounding, style,
-plagiarism, and 11 ATS gates before render, and the deterministic
-fallback runs end-to-end with zero LLM calls.
+plagiarism, and 11 ATS gates before render.
 
 | Concern | Library |
 |---|---|
@@ -57,7 +54,12 @@ fallback runs end-to-end with zero LLM calls.
 - **Model-agnostic** — Anthropic native, OpenAI native, and the **MiniMax platform** (Anthropic-API-compatible at `https://api.minimax.io/anthropic`) all work out of the box. `MODEL=MiniMax-M3` auto-routes.
 - **CLI uniform pattern** — `tailor <verb> <noun>`: `ingest`, `fetch`, `run`, `plan`, `show`, `validate`, `trace`, `diff`, `edit`, `finalize`. Each command is single-purpose and scriptable.
 - **PII consent** — First run prompts for consent (`y/N`); recorded in `~/.config/gethired/consent.json`; re-prompted every 90 days.
-- **Deterministic fallback** — With no model configured, the writer produces an identity-style reorder + summary rewrite so tests and offline runs are deterministic.
+- **PDF compilation via tectonic** — Compiles the TeX into a PDF; falls back to `pdflatex`. Set `LATEX_ENGINE=pdflatex` to override.
+- **Multi-JD consolidated run** — `Tailor(job_description=(jd_a, jd_b))` merges analyses (union of must-haves, intersection of nice-to-haves).
+- **`tailor audit <run-dir>`** — Re-runs all four validators against a previous run; emits `audit.json` + `audit.md`.
+- **Cover-letter tailoring** — `Tailor(..., produce_cover_letter=True)` writes `cover_letter.md`.
+- **Streaming intermediate output** — `Writer.tailor(..., on_progress=...)` emits `ProgressEvent`s as the pipeline runs.
+- **`--dry-run preflight`** — `gethired preflight <urls>` prints cost estimate + gate prediction without an LLM call.
 
 ## Installation
 
@@ -94,7 +96,7 @@ result = tailor.run()      # TailoredResume
 print(result.summary)      # rewritten, JD-targeted
 ```
 
-No API key required — gethired falls back to a deterministic writer when no `MODEL` env var is set. Set `API_KEY` (or `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`) to enable real LLM tailoring.
+Always requires an LLM. Set `MODEL` (e.g. `MiniMax-M3`) and `API_KEY` (or `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`) — otherwise `Tailor(...)` raises `ConfigurationError` immediately. Tests inject a `TestModel` via `Tailor(..., model_instance=TestModel())`.
 
 ### CLI
 
@@ -143,7 +145,7 @@ Settings live in `.env` (gitignored). The CLI loads them at startup.
 | `WEBSEARCH_PROVIDER` | no | `duckduckgo` | One of `duckduckgo`, `anthropic`, `openai` |
 | `RESUME_TAILOR_CONSENT` | no | unset | Set automatically after first-run consent |
 
-Precedence: constructor arguments → `.env` → built-in defaults. Without `MODEL`, gethired runs the deterministic pipeline.
+Precedence: constructor arguments → `.env` → built-in defaults. Without `MODEL` and without an injected `model_instance`, `Tailor(...)` raises `ConfigurationError` immediately.
 
 ## Commands
 
@@ -158,6 +160,9 @@ Precedence: constructor arguments → `.env` → built-in defaults. Without `MOD
 | `gethired validate <path>` | run ATS gates against a `tailored.json` |
 | `gethired trace <run-id>` | pretty-print Job trail from a previous run |
 | `gethired diff <a> <b>` | diff two tailored runs (markdown) |
+| `gethired audit <run-dir>` | re-run all 4 validators against a previous run; emit `audit.json` + `audit.md` |
+| `gethired cover <urls>` | run pipeline + write `cover_letter.md` |
+| `gethired preflight <urls>` | dry-run: cost + gate prediction, no LLM call |
 
 ## Traceability
 
@@ -231,7 +236,7 @@ uv run --with pytest --with pytest-asyncio pytest tests/ -q
 uv run --with pytest --with pytest-asyncio pytest tests/ --cov=gethired --cov-report=term-missing
 ```
 
-The suite covers: parser (against the real `resume.tex`), normalisation (canonical numeric / latex-strip / tokenize), voice profiler, rubric, provider resolution (Anthropic / OpenAI / MiniMax), writer (deterministic + LLM paths with `TestModel`), all four validators (grounding, style, plagiarism, ATS), and end-to-end pipeline runs. Current count: 81 tests.
+The suite covers: parser (against the real `resume.tex`), normalisation (canonical numeric / latex-strip / tokenize), voice profiler, rubric, provider resolution (Anthropic / OpenAI / MiniMax), writer (LLM path with `TestModel`), all four validators (grounding, style, plagiarism, ATS), end-to-end pipeline runs, multi-JD consolidated runs, audit, cover letter, streaming, preflight, and PDF compile. Current count: 129 tests.
 
 ## Smoke test against real LLM
 
@@ -262,8 +267,8 @@ Runs the full pipeline with the configured model on a synthetic JD; emits `tailo
 - **v0.1.0** — Scaffold + parser + models + normalised text utilities. 40 tests.
 - **v0.2.0** — Multi-agent pipeline (parser, fetcher, description, writer, critic, search, tailor, renderer). CLI. Validator (grounding, style, plagiarism, 11 ATS gates). 67 tests.
 - **v0.3.0** — MiniMax provider integration. `Tailor(resume=…, job_description=…, debug=True)` programmatic API. LLM-backed writer via Pydantic AI. 81 tests.
-- **v0.4.0** — Planned: PDF compile gate via `tectonic`, multi-JD consolidated run, `tailor audit <run-dir>` for full audit (grounding + style + plagiarism + ATS).
-- **v0.5.0** — Planned: cover-letter tailoring, streaming intermediate output, `--dry-run` preflight visualisation.
+- **v0.4.0** — PDF compile via `tectonic` (pdflatex fallback), multi-JD consolidated run, `tailor audit <run-dir>`, cover-letter tailoring, streaming intermediate output, `--dry-run` preflight visualisation. 129 tests.
+- **v0.5.0** — Planned: tectonic CI integration, multi-JD ranked output, web UI for audit reports.
 
 ## Contributing
 
