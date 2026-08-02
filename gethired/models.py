@@ -12,7 +12,8 @@ The factory function ``job(...)`` creates a ``Job`` with auto-generated
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass, fields as dc_fields
+from dataclasses import dataclass
+from dataclasses import fields as dc_fields
 from enum import StrEnum
 from typing import Any
 from uuid import uuid4

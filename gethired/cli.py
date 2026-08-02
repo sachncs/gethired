@@ -14,6 +14,11 @@ from uuid import uuid4
 
 import typer
 
+from gethired.audit import (
+    audit_run,
+    render_audit_json,
+    render_audit_markdown,
+)
 from gethired.constants import (
     CONSENT_FILE_PATH,
     CONSENT_RE_PROMPT_DAYS,
@@ -22,10 +27,6 @@ from gethired.constants import (
 )
 from gethired.constants import DEFAULT_DATA_DIR as _DEFAULT_DATA_DIR_STR
 from gethired.constants import DEFAULT_TAILORED_DIR as _DEFAULT_TAILORED_DIR_STR
-
-DEFAULT_DATA_DIR_PATH = Path(_DEFAULT_DATA_DIR_STR)
-DEFAULT_TAILORED_DIR_PATH = Path(_DEFAULT_TAILORED_DIR_STR)
-DEFAULT_MASTER_JSON_PATH = Path(DEFAULT_MASTER_JSON)
 from gethired.exceptions import (
     AtsGateFailureError,
     GroundingViolationError,
@@ -33,15 +34,9 @@ from gethired.exceptions import (
     PlagiarismViolationError,
     StyleViolationError,
 )
-from gethired.audit import (
-    audit_run,
-    render_audit_json,
-    render_audit_markdown,
-)
 from gethired.fetcher import JobDescriptionRetriever
 from gethired.models import (
     Award,
-    Bullet,
     ContactInformation,
     Education,
     Experience,
@@ -56,9 +51,13 @@ from gethired.models import (
 )
 from gethired.observability import configure_logging, utcnow_iso
 from gethired.parser import parse_tex
-from gethired.renderer import render_json, render_text, render_tex
+from gethired.renderer import render_json, render_tex, render_text
 from gethired.tailor import Tailor, coerce_bullets, read_master_json
 from gethired.validator import ats_check
+
+DEFAULT_DATA_DIR_PATH = Path(_DEFAULT_DATA_DIR_STR)
+DEFAULT_TAILORED_DIR_PATH = Path(_DEFAULT_TAILORED_DIR_STR)
+DEFAULT_MASTER_JSON_PATH = Path(DEFAULT_MASTER_JSON)
 
 app = typer.Typer(help="gethired — multi-agent CV tailoring", no_args_is_help=True)
 
@@ -277,7 +276,6 @@ def validate(
         )
         education = tuple(Education(**e) for e in data["education"])
         awards = tuple(Award(**a) for a in data["awards"])
-        run = Run(**data["run_result"]["run"])
         run_result = RunResult(**data["run_result"])
         tailored = TailoredResume(
             contact=contact,
@@ -294,7 +292,6 @@ def validate(
             run_result=run_result,
         )
         master = read_master_json(Path("data/master.json"))
-        tex_source = target.read_text() if target.suffix == ".tex" else ""
         tex_source = render_tex(tailored)
         txt_source = render_text(tailored)
         report = ats_check(

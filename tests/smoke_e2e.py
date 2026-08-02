@@ -10,6 +10,10 @@ import os
 import sys
 from pathlib import Path
 
+from gethired.models import JobDescription
+from gethired.parser import parse_tex
+from gethired.tailor import Tailor
+
 # Load .env manually
 _ENV_PATH = Path(__file__).parent.parent / ".env"
 if _ENV_PATH.exists():
@@ -19,10 +23,6 @@ if _ENV_PATH.exists():
             continue
         key, _, value = line.partition("=")
         os.environ.setdefault(key, value)
-
-from gethired.models import JobDescription
-from gethired.parser import parse_tex
-from gethired.tailor import Tailor
 
 
 def main() -> int:

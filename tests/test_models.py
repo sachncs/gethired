@@ -71,8 +71,9 @@ def test_all_models_are_frozen() -> None:
                 for f in fields(model)
                 if f.default is not f.default_factory or True
             }
+            _ = kwargs  # used only to validate model can be constructed from defaults
         except (TypeError, AttributeError):
-            kwargs = {}
+            pass
         if not instance_fields:
             continue
         # Build a minimal valid instance for each

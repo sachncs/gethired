@@ -12,7 +12,6 @@ Run via the CLI: ``gethired-eval [--category parser] [--trials 3]``
 """
 
 from evals.graders.code import (
-    GraderResult,
     code_equal,
     code_field_length,
     code_field_present,
@@ -23,7 +22,6 @@ from evals.graders.code import (
     code_text_contains,
     code_text_not_contains,
 )
-from evals.graders.registry import GraderRegistry
 from evals.harness import (
     EvalHarness,
     EvalSuiteResult,
@@ -35,7 +33,6 @@ from evals.harness import (
     load_suite,
     load_task,
 )
-from gethired.models import TailoredResume
 
 __all__ = [
     "EvalHarness",

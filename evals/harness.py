@@ -16,12 +16,14 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from pydantic_ai.models.test import TestModel
 
 from evals.graders.registry import GraderRegistry
+from gethired.description import DescriptionAnalysis, analyze
+
+# Backwards-compatible exception aliases (pre-0.4.0 import paths)
 from gethired.fetcher import CacheEntry, JobDescriptionRetriever
-from gethired.description import analyze, DescriptionAnalysis
 from gethired.models import (
-    Award,
     FinalOutcome,
     JobDescription,
     MasterResume,
@@ -30,21 +32,8 @@ from gethired.models import (
     TailoredResume,
 )
 from gethired.parser import parse_tex
-from pydantic_ai.models.test import TestModel
-from gethired.profiler import build as build_profile
-from gethired.tailor import read_master_json, Tailor
-from gethired.validator import (
-    AtsGate,
-    AtsGateResult,
-)
+from gethired.tailor import Tailor, read_master_json
 from gethired.writer import Writer
-
-# Backwards-compatible exception aliases (pre-0.4.0 import paths)
-from gethired.exceptions import (
-    GroundingViolationError,
-    PlagiarismViolationError,
-    StyleViolationError,
-)
 
 # ---------------------------------------------------------------------------
 # Task + Trial types
@@ -539,7 +528,6 @@ def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
         raw_html=payload["raw_html"],
     )
 
-    jd = JobDescriptionRetriever(cache_path.parent).__class__
     return (
         {
             "text": entry.raw_html,

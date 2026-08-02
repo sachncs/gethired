@@ -24,7 +24,6 @@ from gethired.description import analyze as analyze_description
 from gethired.description import analyze_multiple as analyze_description_multiple
 from gethired.exceptions import (
     ConfigurationError,
-    JobDescriptionRetrievalError,
     ResumeTailoringError,
 )
 from gethired.fetcher import JobDescriptionRetriever

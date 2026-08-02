@@ -7,7 +7,8 @@ from __future__ import annotations
 
 import difflib
 import json
-from dataclasses import asdict as _asdict, is_dataclass
+from dataclasses import asdict as _asdict
+from dataclasses import is_dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
@@ -104,7 +105,7 @@ def render_json(tailored: TailoredResume) -> str:
         if isinstance(obj, (list, tuple)):
             return [as_dict(v) for v in obj]
         if hasattr(obj, "value"):  # StrEnum
-            value: object = getattr(obj, "value")
+            value: object = obj.value
             return value
         return obj
 

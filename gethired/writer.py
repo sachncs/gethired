@@ -12,7 +12,7 @@ from __future__ import annotations
 import asyncio
 import os
 from dataclasses import asdict
-from typing import TYPE_CHECKING, Any, Callable
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from gethired.streaming import ProgressCallback, ProgressEvent

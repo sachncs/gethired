@@ -96,8 +96,6 @@ def grounding_check(
     master_text = master.to_markdown().lower()
     master_numbers = canonicalize_numeric(master.to_markdown())
 
-    tailored_text = tailored_to_text(tailored).lower()
-
     for skill_category, skills in tailored.skills.categories.items():
         for skill in skills:
             if skill.lower() not in master_text:
