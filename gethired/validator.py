@@ -440,23 +440,38 @@ def gate_font_size_10_12(tex_source: str) -> AtsGateResult:
 
 
 def gate_length_within_limit(
-    tailored: TailoredResume,  # noqa: ARG001 — reserved for future per-experience length check
+    tailored: TailoredResume,
     tex_source: str,
 ) -> AtsGateResult:
-    # Estimate: count the number of \resumeItem invocations
+    """Estimate page count from both TeX bullet count and tailored content density.
+
+    Cross-references the TeX render (``tex_source``) against the structured
+    ``TailoredResume`` to flag mismatches. If a writer claims fewer bullets
+    than the structured resume has, the TeX render is short-changing the
+    candidate; if more, it's fabricating extra detail.
+    """
     item_count = len(re.findall(r"\\resumeItem\b", tex_source))
+    structured_bullets = sum(
+        len(experience.bullets) for experience in tailored.experiences
+    ) + sum(len(project.bullets) for project in tailored.projects)
+    # Trust the structured resume's bullet count over the TeX render:
+    # the TeX render can drop bullets under stock-phrase substitution.
+    effective_bullets = max(item_count, structured_bullets)
     # ~4 bullets per page is typical for this template; conservative.
-    estimated_pages = max(1.0, item_count / 4.0)
+    estimated_pages = max(1.0, effective_bullets / 4.0)
     if estimated_pages <= 1.0:
         return AtsGateResult(
             AtsGate.LENGTH_WITHIN_LIMIT,
             passed=True,
-            detail=f"~{estimated_pages:.2f} pages estimated",
+            detail=f"~{estimated_pages:.2f} pages estimated ({effective_bullets} bullets)",
         )
     return AtsGateResult(
         AtsGate.LENGTH_WITHIN_LIMIT,
         passed=False,
-        detail=f"~{estimated_pages:.2f} pages exceeds limit of 1.0 ({item_count} bullets)",
+        detail=(
+            f"~{estimated_pages:.2f} pages exceeds limit of 1.0 "
+            f"({effective_bullets} bullets; tex={item_count}, structured={structured_bullets})"
+        ),
     )
 
 
