@@ -1,0 +1,375 @@
+{
+  "suite_name": "smoke",
+  "started_at": "2026-08-02T11:25:46.061Z",
+  "completed_at": "2026-08-02T11:25:46.155Z",
+  "n_tasks": 10,
+  "n_passing_tasks": 2,
+  "n_trials": 10,
+  "pass_rate": 0.2,
+  "task_outcomes": [
+    {
+      "task_id": "writer_cap_keyword_injection",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 10.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 10.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "substring 'gRPC' missing",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "substring 'Kafka' missing",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_cap_no_ai_tell_under_load",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.no_banned_words",
+              "passed": true,
+              "detail": "no banned words present",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_cap_summary_includes_keyword",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Rust' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "substring 'WebAssembly' missing",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_cap_voice_variance",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "experiences has length 10, expected 10",
+              "score": 1.0
+            },
+            {
+              "name": "code.no_banned_words",
+              "passed": true,
+              "detail": "no banned words present",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_anti_ai_no_banned_words_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.no_banned_words",
+              "passed": true,
+              "detail": "no banned words present",
+              "score": 1.0
+            },
+            {
+              "name": "code.tool_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.argument_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.step_efficiency",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_grounding_no_invention_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 6.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 6.0,
+          "grader_results": [
+            {
+              "name": "code.no_banned_words",
+              "passed": true,
+              "detail": "no banned words present",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_not_contains",
+              "passed": true,
+              "detail": "forbidden '99999999' absent",
+              "score": 1.0
+            },
+            {
+              "name": "code.tool_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.argument_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.step_efficiency",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_json_round_trip_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.json_round_trip",
+              "passed": true,
+              "detail": "JSON round-trip succeeded",
+              "score": 1.0
+            },
+            {
+              "name": "code.task_completion",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.tool_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.argument_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.step_efficiency",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_no_jd_plagiarism_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.no_jd_plagiarism",
+              "passed": true,
+              "detail": "no n-gram overlap",
+              "score": 1.0
+            },
+            {
+              "name": "code.tool_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.argument_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_numbers_in_master_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.numbers_in_master",
+              "passed": true,
+              "detail": "all numbers present in master",
+              "score": 1.0
+            },
+            {
+              "name": "code.tool_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.argument_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.step_efficiency",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_summary_keywords_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 7.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 7.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "substring 'Python' missing",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Kubernetes' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.tool_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.argument_correctness",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.plan_quality",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            },
+            {
+              "name": "code.step_efficiency",
+              "passed": false,
+              "detail": "grader raised TypeError: argument should be a str or an os.PathLike object where __fspath__ returns a str, not 'NoneType'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

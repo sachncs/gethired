@@ -1,0 +1,1174 @@
+{
+  "contact": {
+    "name": "Placeholder Name",
+    "city": "Test City",
+    "phone": "5555550100",
+    "email": "placeholder@example.com",
+    "github_url": "https://github.com/gethired",
+    "linkedin_url": "https://linkedin.com/in/gethired"
+  },
+  "summary": "a",
+  "skills": {
+    "categories": {
+      "Programming Languages": [
+        "Python",
+        "SQL",
+        "Rust",
+        "Golang"
+      ],
+      "Machine Learning & AI": [
+        "vLLM",
+        "Hugging Face",
+        "TensorFlow",
+        "PyTorch"
+      ],
+      "Cloud & Infrastructure": [
+        "Kubernetes",
+        "Modal",
+        "Docker",
+        "GCP",
+        "AWS"
+      ],
+      "Backend & Platform Engineering": [
+        "OpenTelemetry",
+        "FastAPI"
+      ],
+      "Datastores & Retrieval": [
+        "Elasticsearch",
+        "Redis",
+        "MongoDB",
+        "PostgreSQL"
+      ]
+    }
+  },
+  "experiences": [
+    {
+      "role": "Founder",
+      "company": "Promptsheon",
+      "start_date": "June 2025",
+      "end_date": "May 2026",
+      "bullets": [
+        {
+          "text": "Founded an AI infrastructure consultancy focused on multi-agent systems, platform architecture, and scalability assessments for enterprise AI deployments."
+        },
+        {
+          "text": "Designed and open-sourced a Git-native versioning system for AI agents, representing prompts, tool configurations, evaluation artifacts, and execution state as immutable, cryptographically linked objects."
+        },
+        {
+          "text": "Led architecture reviews and production migrations for clients, introducing OpenTelemetry-based observability to improve debugging, performance analysis, and operational visibility across distributed agent workflows."
+        }
+      ]
+    },
+    {
+      "role": "Senior Machine Learning Architect",
+      "company": "Aivar Innovations",
+      "start_date": "February 2025",
+      "end_date": "May 2025",
+      "bullets": [
+        {
+          "text": "Established the company\u2019s core AI infrastructure and multi-tenant platform architecture, while helping build the founding R&D team following launch."
+        },
+        {
+          "text": "Designed and deployed isolated AI platforms for enterprise customers across security, fintech, and logistics, enabling secure workload separation and independent operational scaling."
+        },
+        {
+          "text": "Developed demand forecasting and route optimization systems for Pando AI, improving logistics network efficiency through large-scale optimization and capacity planning models."
+        }
+      ]
+    },
+    {
+      "role": "Lead Machine Learning Engineer",
+      "company": "Ablecredit",
+      "start_date": "July 2024",
+      "end_date": "February 2025",
+      "bullets": [
+        {
+          "text": "Built serverless machine learning pipelines on Modal to support transaction-processing workloads at scale, enabling horizontal execution across more than 10,000 daily transactions while reducing end-to-end processing latency."
+        },
+        {
+          "text": "Automated KYC verification workflows using fine-tuned language models and optimized vision-language inference pipelines, increasing document-processing throughput and reducing manual review effort."
+        },
+        {
+          "text": "Designed and deployed retrieval-augmented systems for knowledge-intensive workflows, building retrieval, ranking, and caching layers that improved response latency and information retrieval performance in production."
+        },
+        {
+          "text": "Established an OpenTelemetry-based observability framework across distributed services, introducing end-to-end tracing, metrics, and performance diagnostics that improved operational visibility and accelerated incident resolution."
+        }
+      ]
+    },
+    {
+      "role": "Independent Consultant",
+      "company": "Self-Employed",
+      "start_date": "October 2023",
+      "end_date": "July 2024",
+      "bullets": [
+        {
+          "text": "Co-developed a distributed ledger system in Rust, building cryptographic verification, concurrent validation pipelines, and distributed node infrastructure for immutable state management and high-throughput execution."
+        }
+      ]
+    },
+    {
+      "role": "Senior Machine Learning Engineer",
+      "company": "Aptos Retail",
+      "start_date": "August 2022",
+      "end_date": "October 2023",
+      "bullets": [
+        {
+          "text": "Designed and implemented workload-aware autoscaling on Kubernetes, aligning compute capacity with retail demand patterns and reducing infrastructure costs during peak traffic periods."
+        },
+        {
+          "text": "Developed forecasting and optimization models for pricing and inventory decisions, combining time-series signals with demand patterns to improve commercial performance."
+        },
+        {
+          "text": "Built a serverless inference platform on Google Cloud Run, automating the deployment and execution of containerized machine learning services through CI/CD-driven workflows."
+        }
+      ]
+    },
+    {
+      "role": "Associate Data Architect",
+      "company": "Crediwatch",
+      "start_date": "April 2021",
+      "end_date": "August 2022",
+      "bullets": [
+        {
+          "text": "Developed data pipelines processing millions of financial records daily, providing sub-second data availability for compliance and risk-monitoring systems."
+        },
+        {
+          "text": "Migrated legacy backend services to asynchronous FastAPI applications, reducing request latency and increasing concurrency under production workloads."
+        },
+        {
+          "text": "Decomposed tightly coupled monolithic services into event-driven microservices, improving fault isolation, service autonomy, and system scalability."
+        }
+      ]
+    },
+    {
+      "role": "Machine Learning Engineer",
+      "company": "Crediwatch",
+      "start_date": "December 2019",
+      "end_date": "March 2021",
+      "bullets": [
+        {
+          "text": "Designed Graph Neural Network\u2013based models for structural table extraction from semi-structured financial documents, improving parsing accuracy and downstream data quality."
+        },
+        {
+          "text": "Developed risk-scoring and anomaly-detection models to identify early indicators of financial distress, supporting portfolio monitoring and credit-risk assessment."
+        },
+        {
+          "text": "Built a real-time reporting system in Go and LaTeX that automated compliance reporting and alert generation, reducing manual effort and reporting turnaround times."
+        }
+      ]
+    },
+    {
+      "role": "Machine Learning Engineer",
+      "company": "Skellam AI",
+      "start_date": "August 2019",
+      "end_date": "December 2019",
+      "bullets": [
+        {
+          "text": "Improved Person Re-Identification models built on ResNeXt architectures, reducing inference latency for real-time video analytics workloads."
+        },
+        {
+          "text": "Co-developed distributed microservices and optimized GPU memory utilization for computer vision workloads, improving throughput and resource efficiency in production."
+        }
+      ]
+    },
+    {
+      "role": "Data Mining Intern",
+      "company": "HackerEarth",
+      "start_date": "February 2019",
+      "end_date": "August 2019",
+      "bullets": [
+        {
+          "text": "Built an automated data extraction and enrichment pipeline for marketing datasets, improving the quality of customer data used for campaign targeting and acquisition analysis."
+        }
+      ]
+    },
+    {
+      "role": "Project Intern",
+      "company": "Indian Institute of Science (IISc)",
+      "start_date": "March 2018",
+      "end_date": "January 2019",
+      "bullets": [
+        {
+          "text": "Built computer vision models for real-time monitoring of high-voltage power infrastructure, automating the detection of equipment defects and operational anomalies."
+        }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "name": "Promptsheon",
+      "url": "https://github.com/gethired/promptsheon",
+      "bullets": [
+        {
+          "text": "Built a system for versioning and reproducing AI agent behavior, treating prompts, tool configurations, evaluations, and execution state as immutable, content-addressable artifacts."
+        },
+        {
+          "text": "Designed a cryptographically linked DAG to track lineage across agent executions, enabling deterministic replay, auditability, and reproducible experimentation."
+        },
+        {
+          "text": "Developed provider-agnostic execution and evaluation infrastructure, including versioning primitives, workflow orchestration, and integrations across multiple LLM backends."
+        }
+      ]
+    },
+    {
+      "name": "Underwrite",
+      "url": "https://github.com/gethired/underwrite",
+      "bullets": [
+        {
+          "text": "Built a retail lending platform composed of 30+ services, automating customer onboarding, credit evaluation, and risk-assessment workflows."
+        },
+        {
+          "text": "Designed event-driven distributed workflows using Ed25519-signed messages, saga orchestration, and fault-tolerance patterns to coordinate state transitions across independent services."
+        },
+        {
+          "text": "Implemented idempotency controls, rate limiting, and PII redaction as platform primitives, ensuring reliable execution and compliance within regulated financial systems."
+        }
+      ]
+    },
+    {
+      "name": "Vehicle Routing Problem with Resource-Constrained Pickup and Delivery",
+      "url": "https://github.com/gethired/vehicle-routing-problem-with-resource-constraints",
+      "bullets": [
+        {
+          "text": "Developed a parallel route optimization engine for complex logistics networks, supporting multi-depot operations, traffic constraints, and hub-based routing."
+        },
+        {
+          "text": "Designed custom metaheuristics with adaptive search spaces, multi-restart strategies, and stagnation countermeasures to improve solution quality across large routing search spaces."
+        },
+        {
+          "text": "Replaced iterative capacity validation with an incremental O(1) capacity-check decoder and multi-threaded execution, reducing the computational cost of large-scale route optimization."
+        }
+      ]
+    }
+  ],
+  "education": [
+    {
+      "institution": "Ramaiah Institute of Technology",
+      "location": "Test City",
+      "degree": "Bachelor of Engineering",
+      "major": "Electronics and Communication Engineering",
+      "graduation": "Graduated 2019",
+      "gpa": "8.32"
+    }
+  ],
+  "awards": [
+    {
+      "title": "Winner & Team Lead",
+      "organization": "Microsoft Devenger 2.0 Hackathon",
+      "date": "September 2019",
+      "description": "Led a multidisciplinary team to first place, developing machine learning solutions and supporting infrastructure on Azure."
+    },
+    {
+      "title": "Finalist & Division Winner",
+      "organization": "Unilever Datathon (Skillenza)",
+      "date": "February 2020",
+      "description": "Developed demand forecasting models and end-to-end machine learning workflows on Azure, earning division winner recognition in the Unilever Datathon."
+    }
+  ],
+  "dropped": [],
+  "rationale": "a",
+  "grounding": [],
+  "jobs": [
+    {
+      "id": "91ad1757-9cfc-4f1e-b3c6-61f55cfcb850",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:lookup_experience"
+      ],
+      "rationale": "Called read-only tool lookup_experience",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "307f5937-cbec-477a-8306-2f9d6df48d2f",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:lookup_project"
+      ],
+      "rationale": "Called read-only tool lookup_project",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "362ac626-d630-4765-a642-644dc3ff5c46",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_skills"
+      ],
+      "rationale": "Called read-only tool list_skills",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "ca939498-a2d9-4df1-9b02-3d40bf139dfb",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_projects"
+      ],
+      "rationale": "Called read-only tool list_projects",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "37d944f2-ec13-4db4-8b6e-a55d16838b94",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_education"
+      ],
+      "rationale": "Called read-only tool list_education",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "24bfa1c4-abfd-43eb-a6db-25c7070ee83f",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_awards"
+      ],
+      "rationale": "Called read-only tool list_awards",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "1648e13c-8788-41c3-8079-86c74340dd35",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:read_jd_summary"
+      ],
+      "rationale": "Called read-only tool read_jd_summary",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "7106879e-3a86-4d35-9656-9e175c08fe50",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:lookup_experience"
+      ],
+      "rationale": "Called read-only tool lookup_experience",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "c91971b7-e5ca-4204-94ff-5e4f52612e18",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:lookup_project"
+      ],
+      "rationale": "Called read-only tool lookup_project",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "d2d4f59d-cb99-42c4-865e-18e654e9bfca",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_skills"
+      ],
+      "rationale": "Called read-only tool list_skills",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "897ab423-c824-47c8-a586-4ef19b6c4fbf",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_projects"
+      ],
+      "rationale": "Called read-only tool list_projects",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "74f37dc1-1f56-4db4-9996-a08ba60d45cf",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_education"
+      ],
+      "rationale": "Called read-only tool list_education",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "3a41c29a-29e3-4d66-bf63-02e06f1e2326",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:list_awards"
+      ],
+      "rationale": "Called read-only tool list_awards",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "93bb551e-3063-4958-8b4a-24f85a223a04",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:read_jd_summary"
+      ],
+      "rationale": "Called read-only tool read_jd_summary",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "37d33c2e-4395-4a91-821c-0db416aa234b",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:final_result"
+      ],
+      "rationale": "Called read-only tool final_result",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "65a57dba-4438-45dc-9ba8-a4a136bdd2a4",
+      "type": "lookup",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tool:final_result"
+      ],
+      "rationale": "Called read-only tool final_result",
+      "model": "model",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "f4c85af5-990d-4aec-8cda-9f6947840305",
+      "type": "tailor",
+      "started_at": "2026-08-02T11:25:34.203Z",
+      "completed_at": "2026-08-02T11:25:34.203Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "tailored_resume"
+      ],
+      "rationale": "LLM produced 1 rewritten bullets; rationale: a",
+      "model": "test",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "81821917-c490-49ff-9f7d-5f44887a2a2a",
+      "type": "validate_grounding",
+      "started_at": "2026-08-02T11:25:34.207Z",
+      "completed_at": "2026-08-02T11:25:34.207Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "grounding_violations"
+      ],
+      "rationale": "Validated that every claim traces to master",
+      "model": "deterministic",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "4589f57e-b83e-4608-96d8-c80b9055d7c6",
+      "type": "validate_style",
+      "started_at": "2026-08-02T11:25:34.209Z",
+      "completed_at": "2026-08-02T11:25:34.209Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "style_violations"
+      ],
+      "rationale": "Validated banned words, parallelism, quantification",
+      "model": "deterministic",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "7ccb7beb-6763-402e-9104-ff3f8385f136",
+      "type": "validate_plagiarism",
+      "started_at": "2026-08-02T11:25:34.218Z",
+      "completed_at": "2026-08-02T11:25:34.218Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "plagiarism_violations"
+      ],
+      "rationale": "Validated no verbatim JD phrase overlap",
+      "model": "deterministic",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    },
+    {
+      "id": "f1ca2675-fbf1-4b0f-b6d8-73e2c3668820",
+      "type": "validate_ats",
+      "started_at": "2026-08-02T11:25:34.218Z",
+      "completed_at": "2026-08-02T11:25:34.218Z",
+      "status": "success",
+      "inputs": [],
+      "outputs": [
+        "ats_gates"
+      ],
+      "rationale": "Ran all 11 ATS gates (compile, extract, headings, layout, etc.)",
+      "model": "deterministic",
+      "tool_name": null,
+      "metadata": {
+        "url": null,
+        "gate": null,
+        "char_count": null,
+        "query": null,
+        "note": null
+      }
+    }
+  ],
+  "run_result": {
+    "run": {
+      "id": "8c4f8b41-a112-47f1-8fd7-a2c7dfabdd77",
+      "started_at": "2026-08-02T11:25:34.192Z",
+      "master_hash": "15c83d1b25c6ef220548a957286206eae99c1cad85d08e05d827c333ee56a72d",
+      "jd_urls_hash": "c72ce086fafb9e92",
+      "model": "test",
+      "draft_model": null
+    },
+    "completed_at": "2026-08-02T11:25:34.219Z",
+    "duration_seconds": 0.0,
+    "total_input_tokens": 0,
+    "total_output_tokens": 0,
+    "retry_attempts": 0,
+    "final_outcome": "ats_hard_fail",
+    "jobs": [
+      {
+        "id": "91ad1757-9cfc-4f1e-b3c6-61f55cfcb850",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:lookup_experience"
+        ],
+        "rationale": "Called read-only tool lookup_experience",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "307f5937-cbec-477a-8306-2f9d6df48d2f",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:lookup_project"
+        ],
+        "rationale": "Called read-only tool lookup_project",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "362ac626-d630-4765-a642-644dc3ff5c46",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_skills"
+        ],
+        "rationale": "Called read-only tool list_skills",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "ca939498-a2d9-4df1-9b02-3d40bf139dfb",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_projects"
+        ],
+        "rationale": "Called read-only tool list_projects",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "37d944f2-ec13-4db4-8b6e-a55d16838b94",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_education"
+        ],
+        "rationale": "Called read-only tool list_education",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "24bfa1c4-abfd-43eb-a6db-25c7070ee83f",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_awards"
+        ],
+        "rationale": "Called read-only tool list_awards",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "1648e13c-8788-41c3-8079-86c74340dd35",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:read_jd_summary"
+        ],
+        "rationale": "Called read-only tool read_jd_summary",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "7106879e-3a86-4d35-9656-9e175c08fe50",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:lookup_experience"
+        ],
+        "rationale": "Called read-only tool lookup_experience",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "c91971b7-e5ca-4204-94ff-5e4f52612e18",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:lookup_project"
+        ],
+        "rationale": "Called read-only tool lookup_project",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "d2d4f59d-cb99-42c4-865e-18e654e9bfca",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_skills"
+        ],
+        "rationale": "Called read-only tool list_skills",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "897ab423-c824-47c8-a586-4ef19b6c4fbf",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_projects"
+        ],
+        "rationale": "Called read-only tool list_projects",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "74f37dc1-1f56-4db4-9996-a08ba60d45cf",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_education"
+        ],
+        "rationale": "Called read-only tool list_education",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "3a41c29a-29e3-4d66-bf63-02e06f1e2326",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:list_awards"
+        ],
+        "rationale": "Called read-only tool list_awards",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "93bb551e-3063-4958-8b4a-24f85a223a04",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:read_jd_summary"
+        ],
+        "rationale": "Called read-only tool read_jd_summary",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "37d33c2e-4395-4a91-821c-0db416aa234b",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:final_result"
+        ],
+        "rationale": "Called read-only tool final_result",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "65a57dba-4438-45dc-9ba8-a4a136bdd2a4",
+        "type": "lookup",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tool:final_result"
+        ],
+        "rationale": "Called read-only tool final_result",
+        "model": "model",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "f4c85af5-990d-4aec-8cda-9f6947840305",
+        "type": "tailor",
+        "started_at": "2026-08-02T11:25:34.203Z",
+        "completed_at": "2026-08-02T11:25:34.203Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "tailored_resume"
+        ],
+        "rationale": "LLM produced 1 rewritten bullets; rationale: a",
+        "model": "test",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "81821917-c490-49ff-9f7d-5f44887a2a2a",
+        "type": "validate_grounding",
+        "started_at": "2026-08-02T11:25:34.207Z",
+        "completed_at": "2026-08-02T11:25:34.207Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "grounding_violations"
+        ],
+        "rationale": "Validated that every claim traces to master",
+        "model": "deterministic",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "4589f57e-b83e-4608-96d8-c80b9055d7c6",
+        "type": "validate_style",
+        "started_at": "2026-08-02T11:25:34.209Z",
+        "completed_at": "2026-08-02T11:25:34.209Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "style_violations"
+        ],
+        "rationale": "Validated banned words, parallelism, quantification",
+        "model": "deterministic",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "7ccb7beb-6763-402e-9104-ff3f8385f136",
+        "type": "validate_plagiarism",
+        "started_at": "2026-08-02T11:25:34.218Z",
+        "completed_at": "2026-08-02T11:25:34.218Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "plagiarism_violations"
+        ],
+        "rationale": "Validated no verbatim JD phrase overlap",
+        "model": "deterministic",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      },
+      {
+        "id": "f1ca2675-fbf1-4b0f-b6d8-73e2c3668820",
+        "type": "validate_ats",
+        "started_at": "2026-08-02T11:25:34.218Z",
+        "completed_at": "2026-08-02T11:25:34.218Z",
+        "status": "success",
+        "inputs": [],
+        "outputs": [
+          "ats_gates"
+        ],
+        "rationale": "Ran all 11 ATS gates (compile, extract, headings, layout, etc.)",
+        "model": "deterministic",
+        "tool_name": null,
+        "metadata": {
+          "url": null,
+          "gate": null,
+          "char_count": null,
+          "query": null,
+          "note": null
+        }
+      }
+    ]
+  }
+}
