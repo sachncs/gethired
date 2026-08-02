@@ -11,6 +11,7 @@ from collections.abc import Callable
 from typing import Any
 
 from evals.graders.code import (
+    code_argument_correctness,
     code_equal,
     code_field_length,
     code_field_present,
@@ -18,8 +19,13 @@ from evals.graders.code import (
     code_no_banned_words,
     code_no_jd_plagiarism,
     code_numbers_in_master,
+    code_plan_adherence,
+    code_plan_quality,
+    code_step_efficiency,
+    code_task_completion,
     code_text_contains,
     code_text_not_contains,
+    code_tool_correctness,
 )
 
 
@@ -48,6 +54,12 @@ class GraderRegistry:
                 "code.no_jd_plagiarism": code_no_jd_plagiarism,
                 "code.numbers_in_master": code_numbers_in_master,
                 "code.json_round_trip": code_json_round_trip,
+                "code.tool_correctness": code_tool_correctness,
+                "code.argument_correctness": code_argument_correctness,
+                "code.plan_quality": code_plan_quality,
+                "code.plan_adherence": code_plan_adherence,
+                "code.step_efficiency": code_step_efficiency,
+                "code.task_completion": code_task_completion,
             }
         )
 
