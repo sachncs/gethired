@@ -81,7 +81,6 @@ class AtsGateReport:
 def grounding_check(
     tailored: TailoredResume,
     master: MasterResume,
-    quantification_threshold: float = BULLET_QUANTIFICATION_THRESHOLD,  # noqa: ARG003 — reserved for future quantification rule
 ) -> tuple[GroundingViolation, ...]:
     """Verify every concrete claim in the tailored resume traces back to master.
 
