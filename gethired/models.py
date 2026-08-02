@@ -58,6 +58,7 @@ class JobType(StrEnum):
     PROFILE = "profile"
     TAILOR = "tailor"
     WEBSEARCH = "websearch"
+    LOOKUP = "lookup"
     VALIDATE_GROUNDING = "validate_grounding"
     VALIDATE_STYLE = "validate_style"
     VALIDATE_PLAGIARISM = "validate_plagiarism"
