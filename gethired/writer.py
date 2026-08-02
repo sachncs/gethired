@@ -236,7 +236,7 @@ class Writer:
             ],
         )
 
-        self._register_read_only_tools(agent)
+        self.__register_read_only_tools(agent)
 
         import asyncio
 
@@ -278,7 +278,7 @@ class Writer:
     # Read-only tools
     # ------------------------------------------------------------------
 
-    def _register_read_only_tools(self, agent: Agent) -> None:
+    def __register_read_only_tools(self, agent: Agent) -> None:
         @agent.tool
         async def lookup_experience(ctx: RunContext[WriterDeps], role_or_company: str) -> dict[str, Any]:
             """Look up an experience in the master by role or company."""
