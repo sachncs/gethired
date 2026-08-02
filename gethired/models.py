@@ -484,6 +484,31 @@ class RunDescriptionExtended:
 
 
 # ---------------------------------------------------------------------------
+# Cover letter
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class CoverLetterParagraph:
+    """A single paragraph in a cover letter."""
+
+    text: str
+    opening: bool = False
+    closing: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class CoverLetter:
+    """A tailored cover letter for a specific job description."""
+
+    salutation: str
+    paragraphs: tuple[CoverLetterParagraph, ...]
+    signoff: str
+    sender_name: str
+    recipient: str | None = None
+
+
+# ---------------------------------------------------------------------------
 # Tailored resume
 # ---------------------------------------------------------------------------
 
@@ -566,6 +591,8 @@ __all__ = [
     "Award",
     "Bullet",
     "ContactInformation",
+    "CoverLetter",
+    "CoverLetterParagraph",
     "DropReason",
     "Education",
     "Experience",

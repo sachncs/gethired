@@ -172,6 +172,40 @@ def run(
 
 
 @app.command()
+def cover(
+    urls: list[str] = typer.Argument(...),
+    resume: Path = typer.Option(Path("resume.tex"), "--resume", "-r"),
+    model: str | None = typer.Option(None, "--model", "-m"),
+    debug: bool = typer.Option(False, "--debug", "-d"),
+    out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir"),
+) -> None:
+    """Run the pipeline with cover-letter production enabled."""
+    configure_logging(debug=debug)
+    ensure_consent()
+    jd = fetch_first_jd(urls)
+    tailor = Tailor(
+        resume=resume,
+        job_description=jd,
+        model=model,
+        debug=debug,
+        tailored_dir=out_dir,
+        produce_cover_letter=True,
+    )
+    try:
+        tailored = tailor.run()
+    except (
+        GroundingViolationError,
+        StyleViolationError,
+        PlagiarismViolationError,
+        AtsGateFailureError,
+    ) as exc:
+        typer.echo(f"Tailoring failed: {exc}", err=True)
+        raise typer.Exit(code=1)
+    typer.echo(f"Run complete: {tailored.run.id}")
+    typer.echo(f"Cover letter: {out_dir / tailored.run.id / 'cover_letter.md'}")
+
+
+@app.command()
 def validate(
     target: Path = typer.Argument(..., exists=True),
 ) -> None:

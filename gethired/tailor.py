@@ -71,6 +71,7 @@ class Tailor:
         draft_model: str | None = None,
         data_dir: Path = DEFAULT_DATA_DIR,
         tailored_dir: Path = DEFAULT_TAILORED_DIR,
+        produce_cover_letter: bool = False,
     ) -> None:
         """Construct the orchestrator.
 
@@ -84,6 +85,7 @@ class Tailor:
             draft_model: Optional cheap model identifier for preflight drafts.
             data_dir: Directory for master.json and JD cache.
             tailored_dir: Directory for tailored run outputs.
+            produce_cover_letter: When True, the run also emits ``cover_letter.md``.
 
         Raises:
             ConfigurationError: If neither ``model`` nor ``model_instance`` is provided.
@@ -95,6 +97,7 @@ class Tailor:
         self._model = model or os.environ.get(MODEL_ENV_VAR)
         self._model_instance = model_instance
         self._draft_model = draft_model
+        self._produce_cover_letter = produce_cover_letter
         self._data_dir = Path(data_dir)
         self._tailored_dir = Path(tailored_dir)
         self._cache_dir = Path(data_dir) / "jd_cache"
@@ -183,6 +186,23 @@ class Tailor:
             )
 
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
+
+        if self._produce_cover_letter and analysis is not None:
+            from gethired.cover_letter import (
+                render_cover_letter_markdown,
+                tailor_cover_letter,
+            )
+
+            cover_result = tailor_cover_letter(
+                master=master, analysis=analysis, voice=profile
+            )
+            cover_md = render_cover_letter_markdown(cover_result.cover_letter)
+            run_dir = self._tailored_dir / tailored_with_jobs.run.id
+            (run_dir / "cover_letter.md").write_text(cover_md)
+            self._logger.info("Cover letter written", path=str(run_dir / "cover_letter.md"))
+            return tailored_with_jobs
+
+        return tailored_with_jobs
         return tailored_with_jobs
 
     def plan(self) -> dict[str, object]:
