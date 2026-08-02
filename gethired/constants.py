@@ -75,3 +75,15 @@ DEFAULT_CACHE_DIR: str = "data/jd_cache"
 
 DEFAULT_MASTER_JSON: str = "data/master.json"
 """Default path for the master JSON snapshot."""
+
+TECTONIC_BINARY: str = "tectonic"
+"""Binary name for the tectonic LaTeX engine (preferred)."""
+
+PDFLATEX_BINARY: str = "pdflatex"
+"""Binary name for the pdflatex LaTeX engine (fallback)."""
+
+LATEX_ENGINE_ENV_VAR: str = "LATEX_ENGINE"
+"""Environment variable selecting the LaTeX engine (defaults to ``tectonic``)."""
+
+PDF_COMPILE_TIMEOUT_SECONDS: int = 60
+"""Maximum wall time for a single PDF compilation subprocess run."""

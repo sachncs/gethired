@@ -47,3 +47,7 @@ class AtsGateFailureError(ResumeTailoringError):
     def __init__(self, message: str, failed_gates: tuple[str, ...] = ()) -> None:
         super().__init__(message)
         self.failed_gates: tuple[str, ...] = failed_gates
+
+
+class PdfCompilationError(ResumeTailoringError):
+    """Raised when the LaTeX-to-PDF compilation step fails or the engine is missing."""
