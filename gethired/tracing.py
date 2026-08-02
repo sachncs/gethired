@@ -85,6 +85,11 @@ class _ActiveSpan:
         if self._sink is not None:
             self._sink.write(self._span)
 
+    @property
+    def span_id(self) -> str:
+        """Return the span_id of the underlying span (read-only)."""
+        return self._span.span_id
+
 
 class _JsonlSink:
     def __init__(self, path: Path) -> None:

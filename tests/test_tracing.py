@@ -47,7 +47,7 @@ def test_tracer_nested_spans_track_parent_id(tmp_path: Path) -> None:
     tracer = Tracer(path=path)
     try:
         with tracer.span("root", "agent") as outer:
-            outer_id = outer._span.span_id  # noqa: SLF001 (test introspection)
+            outer_id = outer.span_id
             with tracer.span("child", "tool"):
                 pass
     finally:
