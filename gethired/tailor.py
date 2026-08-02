@@ -16,6 +16,7 @@ from gethired.constants import MODEL_ENV_VAR
 from gethired.critic import Critic
 from gethired.description import analyze as analyze_description
 from gethired.exceptions import (
+    ConfigurationError,
     JobDescriptionRetrievalError,
     ResumeTailoringError,
 )
@@ -60,24 +61,49 @@ class Tailor:
     def __init__(
         self,
         resume: MasterResume | str | Path,
-        job_description: JobDescription | str,
+        job_description: JobDescription | str | tuple[JobDescription | str, ...],
         debug: bool = False,
         model: str | None = None,
+        model_instance: object | None = None,
         draft_model: str | None = None,
         data_dir: Path = DEFAULT_DATA_DIR,
         tailored_dir: Path = DEFAULT_TAILORED_DIR,
     ) -> None:
+        """Construct the orchestrator.
+
+        Args:
+            resume: Master resume or path to ``.tex`` file.
+            job_description: One or more job descriptions (or URL strings).
+            debug: Enable verbose loguru output.
+            model: LLM identifier (e.g. ``"MiniMax-M3"``). Read from ``MODEL`` env var if ``None``.
+            model_instance: Pre-constructed model instance for dependency injection
+                (typically ``TestModel`` in tests).
+            draft_model: Optional cheap model identifier for preflight drafts.
+            data_dir: Directory for master.json and JD cache.
+            tailored_dir: Directory for tailored run outputs.
+
+        Raises:
+            ConfigurationError: If neither ``model`` nor ``model_instance`` is provided.
+        """
         configure_logging(debug=debug)
         self._resume_input = resume
         self._jd_input = job_description
         self._debug = debug
         self._model = model or os.environ.get(MODEL_ENV_VAR)
+        self._model_instance = model_instance
         self._draft_model = draft_model
         self._data_dir = data_dir
         self._tailored_dir = tailored_dir
         self._cache_dir = data_dir / "jd_cache"
         self._master_json = data_dir / "master.json"
         self._logger = step_logger("tailor", debug=debug)
+        if not self._model and self._model_instance is None:
+            raise ConfigurationError(
+                "MODEL is required. Set the MODEL env var (e.g. 'MiniMax-M3', "
+                "'anthropic:claude-sonnet-4-5', 'openai:gpt-5') and API_KEY "
+                "(or ANTHROPIC_API_KEY / OPENAI_API_KEY), or pass "
+                "model_instance=TestModel() for offline tests."
+            )
 
     # ------------------------------------------------------------------
     # Public API
@@ -95,11 +121,15 @@ class Tailor:
             started_at=utcnow_iso(),
             master_hash=master.content_hash(),
             jd_urls_hash=hash_jd_urls(jds),
-            model=self._model or "deterministic",
+            model=self._model,
             draft_model=self._draft_model,
         )
 
-        writer = Writer(model=self._model, debug=self._debug)
+        writer = Writer(
+            model=self._model,
+            model_instance=self._model_instance,
+            debug=self._debug,
+        )
         tailored, writer_jobs = writer.tailor(
             master=master,
             analysis=analysis,  # type: ignore[arg-type]
@@ -152,7 +182,7 @@ class Tailor:
         )
         tokens_estimate = 2_500 + bullets * 150
         return {
-            "model": self._model or "deterministic",
+            "model": self._model,
             "tokens_estimate": tokens_estimate,
             "bullet_count": bullets,
             "jd_count": len(jds),
