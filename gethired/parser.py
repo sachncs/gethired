@@ -14,13 +14,17 @@ The TeX parser handles the macros in the existing resume (``\\resumeSubheading``
 
 from __future__ import annotations
 
+import asyncio
+import os
 import re
 from pathlib import Path
 from typing import Final
 
 import pymupdf
+from pydantic_ai import Agent
 
 from gethired.exceptions import MasterParsingError
+from gethired.provider import resolve_model
 from gethired.models import (
     Award,
     Bullet,
@@ -478,10 +482,57 @@ def parse_pdf(path: Path) -> MasterResume:
 
 
 def parse_image(path: Path) -> MasterResume:
-    """Extract text from an image via vision-capable model, then parse."""
-    raise MasterParsingError(  # noqa: ARG003 — path reserved for vision model routing
-        "Image parsing requires a configured vision model; use parse_tex or parse_pdf."
+    """Extract text from an image via a vision-capable model.
+
+    Requires a multimodal model identifier in ``IMAGE_MODEL`` (or the same
+    value as ``MODEL``). Reads the file at ``path``, sends it to the vision
+    model, and pipes the extracted text through the TeX parser.
+
+    Args:
+        path: Path to the image file (PNG, JPEG, WEBP, PDF-as-image).
+
+    Returns:
+        The parsed ``MasterResume``.
+
+    Raises:
+        MasterParsingError: If the file is missing or the model returns no text.
+    """
+    if not path.exists():
+        raise MasterParsingError(f"Image not found: {path}")
+
+    image_model = os.environ.get("IMAGE_MODEL") or os.environ.get("MODEL", "")
+    if not image_model:
+        raise MasterParsingError(
+            "Image parsing requires IMAGE_MODEL or MODEL env var pointing "
+            "to a multimodal model."
+        )
+    resolved = resolve_model(image_model)
+
+    agent: Agent[None, str] = Agent(
+        resolved.model,
+        system_prompt=(
+            "Extract every section, bullet, employer, role, date, project, "
+            "and skill from the resume image as plain TeX-flavored text. "
+            "Preserve \\resumeSubheading and \\resumeItem structure where possible."
+        ),
+        output_type=str,
     )
+    image_bytes = path.read_bytes()
+    prompt = (
+        "Extract the resume text from this image. "
+        "Return plain LaTeX-flavored text ready for the TeX parser."
+    )
+    try:
+        extracted = asyncio.run(agent.run(prompt, images=[image_bytes]))
+        raw_text = extracted.output
+    except Exception as exc:
+        raise MasterParsingError(
+            f"Vision model extraction failed for {path}: {exc}"
+        ) from exc
+
+    if not raw_text or not raw_text.strip():
+        raise MasterParsingError(f"No text extracted from image {path}")
+    return parse_tex(raw_text)
 
 
 def parse(source: str | Path) -> MasterResume:
