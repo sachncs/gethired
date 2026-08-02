@@ -27,3 +27,24 @@ task:
       name: summary_mentions_kubernetes
       text: $text
       substring: Kubernetes
+  - name: code.tool_correctness
+    args:
+      name: agent_tool_selection
+      trace_path: $trace_path
+      expected_tools:
+      - read_jd_summary
+      - list_skills
+  - name: code.argument_correctness
+    args:
+      name: tool_arguments_present
+      trace_path: $trace_path
+  - name: code.plan_quality
+    args:
+      name: agent_survey_first
+      trace_path: $trace_path
+      expected_first_tool: read_jd_summary
+  - name: code.step_efficiency
+    args:
+      name: agent_step_budget
+      trace_path: $trace_path
+      max_tool_calls: 4

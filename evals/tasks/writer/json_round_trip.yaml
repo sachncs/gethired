@@ -18,3 +18,8 @@ task:
     args:
       name: json_round_trip_ok
       tailored: $tailored
+  - name: code.task_completion
+    args:
+      name: agent_task_completion
+      trace_path: $trace_path
+      tailored: $tailored

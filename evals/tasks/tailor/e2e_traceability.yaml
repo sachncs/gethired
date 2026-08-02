@@ -20,9 +20,30 @@ task:
         name: run_present
         resume: $tailored
         path: run
-    - name: code.field_length
-      args:
-        name: jobs_emitted
-        resume: $tailored
-        path: jobs
-        expected: 7
+  - name: code.field_length
+    args:
+      name: jobs_emitted
+      resume: $tailored
+      path: jobs
+      expected: 7
+  - name: code.task_completion
+    args:
+      name: agent_task_completion
+      trace_path: $trace_path
+      tailored: $tailored
+  - name: code.tool_correctness
+    args:
+      name: agent_tool_selection
+      trace_path: $trace_path
+      expected_tools:
+      - read_jd_summary
+      - list_skills
+  - name: code.argument_correctness
+    args:
+      name: tool_arguments_present
+      trace_path: $trace_path
+  - name: code.step_efficiency
+    args:
+      name: agent_step_budget
+      trace_path: $trace_path
+      max_tool_calls: 5
