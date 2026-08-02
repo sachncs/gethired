@@ -146,16 +146,7 @@ def test_all_models_are_frozen() -> None:
             obj = model(master_path="x", verbatim_span="x", master_hash="x")
         elif model is WebSearch:
             obj = model(step_number=1, query="x", result_snippet="x", reason="x")
-        elif model is Run:
-            obj = model(
-                id="x",
-                started_at="x",
-                master_hash="x",
-                jd_urls_hash="x",
-                model="x",
-                draft_model=None,
-            )
-        elif model is RunDescription:
+        elif model is Run or model is RunDescription:
             obj = model(
                 id="x",
                 started_at="x",

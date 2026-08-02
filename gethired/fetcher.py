@@ -11,7 +11,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Final
 
@@ -71,7 +71,7 @@ class JobDescriptionRetriever:
                 url=url,
                 url_hash=url_hash,
                 content_hash=content_hash,
-                fetched_at=datetime.now(timezone.utc).isoformat(),
+                fetched_at=datetime.now(UTC).isoformat(),
                 raw_html=raw_html,
             )
         )
@@ -132,8 +132,8 @@ class JobDescriptionRetriever:
         except ValueError:
             return False
         if fetched_at.tzinfo is None:
-            fetched_at = fetched_at.replace(tzinfo=timezone.utc)
-        age = datetime.now(timezone.utc) - fetched_at
+            fetched_at = fetched_at.replace(tzinfo=UTC)
+        age = datetime.now(UTC) - fetched_at
         return age <= timedelta(days=CACHE_MAX_AGE_DAYS)
 
     def _parse(self, raw_html: str, url: str, content_hash: str) -> JobDescription:

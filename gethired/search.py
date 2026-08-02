@@ -6,10 +6,10 @@ and audit logging.
 
 from __future__ import annotations
 
+import os
+
 from gethired.constants import WEBSEARCH_DEFAULT_PROVIDER, WEBSEARCH_PROVIDER_ENV_VAR
 from gethired.observability import step_logger
-
-import os
 
 
 class Search:

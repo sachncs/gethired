@@ -12,7 +12,6 @@ from statistics import mean, pstdev
 
 from gethired.models import Bullet, MasterResume, VoiceProfile
 
-
 _OPENING_VERB_RE: Final[re.Pattern[str]] = re.compile(r"\b([A-Z][a-z]+)\b")
 
 

@@ -6,30 +6,29 @@ Multi-agent coordination: parser → fetcher → description → profiler → wr
 from __future__ import annotations
 
 import hashlib
+import json
+import os
 from dataclasses import replace
 from pathlib import Path
 from typing import Final
 
-from gethired.constants import CONSENT_FILE_PATH, CONSENT_TEXT, MODEL_ENV_VAR
+from gethired.constants import MODEL_ENV_VAR
 from gethired.critic import Critic
 from gethired.description import analyze as analyze_description
 from gethired.exceptions import (
-    AtsGateFailureError,
-    GroundingViolationError,
     JobDescriptionRetrievalError,
-    PlagiarismViolationError,
     ResumeTailoringError,
-    StyleViolationError,
 )
 from gethired.fetcher import JobDescriptionRetriever
 from gethired.models import (
+    DropReason,
     FinalOutcome,
+    GroundedCitation,
     JobDescription,
     MasterResume,
     Run,
     RunResult,
     TailoredResume,
-    job,
 )
 from gethired.observability import configure_logging, step_logger, utcnow_iso
 from gethired.parser import parse_tex
@@ -40,11 +39,8 @@ from gethired.renderer import (
     render_tex,
     render_text,
 )
+from gethired.validator import ats_check
 from gethired.writer import Writer
-
-import json
-import os
-
 
 DEFAULT_DATA_DIR: Final[Path] = Path("data")
 DEFAULT_TAILORED_DIR: Final[Path] = Path("tailored")
@@ -177,7 +173,6 @@ class Tailor:
             The re-rendered TailoredResume.
         """
         data = json.loads(Path(edited_json_path).read_text())
-        from dataclasses import asdict
 
         from gethired.models import (
             Award,

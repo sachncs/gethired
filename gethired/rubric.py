@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from typing import Final
 
-
 CHECKLIST_RUBRIC: Final[tuple[str, ...]] = (
     # UIowa Resume Critique Checklist
     "first_impression_inviting",

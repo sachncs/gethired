@@ -12,14 +12,11 @@ The factory function ``job(...)`` creates a ``Job`` with auto-generated
 from __future__ import annotations
 
 import hashlib
-import re
-from dataclasses import dataclass, field, replace
-from datetime import datetime, timezone
+from dataclasses import dataclass
 from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
-from gethired.constants import TIMESTAMP_ISO_FORMAT
 from gethired.observability import utcnow_iso
 
 
@@ -296,7 +293,7 @@ class JobMetadata:
     note: str | None = None
 
     def as_dict(self) -> dict[str, str]:
-        from dataclasses import asdict, fields as dc_fields
+        from dataclasses import fields as dc_fields
 
         result: dict[str, str] = {}
         for f in dc_fields(self):

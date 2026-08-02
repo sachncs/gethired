@@ -6,7 +6,6 @@ Uniform ``verb noun`` command pattern.
 from __future__ import annotations
 
 import json
-import sys
 from pathlib import Path
 
 import typer
@@ -15,9 +14,7 @@ from gethired.constants import (
     CONSENT_FILE_PATH,
     CONSENT_RE_PROMPT_DAYS,
     CONSENT_TEXT,
-    DEFAULT_DATA_DIR,
     DEFAULT_MASTER_JSON,
-    DEFAULT_TAILORED_DIR,
 )
 from gethired.constants import DEFAULT_DATA_DIR as _DEFAULT_DATA_DIR_STR
 from gethired.constants import DEFAULT_TAILORED_DIR as _DEFAULT_TAILORED_DIR_STR
@@ -30,7 +27,6 @@ from gethired.exceptions import (
     GroundingViolationError,
     JobDescriptionRetrievalError,
     PlagiarismViolationError,
-    ResumeTailoringError,
     StyleViolationError,
 )
 from gethired.fetcher import JobDescriptionRetriever
@@ -39,7 +35,6 @@ from gethired.observability import configure_logging
 from gethired.parser import parse_tex
 from gethired.renderer import render_json
 from gethired.tailor import Tailor
-from gethired.validator import AtsGateReport
 
 app = typer.Typer(help="gethired — multi-agent CV tailoring", no_args_is_help=True)
 
@@ -66,7 +61,7 @@ def _ensure_consent(force_prompt: bool = False) -> None:
     import datetime as _dt
 
     consent_file.write_text(
-        json.dumps({"timestamp": _dt.datetime.now(_dt.timezone.utc).isoformat()})
+        json.dumps({"timestamp": _dt.datetime.now(_dt.UTC).isoformat()})
     )
 
 
@@ -198,7 +193,6 @@ def validate(
             SkillsByCategory,
             TailoredResume,
         )
-        from gethired.normalizer_helpers import strip_latex_commands
 
         def _bullet(text: str) -> Bullet:
             return Bullet(text=text)
@@ -318,6 +312,8 @@ def _fetch_first_jd(urls: list[str]) -> JobDescription:
 
 def _master_to_snapshot(master) -> object:
     """Wrap a master into a TailoredResume-like snapshot for JSON serialisation."""
+    from uuid import uuid4
+
     from gethired.models import (
         FinalOutcome,
         Run,
@@ -325,7 +321,6 @@ def _master_to_snapshot(master) -> object:
         TailoredResume,
     )
     from gethired.observability import utcnow_iso
-    from uuid import uuid4
 
     return TailoredResume(
         contact=master.contact,

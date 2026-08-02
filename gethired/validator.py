@@ -9,18 +9,13 @@ import re
 from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Final
 
-from gethired.constants import BULLET_QUANTIFICATION_THRESHOLD, MAX_VOICE_DEVIATION
+from gethired.constants import BULLET_QUANTIFICATION_THRESHOLD
 from gethired.models import (
     AtsGate,
     Bullet,
-    ContactInformation,
-    GroundedCitation,
     JobDescription,
-    KeywordTier,
     MasterResume,
-    SkillsByCategory,
     TailoredResume,
 )
 from gethired.normalize import (
@@ -31,7 +26,6 @@ from gethired.normalize import (
     tokenize_for_overlap,
 )
 from gethired.rubric import (
-    ACTION_VERBS,
     BANNED_CONSTRUCTIONS,
     BANNED_WORDS,
     REQUIRED_SECTION_HEADINGS,

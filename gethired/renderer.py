@@ -6,21 +6,19 @@ Uses Jinja2 templates that mirror the user's existing resume preamble.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
 from gethired.models import (
-    ContactInformation,
-    JobDescriptionData,
     Run,
     RunResult,
     TailoredResume,
 )
 from gethired.normalizer_helpers import strip_latex_commands
-from gethired.validator import AtsGateReport, AtsGateResult
+from gethired.validator import AtsGateReport
 
 _TEMPLATE_DIR: Final[Path] = Path(__file__).parent / "templates"
 
@@ -151,11 +149,9 @@ def render_match_report(
         lines.append("## Web Search Audit")
         lines.append("| # | query | reason | result snippet |")
         lines.append("|---|-------|--------|----------------|")
-        for ws in websearches:
-            lines.append(
-                f"| {ws.metadata.step_number or ''} | {ws.metadata.query or ''} | "
-                f"{ws.rationale} | (result snippet) |"
-            )
+        for idx, ws in enumerate(websearches, start=1):
+            query = ws.metadata.query or ""
+            lines.append(f"| {idx} | {query} | {ws.rationale} | (result snippet) |")
         lines.append("")
     if ats_report is not None:
         lines.append("## ATS Gate Results")
@@ -202,4 +198,4 @@ __all__ = [
 
 _TAILORED = TailoredResume
 _STRIP = strip_latex_commands
-_NOW = datetime.now(timezone.utc).isoformat
+_NOW = datetime.now(UTC).isoformat

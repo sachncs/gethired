@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 from gethired.profiler import build
-from gethired.parser import parse_tex
 
 
 def test_voice_profile_computes_average_bullet_length(master_resume) -> None:

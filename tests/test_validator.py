@@ -2,27 +2,16 @@
 
 from __future__ import annotations
 
-from pathlib import Path
-
 from gethired.models import (
-    Award,
     Bullet,
-    ContactInformation,
-    DropReason,
-    Education,
     Experience,
-    GroundedCitation,
-    Job,
+    FinalOutcome,
     JobDescription,
-    JobType,
     MasterResume,
-    Project,
     Run,
     RunResult,
-    FinalOutcome,
     SkillsByCategory,
     TailoredResume,
-    job,
 )
 from gethired.renderer import render_tex, render_text
 from gethired.validator import (

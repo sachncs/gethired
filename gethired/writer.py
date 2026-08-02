@@ -9,14 +9,12 @@ deterministic identity transform (useful for tests).
 
 from __future__ import annotations
 
-import hashlib
-from typing import Any
+import os
 
 from gethired.constants import MODEL_ENV_VAR
 from gethired.description import DescriptionAnalysis
 from gethired.exceptions import ConfigurationError
 from gethired.models import (
-    DropReason,
     GroundedCitation,
     Job,
     JobType,
@@ -26,9 +24,6 @@ from gethired.models import (
     job,
 )
 from gethired.observability import step_logger
-from gethired.rubric import ACTION_VERBS, ANTI_AI_RULES, GROUNDING_RULES
-
-import os
 
 
 def _resolve_model(model: str | None) -> str | None:
