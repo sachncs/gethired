@@ -403,10 +403,7 @@ def jobs_from_tool_calls(result: Any, master: MasterResume) -> tuple[Job, ...]:
     Best-effort: walks ``result.all_messages`` looking for tool-call parts.
     """
     jobs: list[Job] = []
-    try:
-        messages = result.all_messages()
-    except Exception:
-        return ()
+    messages = result.all_messages()
     for message in messages:
         for part in getattr(message, "parts", []):
             part_type = getattr(part, "part_kind", None) or getattr(part, "type", None)
