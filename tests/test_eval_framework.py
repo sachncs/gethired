@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 
 from evals.graders.code import (
+    GraderResult,
     code_equal,
     code_field_length,
     code_field_present,
@@ -23,6 +24,7 @@ from evals.harness import (
     load_suite,
     load_task,
 )
+from gethired.models import ContactInformation, MasterResume, SkillsByCategory
 
 # ---------------------------------------------------------------------------
 # Grader tests
@@ -43,8 +45,6 @@ def test_code_equal_fails_on_mismatch() -> None:
 
 def test_code_field_present_on_dataclass() -> None:
     """``_resolve_path`` supports dotted paths on dataclasses."""
-    from gethired.models import ContactInformation
-
     contact = ContactInformation(
         name="Placeholder Name",
         city="Test City",
@@ -71,8 +71,6 @@ def test_code_field_present_missing_returns_false() -> None:
 
 
 def test_code_field_length_correct_count() -> None:
-    from gethired.models import ContactInformation
-
     contact = ContactInformation(
         name="A", city="X", phone="0", email="a@b.c",
         github_url=None, linkedin_url=None,
@@ -84,8 +82,6 @@ def test_code_field_length_correct_count() -> None:
 
 
 def test_code_field_length_wrong_count() -> None:
-    from gethired.models import ContactInformation
-
     contact = ContactInformation(
         name="AB", city="X", phone="0", email="a@b.c",
         github_url=None, linkedin_url=None,
@@ -147,8 +143,6 @@ def test_code_no_jd_plagiarism_detects_5gram() -> None:
 
 
 def test_code_numbers_in_master_no_invention() -> None:
-    from gethired.models import ContactInformation, MasterResume, SkillsByCategory
-
     master = MasterResume(
         contact=ContactInformation(
             name="A", city="X", phone="0", email="a@b.c",
@@ -168,8 +162,6 @@ def test_code_numbers_in_master_no_invention() -> None:
 
 
 def test_code_numbers_in_master_passes_when_present() -> None:
-    from gethired.models import ContactInformation, MasterResume, SkillsByCategory
-
     master = MasterResume(
         contact=ContactInformation(
             name="A", city="X", phone="0", email="a@b.c",
@@ -189,12 +181,6 @@ def test_code_numbers_in_master_passes_when_present() -> None:
 
 
 def test_code_json_round_trip() -> None:
-    from gethired.models import (
-        ContactInformation,
-        MasterResume,
-        SkillsByCategory,
-    )
-
     master = MasterResume(
         contact=ContactInformation(
             name="A", city="X", phone="0", email="a@b.c",
@@ -242,8 +228,6 @@ def test_registry_register_custom() -> None:
     r = GraderRegistry()
 
     def my_grader(name, **kwargs):
-        from evals.graders.code import GraderResult
-
         return GraderResult(name=name, passed=True, detail="ok")
 
     r.register("custom.grader", my_grader)

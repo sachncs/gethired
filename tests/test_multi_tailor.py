@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pydantic_ai.models.test import TestModel
 
+from gethired.description import analyze_multiple
 from gethired.models import JobDescription
 from gethired.tailor import Tailor
 
@@ -50,8 +51,6 @@ def test_tailor_accepts_multiple_job_descriptions(master_resume) -> None:
 
 def test_tailor_with_multiple_jds_consolidates_analysis() -> None:
     """analyze_multiple unions must-haves and intersects nice-to-haves."""
-    from gethired.description import analyze_multiple
-
     consolidated = analyze_multiple((SAMPLE_JD_A, SAMPLE_JD_B))
     assert "python" in consolidated.must_have_skills
     assert "kubernetes" in consolidated.must_have_skills

@@ -18,7 +18,33 @@ from typing import Any
 import yaml
 
 from evals.graders.registry import GraderRegistry
-from gethired.models import MasterResume, TailoredResume
+from gethired.fetcher import CacheEntry, JobDescriptionRetriever
+from gethired.description import analyze, DescriptionAnalysis
+from gethired.models import (
+    Award,
+    FinalOutcome,
+    JobDescription,
+    MasterResume,
+    Run,
+    RunResult,
+    TailoredResume,
+)
+from gethired.parser import parse_tex
+from pydantic_ai.models.test import TestModel
+from gethired.profiler import build as build_profile
+from gethired.tailor import read_master_json, Tailor
+from gethired.validator import (
+    AtsGate,
+    AtsGateResult,
+)
+from gethired.writer import Writer
+
+# Backwards-compatible exception aliases (pre-0.4.0 import paths)
+from gethired.exceptions import (
+    GroundingViolationError,
+    PlagiarismViolationError,
+    StyleViolationError,
+)
 
 # ---------------------------------------------------------------------------
 # Task + Trial types
@@ -440,16 +466,12 @@ def load_shared_master() -> MasterResume | None:
     The master is loaded once per eval run and shared across tasks so that
     every writer/critic task operates on the same source of truth.
     """
-    from gethired.parser import parse_tex
-
     canonical = Path("resume.tex")
     if canonical.exists():
         return parse_tex(canonical)
     cached = Path("data/master.json")
     if cached.exists():
-        from gethired.tailor import _read_master_json
-
-        return _read_master_json(cached)
+        return read_master_json(cached)
     return None
 
 
@@ -490,8 +512,6 @@ def passthrough_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, 
 
 def parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for parser tasks: parse a TeX file and emit the model."""
-    from gethired.parser import parse_tex
-
     tex_path = Path(task.input["tex_path"])
     resume = parse_tex(tex_path)
     return (
@@ -506,8 +526,6 @@ def parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
 def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for fetcher tasks: parse cached JDs without network."""
-    from gethired.fetcher import CacheEntry, JobDescriptionRetriever
-
     cache_path = Path(task.input["cache_path"])
     if not cache_path.exists():
         return ({"text": "", "jd": None}, {"error": "missing cache"})
@@ -520,8 +538,6 @@ def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
         fetched_at=payload["fetched_at"],
         raw_html=payload["raw_html"],
     )
-
-    from gethired.models import JobDescription
 
     jd = JobDescriptionRetriever(cache_path.parent).__class__
     return (
@@ -556,15 +572,9 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     (e.g. plagiarism avoidance requires actual rewriting).
     """
 
-    from gethired.description import DescriptionAnalysis
-    from gethired.models import JobDescription
-    from gethired.profiler import build
-    from gethired.writer import Writer
 
     test_model = None
     if task.input.get("use_test_model", False):
-        from pydantic_ai.models.test import TestModel
-
         test_model = TestModel()
         if task.input.get("skip_if_test_model", False):
             return ({"text": "", "master": None, "tailored": None}, {"skipped": True})
@@ -617,7 +627,6 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
 def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for critic tasks: run validators against a tailored resume."""
-    from gethired.models import FinalOutcome, JobDescription, Run, RunResult
 
     master = task.input["__master__"]
     tailored_dict = task.input["tailored_dict"]
@@ -655,12 +664,6 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         content_hash="eval",
     )
 
-    from gethired.validator import (
-        grounding_check,
-        plagiarism_check,
-        style_check,
-    )
-
     grounding = grounding_check(tailored, master)
     style = style_check(tailored)
     plagiarism = plagiarism_check(tailored, (jd,))
@@ -683,9 +686,6 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
 def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for description tasks: analyze a JD."""
-    from gethired.description import analyze
-    from gethired.models import JobDescription
-
     jd = JobDescription(
         url="eval://synthetic",
         title="",
@@ -706,13 +706,8 @@ def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, 
 def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for end-to-end tailor tasks: full pipeline run."""
 
-    from gethired.models import JobDescription
-    from gethired.tailor import Tailor
-
     test_model = None
     if task.input.get("use_test_model", False):
-        from pydantic_ai.models.test import TestModel
-
         test_model = TestModel()
 
     master = task.input["__master__"]

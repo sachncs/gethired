@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import subprocess
 from pathlib import Path
 from unittest.mock import patch
 
@@ -64,8 +65,6 @@ def test_compile_pdf_propagates_subprocess_failure(
 ) -> None:
     """Non-zero engine exit propagates as subprocess.CalledProcessError."""
     monkeypatch.delenv(LATEX_ENGINE_ENV_VAR, raising=False)
-    import subprocess
-
     err = subprocess.CalledProcessError(
         returncode=1, cmd=["tectonic"], stderr=b"! Undefined control sequence."
     )
@@ -79,8 +78,6 @@ def test_compile_pdf_propagates_subprocess_timeout(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """Subprocess timeout propagates as subprocess.TimeoutExpired."""
-    import subprocess
-
     monkeypatch.delenv(LATEX_ENGINE_ENV_VAR, raising=False)
     err = subprocess.TimeoutExpired(cmd=["tectonic"], timeout=60)
     with patch("shutil.which", return_value="/usr/bin/tectonic"):

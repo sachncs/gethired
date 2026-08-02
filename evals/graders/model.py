@@ -8,7 +8,11 @@ expensive than code-based graders.
 
 from __future__ import annotations
 
+import asyncio
+import json
 from dataclasses import dataclass
+
+from pydantic_ai import Agent
 
 from gethired.provider import resolve_model
 
@@ -56,11 +60,6 @@ def model_grade(
     Returns:
         A ``ModelGrade`` with score, pass/fail, rationale, and raw response.
     """
-    import asyncio
-    import json
-
-    from pydantic_ai import Agent
-
     resolved = resolve_model(model_string)
     agent = Agent(
         resolved.model,

@@ -7,10 +7,18 @@ behaviour under test has a clear pass/fail signal.
 
 from __future__ import annotations
 
+import json
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 
 from gethired.models import MasterResume, TailoredResume
+from gethired.normalize import (
+    canonicalize_numeric,
+    extract_ngrams,
+    tokenize_for_overlap,
+)
+from gethired.renderer import render_json, render_text
 
 
 @dataclass(frozen=True, slots=True)
@@ -112,8 +120,6 @@ def code_no_jd_plagiarism(
     Excludes any n-gram in ``technical_allowlist`` (per the project's
     ANTI_AI_RULES + TECHNICAL_NGRAMS_ALLOWLIST rubric).
     """
-    from gethired.normalize import extract_ngrams, tokenize_for_overlap
-
     tailored_tokens = tokenize_for_overlap(tailored_text)
     jd_tokens = tokenize_for_overlap(jd_text)
     tailored_ngrams = set(extract_ngrams(tailored_tokens, ngram_size))
@@ -133,8 +139,6 @@ def code_numbers_in_master(
     name: str, tailored_text: str, master: MasterResume
 ) -> GraderResult:
     """Assert that any number in the tailored text is also in the master."""
-    from gethired.normalize import canonicalize_numeric
-
     tailored_numbers = canonicalize_numeric(tailored_text)
     master_numbers = canonicalize_numeric(master.to_markdown())
     invented = sorted(tailored_numbers - master_numbers)
@@ -149,12 +153,8 @@ def code_numbers_in_master(
 
 def code_json_round_trip(name: str, tailored: TailoredResume) -> GraderResult:
     """Serialise via the renderer and confirm round-trip equality."""
-    from gethired.renderer import render_json, render_text
-
     json_text = render_json(tailored)
     try:
-        import json
-
         data = json.loads(json_text)
     except json.JSONDecodeError as exc:
         return GraderResult(
@@ -179,8 +179,6 @@ def resolve_path(obj: object, dotted: str) -> object:
     """Resolve a dotted path like ``experiences[0].company`` on a dataclass
     or dict (mixed access supported).
     """
-    import re
-
     tokens = re.findall(r"[^.\[\]]+|\[\d+\]", dotted)
     current: object = obj
     for token in tokens:
