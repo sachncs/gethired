@@ -85,8 +85,8 @@ class Tailor:
 
     def run(self) -> TailoredResume:
         """Execute the full tailoring pipeline."""
-        master = self._load_master()
-        jds = self._load_jds()
+        master = self.__load_master()
+        jds = self.__load_jds()
         profile = build_profile(master)
         analysis = analyze_description(jds[0]) if jds else None
 
@@ -133,7 +133,7 @@ class Tailor:
         )
         tailored_with_jobs = replace(tailored_with_jobs, run_result=run_result)
 
-        self._persist(tailored_with_jobs, tex_source, txt_source, ats_report)
+        self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
         return tailored_with_jobs
 
     def plan(self) -> dict[str, object]:
@@ -142,8 +142,8 @@ class Tailor:
         Returns:
             A dict containing token estimates, gate expectations, and metadata.
         """
-        master = self._load_master()
-        jds = self._load_jds()
+        master = self.__load_master()
+        jds = self.__load_jds()
         profile = build_profile(master)
         analysis = analyze_description(jds[0]) if jds else None
 
@@ -252,7 +252,7 @@ class Tailor:
         """Return a markdown diff between this run and a prior run."""
         import difflib
 
-        current = self._load_report()
+        current = self.__load_report()
         prior = (self._tailored_dir / other_run_id / "match_report.md").read_text()
         return "\n".join(
             difflib.unified_diff(
@@ -268,7 +268,7 @@ class Tailor:
     # Internals
     # ------------------------------------------------------------------
 
-    def _load_master(self) -> MasterResume:
+    def __load_master(self) -> MasterResume:
         if isinstance(self._resume_input, MasterResume):
             return self._resume_input
         if self._master_json.exists():
@@ -278,7 +278,7 @@ class Tailor:
         self._master_json.write_text(render_json(to_tailored(master)))
         return master
 
-    def _load_jds(self) -> tuple[JobDescription, ...]:
+    def __load_jds(self) -> tuple[JobDescription, ...]:
         if isinstance(self._jd_input, JobDescription):
             return (self._jd_input,)
         retriever = JobDescriptionRetriever(self._cache_dir)
@@ -288,7 +288,7 @@ class Tailor:
             raise
         return (jd,)
 
-    def _persist(
+    def __persist(
         self,
         tailored: TailoredResume,
         tex_source: str,
@@ -307,7 +307,7 @@ class Tailor:
         )
         return run_dir
 
-    def _load_report(self) -> str:
+    def __load_report(self) -> str:
         runs = sorted(self._tailored_dir.iterdir(), key=lambda p: p.stat().st_mtime)
         if not runs:
             raise ResumeTailoringError("No runs found")
