@@ -9,6 +9,7 @@ provider (which works with both Anthropic native and the MiniMax platform).
 
 from __future__ import annotations
 
+import asyncio
 import os
 from dataclasses import asdict
 from typing import TYPE_CHECKING, Any, Callable
@@ -187,8 +188,6 @@ class Writer:
         )
 
         self.__register_read_only_tools(agent)
-
-        import asyncio
 
         result = asyncio.run(agent.run(user_prompt(master, analysis), deps=deps))
         writer_output = result.output

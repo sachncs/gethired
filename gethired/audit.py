@@ -22,6 +22,8 @@ from gethired.models import (
     Experience,
     MasterResume,
     Project,
+    Run,
+    RunResult,
     SkillsByCategory,
     TailoredResume,
 )
@@ -150,8 +152,6 @@ def __load_tailored_and_master(
 
 
 def __coerce_tailored(raw: Any) -> TailoredResume:
-    from gethired.models import Run, RunResult
-
     contact = ContactInformation(**raw["contact"])
     skills = SkillsByCategory(
         categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()}

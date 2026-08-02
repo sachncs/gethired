@@ -5,8 +5,12 @@ Uniform ``verb noun`` command pattern.
 
 from __future__ import annotations
 
+import difflib
+import hashlib
 import json
+from datetime import UTC, datetime
 from pathlib import Path
+from uuid import uuid4
 
 import typer
 
@@ -29,12 +33,32 @@ from gethired.exceptions import (
     PlagiarismViolationError,
     StyleViolationError,
 )
+from gethired.audit import (
+    audit_run,
+    render_audit_json,
+    render_audit_markdown,
+)
 from gethired.fetcher import JobDescriptionRetriever
-from gethired.models import JobDescription, MasterResume, TailoredResume
-from gethired.observability import configure_logging
+from gethired.models import (
+    Award,
+    Bullet,
+    ContactInformation,
+    Education,
+    Experience,
+    FinalOutcome,
+    JobDescription,
+    MasterResume,
+    Project,
+    Run,
+    RunResult,
+    SkillsByCategory,
+    TailoredResume,
+)
+from gethired.observability import configure_logging, utcnow_iso
 from gethired.parser import parse_tex
-from gethired.renderer import render_json
-from gethired.tailor import Tailor
+from gethired.renderer import render_json, render_text, render_tex
+from gethired.tailor import Tailor, coerce_bullets, read_master_json
+from gethired.validator import ats_check
 
 app = typer.Typer(help="gethired — multi-agent CV tailoring", no_args_is_help=True)
 
@@ -43,11 +67,12 @@ def ensure_consent(force_prompt: bool = False) -> None:
     consent_file = Path(CONSENT_FILE_PATH).expanduser()
     if consent_file.exists() and not force_prompt:
         try:
-            import datetime as _dt
-
             data = json.loads(consent_file.read_text())
-            timestamp = _dt.datetime.fromisoformat(data["timestamp"])
-            now = _dt.datetime.now(timestamp.tzinfo) if timestamp.tzinfo else _dt.datetime.utcnow()
+            timestamp = datetime.fromisoformat(data["timestamp"])
+            if timestamp.tzinfo is None:
+                now = datetime.now(UTC).replace(tzinfo=None)
+            else:
+                now = datetime.now(timestamp.tzinfo)
             if (now - timestamp).days < CONSENT_RE_PROMPT_DAYS:
                 return
         except (json.JSONDecodeError, KeyError, ValueError):
@@ -58,10 +83,8 @@ def ensure_consent(force_prompt: bool = False) -> None:
         raise typer.Exit(code=1)
 
     consent_file.parent.mkdir(parents=True, exist_ok=True)
-    import datetime as _dt
-
     consent_file.write_text(
-        json.dumps({"timestamp": _dt.datetime.now(_dt.UTC).isoformat()})
+        json.dumps({"timestamp": datetime.now(UTC).isoformat()})
     )
 
 
@@ -114,8 +137,6 @@ def show_cmd(
         if url is None:
             typer.echo("--url required for jd", err=True)
             raise typer.Exit(code=1)
-        import hashlib
-
         url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
         cache_path = DEFAULT_DATA_DIR_PATH / "jd_cache" / f"{url_hash}.json"
         if not cache_path.exists():
@@ -235,28 +256,7 @@ def validate(
     """Run ATS gates against a tailored.tex or tailored.json."""
     configure_logging()
     if target.suffix == ".json":
-        from gethired.tailor import read_master_json
-
         data = json.loads(target.read_text())
-        from gethired.models import (
-            Award,
-            Bullet,
-            ContactInformation,
-            Education,
-            Experience,
-            Project,
-            Run,
-            RunResult,
-            SkillsByCategory,
-            TailoredResume,
-        )
-
-        def _bullet(text: str) -> Bullet:
-            return Bullet(text=text)
-
-        def _bullets(items: list[dict]) -> tuple[Bullet, ...]:
-            return tuple(_bullet(b["text"]) for b in items)
-
         contact = ContactInformation(**data["contact"])
         skills = SkillsByCategory(
             categories={k: tuple(v) for k, v in data["skills"]["categories"].items()}
@@ -267,12 +267,12 @@ def validate(
                 company=e["company"],
                 start_date=e["start_date"],
                 end_date=e["end_date"],
-                bullets=_bullets(e["bullets"]),
+                bullets=coerce_bullets(e["bullets"]),
             )
             for e in data["experiences"]
         )
         projects = tuple(
-            Project(name=p["name"], url=p["url"], bullets=_bullets(p["bullets"]))
+            Project(name=p["name"], url=p["url"], bullets=coerce_bullets(p["bullets"]))
             for p in data["projects"]
         )
         education = tuple(Education(**e) for e in data["education"])
@@ -295,14 +295,8 @@ def validate(
         )
         master = read_master_json(Path("data/master.json"))
         tex_source = target.read_text() if target.suffix == ".tex" else ""
-        from gethired.renderer import render_tex
-
         tex_source = render_tex(tailored)
-        from gethired.renderer import render_text
-
         txt_source = render_text(tailored)
-        from gethired.validator import ats_check
-
         report = ats_check(
             tailored,
             tex_source=tex_source,
@@ -351,8 +345,6 @@ def audit(
     Writes ``audit.json`` and ``audit.md`` into ``run_dir``. Exits non-zero
     if any validator reports a failure.
     """
-    from gethired.audit import audit_run, render_audit_json, render_audit_markdown
-
     configure_logging()
     report = audit_run(run_dir)
     (Path(run_dir) / "audit.json").write_text(render_audit_json(report))
@@ -383,8 +375,6 @@ def diff(
     configure_logging()
     a = (out_dir / run_a / "match_report.md").read_text()
     b = (out_dir / run_b / "match_report.md").read_text()
-    import difflib
-
     diff_text = "\n".join(
         difflib.unified_diff(
             a.splitlines(), b.splitlines(), fromfile=run_a, tofile=run_b, lineterm=""
@@ -400,16 +390,6 @@ def fetch_first_jd(urls: list[str]) -> JobDescription:
 
 def master_to_snapshot(master: MasterResume) -> TailoredResume:
     """Wrap a master into a TailoredResume-like snapshot for JSON serialisation."""
-    from uuid import uuid4
-
-    from gethired.models import (
-        FinalOutcome,
-        Run,
-        RunResult,
-        TailoredResume,
-    )
-    from gethired.observability import utcnow_iso
-
     return TailoredResume(
         contact=master.contact,
         summary=master.summary,

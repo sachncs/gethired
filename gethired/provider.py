@@ -11,6 +11,11 @@ import os
 from dataclasses import dataclass
 from typing import Final
 
+from pydantic_ai.models.anthropic import AnthropicModel
+from pydantic_ai.models.openai import OpenAIChatModel
+from pydantic_ai.providers.anthropic import AnthropicProvider
+from pydantic_ai.providers.openai import OpenAIProvider
+
 MINIMAX_BASE_URL: Final[str] = "https://api.minimax.io/anthropic"
 """MiniMax platform Anthropic-compatible base URL."""
 
@@ -123,16 +128,7 @@ def build_anthropic_model(
     base_url: str | None,
     display_label: str,
 ) -> ResolvedModel:
-    from pydantic_ai.models.anthropic import AnthropicModel
-    from pydantic_ai.providers.anthropic import AnthropicProvider
-
-    provider_kwargs: dict[str, str] = {"api_key": api_key}
-    if base_url is not None:
-        provider_kwargs["base_url"] = base_url
-    provider = AnthropicProvider(
-        api_key=provider_kwargs.get("api_key"),
-        base_url=provider_kwargs.get("base_url"),
-    )
+    provider = AnthropicProvider(api_key=api_key, base_url=base_url)
     model = AnthropicModel(model_name, provider=provider)
     return ResolvedModel(
         model=model,
@@ -142,9 +138,6 @@ def build_anthropic_model(
 
 def build_openai_model(model_name: str, api_key: str | None) -> ResolvedModel:
     """Construct an OpenAI provider model."""
-    from pydantic_ai.models.openai import OpenAIChatModel
-    from pydantic_ai.providers.openai import OpenAIProvider
-
     resolved_key = api_key or os.environ.get("OPENAI_API_KEY")
     if not resolved_key:
         raise ValueError("OPENAI_API_KEY not set. Required for OpenAI models.")

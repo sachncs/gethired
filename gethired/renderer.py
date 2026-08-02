@@ -5,7 +5,9 @@ Uses Jinja2 templates that mirror the user's existing resume preamble.
 
 from __future__ import annotations
 
+import difflib
 import json
+from dataclasses import asdict as _asdict, is_dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
@@ -95,8 +97,6 @@ def render_json(tailored: TailoredResume) -> str:
     """Serialise the full TailoredResume including traceability to JSON."""
 
     def as_dict(obj: object) -> object:
-        from dataclasses import asdict as _asdict, is_dataclass
-
         if is_dataclass(obj) and not isinstance(obj, type):
             return _asdict(obj)
         if isinstance(obj, dict):
@@ -176,8 +176,6 @@ def render_match_report(
 
 def render_diff(prior_report: str, current_report: str) -> str:
     """Render a unified diff between two markdown reports."""
-    import difflib
-
     diff = difflib.unified_diff(
         prior_report.splitlines(),
         current_report.splitlines(),

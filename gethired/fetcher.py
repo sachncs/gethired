@@ -169,8 +169,6 @@ def extract_jsonld(html: str) -> dict | None:
 
 
 def extract_text_trafilatura(html: str) -> str:
-    import trafilatura
-
     extracted = trafilatura.extract(html)
     return extracted or ""
 

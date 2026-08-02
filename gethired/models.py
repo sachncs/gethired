@@ -12,11 +12,12 @@ The factory function ``job(...)`` creates a ``Job`` with auto-generated
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, fields as dc_fields
 from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
+from gethired.exceptions import ResumeTailoringError
 from gethired.observability import utcnow_iso
 
 
@@ -294,8 +295,6 @@ class JobMetadata:
     note: str | None = None
 
     def as_dict(self) -> dict[str, str]:
-        from dataclasses import fields as dc_fields
-
         result: dict[str, str] = {}
         for f in dc_fields(self):
             value = getattr(self, f.name)
@@ -549,8 +548,6 @@ class TailoredResume:
             ResumeTailoringError: If ``run_result`` was not set.
         """
         if self.run_result is None:
-            from gethired.exceptions import ResumeTailoringError
-
             raise ResumeTailoringError("run_result not set on TailoredResume")
         return self.run_result.run
 

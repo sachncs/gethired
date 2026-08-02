@@ -5,14 +5,20 @@ Multi-agent coordination: parser → fetcher → description → profiler → wr
 
 from __future__ import annotations
 
+import difflib
 import hashlib
 import json
 import os
 from dataclasses import replace
 from pathlib import Path
 from typing import Final
+from uuid import uuid4
 
 from gethired.constants import MODEL_ENV_VAR
+from gethired.cover_letter import (
+    render_cover_letter_markdown,
+    tailor_cover_letter,
+)
 from gethired.critic import Critic
 from gethired.description import analyze as analyze_description
 from gethired.description import analyze_multiple as analyze_description_multiple
@@ -23,14 +29,21 @@ from gethired.exceptions import (
 )
 from gethired.fetcher import JobDescriptionRetriever
 from gethired.models import (
+    Award,
+    Bullet,
+    ContactInformation,
     DropReason,
+    Education,
+    Experience,
     FinalOutcome,
     GroundedCitation,
     JobDescription,
     MasterResume,
     PreflightReport,
+    Project,
     Run,
     RunResult,
+    SkillsByCategory,
     TailoredResume,
 )
 from gethired.observability import configure_logging, step_logger, utcnow_iso
@@ -137,9 +150,12 @@ class Tailor:
             model_instance=self._model_instance,
             debug=self._debug,
         )
+        analysis_for_writer = (
+            analysis if analysis is not None else analyze_description(jds[0])
+        )
         tailored, writer_jobs = writer.tailor(
             master=master,
-            analysis=analysis,  # type: ignore[arg-type]
+            analysis=analysis_for_writer,
             voice=profile,
         )
 
@@ -189,11 +205,6 @@ class Tailor:
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
 
         if self._produce_cover_letter and analysis is not None:
-            from gethired.cover_letter import (
-                render_cover_letter_markdown,
-                tailor_cover_letter,
-            )
-
             cover_result = tailor_cover_letter(
                 master=master, analysis=analysis, voice=profile
             )
@@ -285,25 +296,6 @@ class Tailor:
         """
         data = json.loads(Path(edited_json_path).read_text())
 
-        from gethired.models import (
-            Award,
-            Bullet,
-            ContactInformation,
-            Education,
-            Experience,
-            Project,
-            Run,
-            RunResult,
-            SkillsByCategory,
-            TailoredResume,
-        )
-
-        def _bullet(text: str) -> Bullet:
-            return Bullet(text=text)
-
-        def _bullets(items: list[dict]) -> tuple[Bullet, ...]:
-            return tuple(_bullet(b["text"]) for b in items)
-
         contact = ContactInformation(**data["contact"])
         skills = SkillsByCategory(
             categories={k: tuple(v) for k, v in data["skills"]["categories"].items()}
@@ -314,12 +306,12 @@ class Tailor:
                 company=e["company"],
                 start_date=e["start_date"],
                 end_date=e["end_date"],
-                bullets=_bullets(e["bullets"]),
+                bullets=coerce_bullets(e["bullets"]),
             )
             for e in data["experiences"]
         )
         projects = tuple(
-            Project(name=p["name"], url=p["url"], bullets=_bullets(p["bullets"]))
+            Project(name=p["name"], url=p["url"], bullets=coerce_bullets(p["bullets"]))
             for p in data["projects"]
         )
         education = tuple(Education(**e) for e in data["education"])
@@ -361,8 +353,6 @@ class Tailor:
 
     def diff(self, other_run_id: str) -> str:
         """Return a markdown diff between this run and a prior run."""
-        import difflib
-
         current = self.__load_report()
         prior = (self._tailored_dir / other_run_id / "match_report.md").read_text()
         return "\n".join(
@@ -455,9 +445,12 @@ class Tailor:
 # ---------------------------------------------------------------------------
 
 
-def new_uuid() -> str:
-    from uuid import uuid4
+def coerce_bullets(items: list[dict[str, str]]) -> tuple[Bullet, ...]:
+    """Map a list of ``{"text": str}`` dicts to a tuple of ``Bullet`` values."""
+    return tuple(Bullet(text=item["text"]) for item in items)
 
+
+def new_uuid() -> str:
     return str(uuid4())
 
 
@@ -480,24 +473,11 @@ def read_master_json(path: Path) -> MasterResume:
     The JSON snapshot is produced by ``render_json`` against a TailoredResume;
     we recover only the master fields.
     """
-    from gethired.models import (
-        Award,
-        Bullet,
-        ContactInformation,
-        Education,
-        Experience,
-        Project,
-        SkillsByCategory,
-    )
-
     data = json.loads(path.read_text())
     contact = ContactInformation(**data["contact"])
     skills = SkillsByCategory(
         categories={k: tuple(v) for k, v in data["skills"]["categories"].items()}
     )
-
-    def _bullets(items: list[dict]) -> tuple[Bullet, ...]:
-        return tuple(Bullet(text=b["text"]) for b in items)
 
     experiences = tuple(
         Experience(
@@ -505,12 +485,12 @@ def read_master_json(path: Path) -> MasterResume:
             company=e["company"],
             start_date=e["start_date"],
             end_date=e["end_date"],
-            bullets=_bullets(e["bullets"]),
+            bullets=coerce_bullets(e["bullets"]),
         )
         for e in data["experiences"]
     )
     projects = tuple(
-        Project(name=p["name"], url=p["url"], bullets=_bullets(p["bullets"]))
+        Project(name=p["name"], url=p["url"], bullets=coerce_bullets(p["bullets"]))
         for p in data["projects"]
     )
     education = tuple(Education(**e) for e in data["education"])
@@ -528,9 +508,7 @@ def read_master_json(path: Path) -> MasterResume:
 
 def to_tailored(master: MasterResume) -> TailoredResume:
     """Wrap a master resume in a TailoredResume for JSON serialisation."""
-    from gethired.models import TailoredResume as _TR
-
-    return _TR(
+    return TailoredResume(
         contact=master.contact,
         summary=master.summary,
         skills=master.skills,
