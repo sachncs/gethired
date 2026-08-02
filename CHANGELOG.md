@@ -5,6 +5,33 @@ All notable changes to gethired will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.4.0] - 2026-08-02
+
+### Added
+
+- **PDF compilation via tectonic** with pdflatex fallback (`LATEX_ENGINE` env var). New module `gethired/render_pdf.py`. Constants: `TECTONIC_BINARY`, `PDFLATEX_BINARY`, `LATEX_ENGINE_ENV_VAR`, `PDF_COMPILE_TIMEOUT_SECONDS`. New exception: `PdfCompilationError`.
+- **Multi-JD consolidated run**: `Tailor(job_description=(jd_a, jd_b))`. New `description.analyze_multiple()` consolidates analyses (union of must-haves, intersection of nice-to-haves, highest seniority, deduplicated responsibilities).
+- **`tailor audit <run-dir>`**: new CLI command + new module `gethired/audit.py`. Re-runs grounding, style, plagiarism, and ATS gates against a previous run; emits `audit.json` + `audit.md`.
+- **Cover-letter tailoring**: new models `CoverLetter` + `CoverLetterParagraph`; new module `gethired/cover_letter.py`. `Tailor(..., produce_cover_letter=True)` writes `cover_letter.md`.
+- **Streaming intermediate output**: new module `gethired/streaming.py` with `ProgressEvent` + `progress_reporter` context manager. `Writer.tailor(..., on_progress=...)` emits events at step boundaries.
+- **`--dry-run preflight`**: new method `Tailor.preflight()` + new CLI command. Returns `PreflightReport` with token estimate, expected gates, JD keyword coverage, voice drift risk, missing must-haves — no LLM call.
+- `Tailor.__init__` accepts `model_instance: object | None` for dependency-injected test models.
+- New CLI commands: `audit`, `cover`, `preflight`.
+
+### Removed
+
+- **Deterministic writer fallback**. `Writer` no longer ships an in-process identity-style transform. `Tailor(...)` raises `ConfigurationError` at construction when `MODEL` is unset and `model_instance` is None.
+
+### Changed
+
+- **Breaking**: callers relying on the silent deterministic fallback must now set `MODEL` + `API_KEY`, or inject a `TestModel`. The eval harness flag `deterministic: true` is renamed to `use_test_model: true`.
+
+### Fixed
+
+- Repo-wide cleanup: single-underscore identifiers converted to true-private (`__`) in `writer.py`, `tailor.py`, `fetcher.py`, `provider.py`, `cli.py`.
+- Fixed `UnboundLocalError` in `renderer.render_tex` (local `env` shadowed `env()` function).
+- Wrapped several lines exceeding the 100-char ruff limit.
+
 ## [Unreleased]
 
 ### Added
