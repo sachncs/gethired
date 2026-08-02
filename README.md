@@ -98,6 +98,10 @@ print(result.summary)      # rewritten, JD-targeted
 
 Always requires an LLM. Set `MODEL` (e.g. `MiniMax-M3`) and `API_KEY` (or `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`) — otherwise `Tailor(...)` raises `ConfigurationError` immediately. Tests inject a `TestModel` via `Tailor(..., model_instance=TestModel())`.
 
+### Tracing (v0.5.0+)
+
+Every `Tailor.run()` emits OpenTelemetry-compatible spans to `tailored/<run-id>/trace.jsonl`. The deepeval-style graders in `evals/graders/code.py` consume this trace to score component-level behaviour (tool selection, argument correctness), reasoning-layer behaviour (plan quality, plan adherence), and overall-execution outcomes (task completion, step efficiency). Set `GETHIRED_TRACE_PATH=off` to disable.
+
 ### CLI
 
 ```bash
@@ -268,7 +272,8 @@ Runs the full pipeline with the configured model on a synthetic JD; emits `tailo
 - **v0.2.0** — Multi-agent pipeline (parser, fetcher, description, writer, critic, search, tailor, renderer). CLI. Validator (grounding, style, plagiarism, 11 ATS gates). 67 tests.
 - **v0.3.0** — MiniMax provider integration. `Tailor(resume=…, job_description=…, debug=True)` programmatic API. LLM-backed writer via Pydantic AI. 81 tests.
 - **v0.4.0** — PDF compile via `tectonic` (pdflatex fallback), multi-JD consolidated run, `tailor audit <run-dir>`, cover-letter tailoring, streaming intermediate output, `--dry-run` preflight visualisation. 129 tests.
-- **v0.5.0** — Planned: tectonic CI integration, multi-JD ranked output, web UI for audit reports.
+- **v0.5.0** — OpenTelemetry-compatible tracing (`gethired/tracing.py`, JSONL span emission). Six deepeval-style agent-evaluation graders (component / reasoning / overall-execution layers). `parse_image` wired to a vision-capable model. `job()` factory split into focused builders. **Zero `# noqa:` / `# type: ignore` suppressions** across the codebase. 150 tests.
+- **v0.6.0** — Planned: tectonic CI integration, multi-JD ranked output, web UI for audit reports, full Golden adapter for deepeval's `assert_test`.
 
 ## Contributing
 
