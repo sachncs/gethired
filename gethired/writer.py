@@ -122,7 +122,7 @@ class Writer:
                 return self._deterministic_tailor(master, analysis, voice)
         if self._model_string is None and self._model_instance is None:
             return self._deterministic_tailor(master, analysis, voice)
-        return self._llm_tailor(master, analysis, voice, previous_violations)
+        return self.__llm_tailor(master, analysis, voice, previous_violations)
 
     # ------------------------------------------------------------------
     # Deterministic fallback
@@ -199,18 +199,23 @@ class Writer:
     # LLM-backed tailoring
     # ------------------------------------------------------------------
 
-    def _llm_tailor(
+    def __llm_tailor(
         self,
         master: MasterResume,
         analysis: DescriptionAnalysis,
         voice: VoiceProfile,
         previous_violations: tuple[str, ...],
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
-        """Delegate to a Pydantic AI Agent backed by Anthropic / MiniMax.
+        """Run the Pydantic AI Agent against the configured model.
 
-        The agent returns a TailoredResume. ``run_result`` is filled in
-        by the orchestrator after the writer returns; the writer just
-        leaves it as None on the produced object.
+        Args:
+            master: The canonical master resume.
+            analysis: Structured JD analysis.
+            voice: Voice profile for fingerprint preservation.
+            previous_violations: Style violations from prior retry (if any).
+
+        Returns:
+            Tuple of ``(TailoredResume, jobs)``.
         """
         if self._model_instance is not None:
             model: Any = self._model_instance
