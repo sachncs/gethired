@@ -286,6 +286,37 @@ def trace(
 
 
 @app.command()
+def audit(
+    run_dir: Path = typer.Argument(..., exists=True),
+) -> None:
+    """Re-run all validators against a previous run directory.
+
+    Writes ``audit.json`` and ``audit.md`` into ``run_dir``. Exits non-zero
+    if any validator reports a failure.
+    """
+    from gethired.audit import audit_run, render_audit_json, render_audit_markdown
+
+    configure_logging()
+    report = audit_run(run_dir)
+    (Path(run_dir) / "audit.json").write_text(render_audit_json(report))
+    (Path(run_dir) / "audit.md").write_text(render_audit_markdown(report))
+    typer.echo(f"Audit written to {run_dir}/audit.json and audit.md")
+    typer.echo(f"ATS passed: {report.ats_passed}")
+    typer.echo(
+        f"Violations: grounding={len(report.grounding_violations)} "
+        f"style={len(report.style_violations)} "
+        f"plagiarism={len(report.plagiarism_violations)}"
+    )
+    if (
+        not report.ats_passed
+        or report.grounding_violations
+        or report.style_violations
+        or report.plagiarism_violations
+    ):
+        raise typer.Exit(code=1)
+
+
+@app.command()
 def diff(
     run_a: str = typer.Argument(...),
     run_b: str = typer.Argument(...),
