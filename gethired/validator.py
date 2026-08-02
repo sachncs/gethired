@@ -337,11 +337,8 @@ def gate_pdf_compiles(pdf_path: Path | None) -> AtsGateResult:
 def gate_pdf_text_extractable(pdf_path: Path | None) -> AtsGateResult:
     if pdf_path is None or not pdf_path.exists():
         return AtsGateResult(AtsGate.PDF_TEXT_EXTRACTABLE, passed=False, detail="PDF missing")
-    document = pymupdf.open(pdf_path)
-    try:
+    with pymupdf.open(pdf_path) as document:
         text = "\n".join(document[i].get_text() for i in range(len(document)))
-    finally:
-        document.close()
     if not text.strip():
         return AtsGateResult(
             AtsGate.PDF_TEXT_EXTRACTABLE,
@@ -354,13 +351,10 @@ def gate_pdf_text_extractable(pdf_path: Path | None) -> AtsGateResult:
 def gate_pdf_text_matches_txt(pdf_path: Path | None, txt_source: str) -> AtsGateResult:
     if pdf_path is None or not pdf_path.exists():
         return AtsGateResult(AtsGate.PDF_TEXT_MATCHES_TXT, passed=False, detail="PDF missing")
-    document = pymupdf.open(pdf_path)
-    try:
+    with pymupdf.open(pdf_path) as document:
         pdf_text = "\n".join(
             document[i].get_text() for i in range(len(document))
         )
-    finally:
-        document.close()
     pdf_normalised = normalise_whitespace(pdf_text)
     txt_normalised = normalise_whitespace(txt_source)
     if pdf_normalised == txt_normalised:

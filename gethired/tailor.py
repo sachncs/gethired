@@ -19,7 +19,6 @@ from gethired.description import analyze_multiple as analyze_description_multipl
 from gethired.exceptions import (
     ConfigurationError,
     JobDescriptionRetrievalError,
-    PdfCompilationError,
     ResumeTailoringError,
 )
 from gethired.fetcher import JobDescriptionRetriever
@@ -403,10 +402,7 @@ class Tailor:
             retriever = JobDescriptionRetriever(self._cache_dir)
             return tuple(retriever.retrieve(url) for url in urls)
         retriever = JobDescriptionRetriever(self._cache_dir)
-        try:
-            jd = retriever.retrieve(self._jd_input)
-        except JobDescriptionRetrievalError:
-            raise
+        jd = retriever.retrieve(self._jd_input)
         return (jd,)
 
     def __persist(
@@ -438,20 +434,20 @@ class Tailor:
     def __compile_pdf_best_effort(
         self, tailored: TailoredResume, tex_source: str
     ) -> Path | None:
-        """Compile the tailored TeX into a PDF if a LaTeX engine is available.
+        """Compile the tailored TeX into a PDF.
 
-        Returns ``None`` when the engine is missing or compilation fails, so the
-        pipeline still completes and ATS gates report the missing PDF rather
-        than aborting.
+        Returns ``None`` when ``LATEX_ENGINE=none`` (intentional skip) or when
+        the compiled PDF does not materialise on disk. Compilation failures
+        propagate as ``PdfCompilationError`` — the caller decides whether to
+        log and continue or abort.
         """
         run_dir = self._tailored_dir / tailored.run.id
-        try:
-            pdf_path = compile_pdf(tex_source, run_dir)
-            self._logger.info("PDF compiled", path=str(pdf_path))
-            return pdf_path
-        except PdfCompilationError as exc:
-            self._logger.warning("PDF compilation skipped", reason=str(exc))
+        pdf_path = compile_pdf(tex_source, run_dir)
+        if pdf_path is None:
+            self._logger.info("PDF compilation skipped (LATEX_ENGINE=none)")
             return None
+        self._logger.info("PDF compiled", path=str(pdf_path))
+        return pdf_path
 
 
 # ---------------------------------------------------------------------------

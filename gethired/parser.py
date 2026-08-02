@@ -461,13 +461,10 @@ def parse_text(text: str) -> MasterResume:
 
 def parse_pdf(path: Path) -> MasterResume:
     """Extract text from a PDF and route through the TeX-style parser."""
-    document = pymupdf.open(path)
-    try:
+    with pymupdf.open(path) as document:
         raw_text = "\n".join(
             document[i].get_text() for i in range(len(document))
         )
-    finally:
-        document.close()
 
     if not raw_text.strip():
         raise MasterParsingError(f"No text extracted from {path}")

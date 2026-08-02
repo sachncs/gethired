@@ -59,10 +59,10 @@ def test_compile_pdf_raises_when_engine_missing(
             compile_pdf("body", tmp_path)
 
 
-def test_compile_pdf_raises_on_engine_failure(
+def test_compile_pdf_propagates_subprocess_failure(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Non-zero engine exit raises PdfCompilationError with stderr snippet."""
+    """Non-zero engine exit propagates as subprocess.CalledProcessError."""
     monkeypatch.delenv(LATEX_ENGINE_ENV_VAR, raising=False)
     import subprocess
 
@@ -71,19 +71,19 @@ def test_compile_pdf_raises_on_engine_failure(
     )
     with patch("shutil.which", return_value="/usr/bin/tectonic"):
         with patch("subprocess.run", side_effect=err):
-            with pytest.raises(PdfCompilationError, match="Undefined control sequence"):
+            with pytest.raises(subprocess.CalledProcessError):
                 compile_pdf("body", tmp_path)
 
 
-def test_compile_pdf_raises_on_timeout(
+def test_compile_pdf_propagates_subprocess_timeout(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """Subprocess timeout is wrapped in PdfCompilationError."""
+    """Subprocess timeout propagates as subprocess.TimeoutExpired."""
     import subprocess
 
     monkeypatch.delenv(LATEX_ENGINE_ENV_VAR, raising=False)
     err = subprocess.TimeoutExpired(cmd=["tectonic"], timeout=60)
     with patch("shutil.which", return_value="/usr/bin/tectonic"):
         with patch("subprocess.run", side_effect=err):
-            with pytest.raises(PdfCompilationError, match="timed out"):
+            with pytest.raises(subprocess.TimeoutExpired):
                 compile_pdf("body", tmp_path)
