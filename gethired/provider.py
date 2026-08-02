@@ -82,7 +82,7 @@ def resolve_model(
     model_name = model_name or provider_name
     provider_name = provider_name.lower() if provider_name else ""
 
-    if _is_minimax(model_name, provider_name):
+    if __is_minimax(model_name, provider_name):
         resolved_url = resolve_base_url(base_url) or MINIMAX_BASE_URL
         return build_anthropic_model(
             model_name=model_name,
@@ -108,7 +108,7 @@ def resolve_model(
     )
 
 
-def _is_minimax(model_name: str, provider_name: str) -> bool:
+def __is_minimax(model_name: str, provider_name: str) -> bool:
     """Heuristic: MiniMax model names start with MiniMax-."""
     if provider_name == "minimax":
         return True
