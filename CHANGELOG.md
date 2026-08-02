@@ -5,6 +5,34 @@ All notable changes to gethired will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.0] - 2026-08-02
+
+### Added
+
+- **OpenTelemetry-compatible tracing** in `gethired/tracing.py`. `Tracer` emits JSONL spans to `tailored/<run-id>/trace.jsonl`. `tracer_for_run()` factory; opt-out via `GETHIRED_TRACE_PATH=off`. ContextVar-based active span so tool/llm spans emit without threading the tracer through call sites. New module includes `TraceSpan` dataclass with `name`, `kind` (`agent`/`tool`/`llm`/`validate`), `started_at`, `ended_at`, `duration_ms`, `attributes`, `parent_id`, `span_id`.
+- **Deepeval-style agent-evaluation graders** in `evals/graders/code.py`:
+  - Component layer: `code_tool_correctness` (ToolCorrectnessMetric), `code_argument_correctness` (ArgumentCorrectnessMetric).
+  - Reasoning layer: `code_plan_adherence` (PlanAdherenceMetric), `code_plan_quality` (PlanQualityMetric).
+  - Overall execution: `code_task_completion` (TaskCompletionMetric), `code_step_efficiency` (StepEfficiencyMetric).
+  - All consume the trace.jsonl emitted by the tracer. `WRITER_TOOL_NAMES` exposes the agent's tool set as the canonical reference.
+- `parse_image()` now wires to a vision-capable Pydantic AI agent. Reads the file, sends bytes to a multimodal model named in `IMAGE_MODEL` (or `MODEL`), pipes the extracted text through the TeX parser. The `path` argument is now actually used.
+- `jobs_from_tool_calls(result)` signature simplified: dropped the unused `master` parameter that was declared for a planned master-aware extraction.
+
+### Changed
+
+- **Breaking**: `job()` factory split into focused builders: `job_tailor`, `job_validate`, `job_lookup`, plus the generic `job()`. All callers updated. A new `JobEnvelope` dataclass carries the shared fields (model, tool_name, status, timestamps). Resolves the `PLR0913` and `A002` noqa suppressions.
+- **Breaking**: `grounding_check()` no longer accepts a `quantification_threshold` parameter — quantification is enforced by `style_check` and `gate_bullets_quantified` instead.
+- **Breaking**: `gate_length_within_limit()` now uses the structured `TailoredResume` (sum of experiences+projects bullets) alongside the TeX `re.findall` bullet count, cross-checking the two sources.
+- **Breaking**: `parse_task()` no longer accepts an unused `source` parameter.
+- Inline `_bullet`/`_bullets` helpers in `cli.py` and `tailor.py` replaced by a module-level `coerce_bullets()` helper. Resolves the visibility-noise introduced by the AGENTS.md §824-856 single-underscore prohibition.
+- `evals/harness.py` exception handler retained as `except Exception` but with the per-file `BLE001` suppression centralised in `pyproject.toml` rather than scattered as inline `noqa: BLE001` comments.
+
+### Removed
+
+- **`# noqa:` and `# type: ignore` suppressions: 9 → 0** across `gethired/`, `tests/`, `evals/`. Each suppression was either replaced by a real fix (split factory, dropped parameter, removed dead code) or centralised into `pyproject.toml` per-file-ignores. The codebase now passes `mypy --strict` and `ruff check` with zero suppressions outside `pyproject.toml`.
+- `tests/test_models.py`: the no-op `if f.default is not f.default_factory or True` filter that always included every field is gone. The test now actually constructs each model from defaults and verifies frozen semantics.
+- Defensive `try/except ImportError` for `pymupdf`, `trafilatura`, `WebSearch` (pydantic_ai) removed — these are now hard dependencies declared in `pyproject.toml`.
+
 ## [0.4.0] - 2026-08-02
 
 ### Added
