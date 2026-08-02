@@ -9,6 +9,7 @@ for AI agents":
 from __future__ import annotations
 
 import json
+import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
@@ -425,13 +426,14 @@ def resolve_args(
     """Resolve special argument placeholders against the output.
 
     Supported placeholders:
-        ``$output``     → the entire output dict
-        ``$master``     → the parsed MasterResume from the shared cache
-        ``$tailored``   → the TailoredResume if present
-        ``$text``       → the tailored text (summary + bullets joined)
-        ``$jd_text``    → the JobDescription full text
-        ``$analysis``   → the DescriptionAnalysis object
-        ``$<key>``      → output[key] for any other output key
+        ``$output``       → the entire output dict
+        ``$master``       → the parsed MasterResume from the shared cache
+        ``$tailored``     → the TailoredResume if present
+        ``$text``         → the tailored text (summary + bullets joined)
+        ``$jd_text``      → the JobDescription full text
+        ``$analysis``     → the DescriptionAnalysis object
+        ``$trace_path``   → the agent trace.jsonl emitted by the runner
+        ``$<key>``        → output[key] for any other output key
 
     The reserved key ``name`` in the YAML is treated as a display label
     and stripped before passing the rest to the grader function.
@@ -446,6 +448,8 @@ def resolve_args(
                 resolved[key] = output
             elif placeholder == "master":
                 resolved[key] = shared_master or task.input.get("__master__")
+            elif placeholder == "trace_path":
+                resolved[key] = output.get("trace_path")
             elif placeholder in output:
                 resolved[key] = output[placeholder]
             else:
@@ -699,7 +703,6 @@ def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, 
 
 def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for end-to-end tailor tasks: full pipeline run."""
-
     test_model = None
     if task.input.get("use_test_model", False):
         test_model = TestModel()
@@ -715,11 +718,19 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         nice_to_have_keywords=tuple(task.input.get("nice_to_have_keywords", ())),
         content_hash="eval",
     )
+    trace_dir = Path(
+        task.input.get("trace_dir") or os.environ.get("EVAL_TRACE_DIR") or "evals/traces"
+    )
+    trace_dir.mkdir(parents=True, exist_ok=True)
+    run_id_marker = task.input.get("run_id_marker", task.id)
+    trace_path = trace_dir / f"{run_id_marker}.jsonl"
+    os.environ["GETHIRED_TRACE_PATH"] = "on"
     tailor = Tailor(
         resume=master,
         job_description=jd,
         model=task.input.get("model"),
         model_instance=test_model,
+        tailored_dir=trace_dir,
     )
     tailored = tailor.run()
 
@@ -735,11 +746,13 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             "text": text,
             "jobs": [j.description() for j in tailored.jobs],
             "run": tailored.run_result,
+            "trace_path": str(trace_path),
         },
         {
             "task_id": task.id,
             "n_jobs": len(tailored.jobs),
             "n_grounding": len(tailored.grounding),
+            "trace_path": str(trace_path),
         },
     )
 
