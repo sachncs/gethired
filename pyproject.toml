@@ -74,7 +74,7 @@ asyncio_mode = "auto"
 
 [tool.coverage.run]
 branch = true
-source = ["gethired"]
+source = ["gethired", "evals"]
 
 [tool.coverage.report]
 exclude_lines = [
@@ -84,7 +84,3 @@ exclude_lines = [
     "if __name__ == .__main__.:",
 ]
 fail_under = 85
-
-[tool.coverage.run]
-branch = true
-source = ["gethired", "evals"]
