@@ -1,28 +1,25 @@
 """Central logging configuration using loguru.
 
 All modules import the same logger from here. Per-step events are emitted as
-structured records via ``logger.bind`` so they can be ingested by Logfire or
-other OpenTelemetry-compatible backends.
+structured records via ``logger.bind``.
 """
 
 from __future__ import annotations
 
 import sys
-from datetime import UTC, datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from loguru import logger as default_logger
 from loguru._logger import Logger
 
-from gethired.constants import LOGFIRE_TOKEN_ENV_VAR
-
 _configured: bool = False
 
 
 def utcnow_iso() -> str:
     """Return current UTC time as ISO-8601 string with millisecond precision."""
-    return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
 def configure_logging(
@@ -72,28 +69,8 @@ def configure_logging(
     if run_id is not None:
         default_logger.configure(extra={"run_id": run_id})
 
-    _configure_logfire_if_available(run_id)
-
     _configured = True
     return default_logger
-
-
-def _configure_logfire_if_available(run_id: str | None) -> None:
-    """Initialise Logfire only when ``LOGFIRE_TOKEN`` is set in the environment."""
-    import os
-
-    if not os.environ.get(LOGFIRE_TOKEN_ENV_VAR):
-        return
-
-    try:
-        import logfire  # type: ignore[import-not-found]
-    except ImportError:
-        return
-
-    logfire.configure()
-    logfire.instrument_pydantic_ai()
-    if run_id is not None:
-        logfire.configure(tags={"run_id": run_id})
 
 
 def step_logger(step_name: str, run_id: str | None = None, **fields: Any) -> Logger:
@@ -135,3 +112,4 @@ __all__ = [
     "step_logger",
     "utcnow_iso",
 ]
+

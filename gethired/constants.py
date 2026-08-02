@@ -30,9 +30,6 @@ DRAFT_MODEL_ENV_VAR: str = "DRAFT_MODEL"
 WEBSEARCH_PROVIDER_ENV_VAR: str = "WEBSEARCH_PROVIDER"
 """Environment variable name used to read the WebSearch provider name."""
 
-LOGFIRE_TOKEN_ENV_VAR: str = "LOGFIRE_TOKEN"
-"""Environment variable name used to read the optional Logfire token."""
-
 WEBSEARCH_DEFAULT_PROVIDER: str = "duckduckgo"
 """Default WebSearch provider; chosen for provider-agnostic operation without API keys."""
 

@@ -10,9 +10,9 @@ v0.2.0 — full pipeline operational with model-agnostic provider (Anthropic, Op
 
 - **Anthropic** (native): `anthropic:claude-sonnet-4-5`, `anthropic:claude-opus-4-1`, …
 - **OpenAI** (native): `openai:gpt-5`, `openai:gpt-4o`, …
-- **MiniMax platform** (Anthropic-API-compatible at `https://api.minimax.io/anthropic`): `anthropic:MiniMax-M3`, `MiniMax-M3`, `MiniMax-M2.7`, `MiniMax-M2.7-highspeed`, `MiniMax-M2.5`, `MiniMax-M2.1`, `MiniMax-M2`
+- **MiniMax platform** (Anthropic-API-compatible at `https://api.minimax.io/anthropic`): `MiniMax-M3`, `MiniMax-M2.7`, `MiniMax-M2.7-highspeed`, `MiniMax-M2.5`, `MiniMax-M2.1`, `MiniMax-M2`
 
-When the model name starts with `MiniMax-` or is `MiniMax-M3`, gethired automatically routes through the MiniMax Anthropic-compatible API. Set `ANTHROPIC_API_KEY` to your MiniMax key and the rest works out of the box.
+When the model name starts with `MiniMax-`, gethired automatically routes through the MiniMax Anthropic-compatible API. Set `API_KEY` to your MiniMax key and the rest works out of the box.
 
 ## Architecture (one-word modules)
 
@@ -71,7 +71,7 @@ tailor = Tailor(
     resume=master_resume,            # or path to .tex
     job_description=job_description, # or URL string
     debug=True,
-    model="anthropic:MiniMax-M3",    # optional; defaults to MODEL env var
+    model="MiniMax-M3",              # optional; defaults to MODEL env var
 )
 result = tailor.run()                # TailoredResume
 ```

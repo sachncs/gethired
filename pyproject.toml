@@ -31,9 +31,6 @@ dev = [
     "types-requests",
     "respx>=0.21,<1.0",
 ]
-logfire = [
-    "logfire>=3.14,<5.0",
-]
 
 [project.scripts]
 gethired = "gethired.cli:app"
@@ -63,7 +60,7 @@ warn_return_any = true
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["trafilatura.*", "readability.*", "pymupdf.*", "tectonic.*", "respx.*", "loguru.*"]
+module = ["trafilatura.*", "readability.*", "pymupdf.*", "tectonic.*", "respx.*"]
 ignore_missing_imports = true
 ignore_errors = true
 

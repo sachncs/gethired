@@ -23,6 +23,25 @@ class ResolvedModel:
     display_name: str
 
 
+def _resolve_api_key(explicit: str | None = None) -> str:
+    """Resolve API key from explicit arg, then ``API_KEY``, then ``ANTHROPIC_API_KEY``."""
+    if explicit:
+        return explicit
+    api_key = os.environ.get("API_KEY") or os.environ.get("ANTHROPIC_API_KEY")
+    if not api_key:
+        raise ValueError(
+            "API_KEY (or ANTHROPIC_API_KEY) not set. Required for Anthropic-compatible APIs."
+        )
+    return api_key
+
+
+def _resolve_base_url(explicit: str | None = None) -> str | None:
+    """Resolve base URL from explicit arg, then ``BASE_URL``, then ``ANTHROPIC_BASE_URL``."""
+    if explicit:
+        return explicit
+    return os.environ.get("BASE_URL") or os.environ.get("ANTHROPIC_BASE_URL")
+
+
 def resolve_model(
     model_string: str | None,
     api_key: str | None = None,
@@ -31,16 +50,23 @@ def resolve_model(
     """Resolve a model string into a Pydantic AI model instance.
 
     Supports the following formats:
-    - ``anthropic:MiniMax-M3`` → MiniMax platform via Anthropic API
+    - ``MiniMax-M3`` / ``MiniMax-M2.7`` / ... → MiniMax platform (Anthropic-compatible API)
     - ``anthropic:claude-...`` → Anthropic native
     - ``openai:gpt-...`` → OpenAI native
-    - ``minimax:MiniMax-M3`` → alias for ``anthropic:MiniMax-M3``
-    - ``MiniMax-M3`` → bare model name → MiniMax platform via Anthropic API
+
+    Environment variables (in priority order):
+    - ``API_KEY`` / ``ANTHROPIC_API_KEY`` — provider auth token
+    - ``BASE_URL`` / ``ANTHROPIC_BASE_URL`` — provider base URL
+    - ``MODEL`` — default model identifier
+
+    When the model name starts with ``MiniMax-``, gethired automatically
+    routes through the MiniMax Anthropic-compatible base URL
+    (``https://api.minimax.io/anthropic``).
 
     Args:
         model_string: The model identifier (env var ``MODEL`` if None).
-        api_key: Override API key (defaults to env var).
-        base_url: Override base URL (defaults to provider-specific).
+        api_key: Override API key.
+        base_url: Override base URL.
 
     Returns:
         A ``ResolvedModel`` containing the constructed model and a display name.
@@ -59,30 +85,34 @@ def resolve_model(
     provider_name = provider_name.lower() if provider_name else ""
 
     if _is_minimax(model_name, provider_name):
+        resolved_url = _resolve_base_url(base_url) or MINIMAX_BASE_URL
         return _build_anthropic_model(
             model_name=model_name,
-            api_key=api_key,
-            base_url=base_url or os.environ.get("ANTHROPIC_BASE_URL") or MINIMAX_BASE_URL,
+            api_key=_resolve_api_key(api_key),
+            base_url=resolved_url,
             display_label="MiniMax",
         )
 
     if provider_name in ("anthropic", ""):
         return _build_anthropic_model(
             model_name=model_name,
-            api_key=api_key,
-            base_url=base_url or os.environ.get("ANTHROPIC_BASE_URL"),
+            api_key=_resolve_api_key(api_key),
+            base_url=_resolve_base_url(base_url),
             display_label="Anthropic",
         )
 
+    if provider_name == "openai":
+        return _build_openai_model(model_name, api_key)
+
     raise ValueError(
-        f"Unsupported model string {raw!r}. Use 'anthropic:NAME', 'openai:NAME', "
-        "or 'MiniMax-M3' (MiniMax platform)."
+        f"Unsupported model string {raw!r}. Use 'MiniMax-M3' (MiniMax platform), "
+        "'anthropic:NAME' (Anthropic), or 'openai:NAME' (OpenAI)."
     )
 
 
 def _is_minimax(model_name: str, provider_name: str) -> bool:
     """Heuristic: MiniMax model names start with MiniMax-."""
-    if provider_name in ("minimax", "minimax"):
+    if provider_name == "minimax":
         return True
     if model_name.startswith("MiniMax-") or model_name.startswith("MiniMax"):
         return True
@@ -91,23 +121,16 @@ def _is_minimax(model_name: str, provider_name: str) -> bool:
 
 def _build_anthropic_model(
     model_name: str,
-    api_key: str | None,
+    api_key: str,
     base_url: str | None,
     display_label: str,
 ) -> ResolvedModel:
     from pydantic_ai.models.anthropic import AnthropicModel
     from pydantic_ai.providers.anthropic import AnthropicProvider
 
-    resolved_api_key = api_key or os.environ.get("ANTHROPIC_API_KEY")
-    if not resolved_api_key:
-        raise ValueError(
-            "ANTHROPIC_API_KEY not set. Required for Anthropic-compatible APIs "
-            "(Anthropic, MiniMax)."
-        )
-    resolved_base_url = base_url or os.environ.get("ANTHROPIC_BASE_URL")
-    provider_kwargs: dict[str, str] = {"api_key": resolved_api_key}
-    if resolved_base_url:
-        provider_kwargs["base_url"] = resolved_base_url
+    provider_kwargs: dict[str, str] = {"api_key": api_key}
+    if base_url:
+        provider_kwargs["base_url"] = base_url
     provider = AnthropicProvider(**provider_kwargs)
     model = AnthropicModel(model_name, provider=provider)
     return ResolvedModel(
@@ -116,4 +139,18 @@ def _build_anthropic_model(
     )
 
 
+def _build_openai_model(model_name: str, api_key: str | None) -> ResolvedModel:
+    """Construct an OpenAI provider model."""
+    from pydantic_ai.models.openai import OpenAIChatModel
+    from pydantic_ai.providers.openai import OpenAIProvider
+
+    resolved_key = api_key or os.environ.get("OPENAI_API_KEY")
+    if not resolved_key:
+        raise ValueError("OPENAI_API_KEY not set. Required for OpenAI models.")
+    provider = OpenAIProvider(api_key=resolved_key)
+    model = OpenAIChatModel(model_name, provider=provider)
+    return ResolvedModel(model=model, display_name=f"OpenAI:{model_name}")
+
+
 __all__ = ["MINIMAX_BASE_URL", "ResolvedModel", "resolve_model"]
+
