@@ -185,7 +185,7 @@ class EvalSuiteResult:
 def load_task(path: Path) -> TaskDefinition:
     """Load a single task definition from a YAML file."""
     data = yaml.safe_load(path.read_text())
-    return parse_task(data, source=str(path))
+    return parse_task(data)
 
 
 def load_suite(suite_dir: Path) -> tuple[TaskDefinition, ...]:
@@ -193,11 +193,11 @@ def load_suite(suite_dir: Path) -> tuple[TaskDefinition, ...]:
     tasks: list[TaskDefinition] = []
     for yaml_path in sorted(suite_dir.glob("tasks/**/*.yaml")):
         data = yaml.safe_load(yaml_path.read_text())
-        tasks.append(parse_task(data, source=str(yaml_path)))
+        tasks.append(parse_task(data))
     return tuple(tasks)
 
 
-def parse_task(data: dict[str, Any], source: str = "<unknown>") -> TaskDefinition:
+def parse_task(data: dict[str, Any]) -> TaskDefinition:
     # Accept either flat (id at root) or wrapped under `task:` key.
     task_data = data.get("task", data)
     graders: list[GraderSpec] = []
