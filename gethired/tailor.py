@@ -15,6 +15,7 @@ from typing import Final
 from gethired.constants import MODEL_ENV_VAR
 from gethired.critic import Critic
 from gethired.description import analyze as analyze_description
+from gethired.description import analyze_multiple as analyze_description_multiple
 from gethired.exceptions import (
     ConfigurationError,
     JobDescriptionRetrievalError,
@@ -94,10 +95,10 @@ class Tailor:
         self._model = model or os.environ.get(MODEL_ENV_VAR)
         self._model_instance = model_instance
         self._draft_model = draft_model
-        self._data_dir = data_dir
-        self._tailored_dir = tailored_dir
-        self._cache_dir = data_dir / "jd_cache"
-        self._master_json = data_dir / "master.json"
+        self._data_dir = Path(data_dir)
+        self._tailored_dir = Path(tailored_dir)
+        self._cache_dir = Path(data_dir) / "jd_cache"
+        self._master_json = Path(data_dir) / "master.json"
         self._logger = step_logger("tailor", debug=debug)
         if not self._model and self._model_instance is None:
             raise ConfigurationError(
@@ -116,7 +117,7 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = analyze_description(jds[0]) if jds else None
+        analysis = analyze_description_multiple(jds) if len(jds) > 1 else (analyze_description(jds[0]) if jds else None)
 
         run = Run(
             id=str(new_uuid()),
@@ -193,7 +194,7 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = analyze_description(jds[0]) if jds else None
+        analysis = analyze_description_multiple(jds) if len(jds) > 1 else (analyze_description(jds[0]) if jds else None)
 
         bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
             len(p.bullets) for p in master.projects
@@ -329,6 +330,14 @@ class Tailor:
     def __load_jds(self) -> tuple[JobDescription, ...]:
         if isinstance(self._jd_input, JobDescription):
             return (self._jd_input,)
+        if isinstance(self._jd_input, tuple):
+            if all(isinstance(j, JobDescription) for j in self._jd_input):
+                return self._jd_input
+            urls: tuple[str, ...] = tuple(j for j in self._jd_input if isinstance(j, str))
+            if urls and len(urls) != len(self._jd_input):
+                raise TypeError("job_description tuple must contain only JobDescription or only str")
+            retriever = JobDescriptionRetriever(self._cache_dir)
+            return tuple(retriever.retrieve(url) for url in urls)
         retriever = JobDescriptionRetriever(self._cache_dir)
         try:
             jd = retriever.retrieve(self._jd_input)
