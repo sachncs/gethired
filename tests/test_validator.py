@@ -180,7 +180,8 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
     violations = plagiarism_check(fake, (jd,))
     expected_5gram = "designed and deployed isolated ai"
     assert any(expected_5gram in v.ngram for v in violations), (
-        f"Expected 5-gram {expected_5gram!r} not found in violations: {[v.ngram for v in violations]}"
+        f"Expected 5-gram {expected_5gram!r} not found in violations: "
+        f"{[v.ngram for v in violations]}"
     )
 
 

@@ -95,7 +95,15 @@ def analyze_multiple(descriptions: tuple[JobDescription, ...]) -> DescriptionAna
             if sentence not in seen_resp:
                 responsibilities.append(sentence)
                 seen_resp.add(sentence)
-    seniority_rank = {"principal": 4, "staff": 4, "senior": 3, "lead": 3, "junior": 1, "intern": 0, "unspecified": 0}
+    seniority_rank = {
+        "principal": 4,
+        "staff": 4,
+        "senior": 3,
+        "lead": 3,
+        "junior": 1,
+        "intern": 0,
+        "unspecified": 0,
+    }
     top_seniority = max(
         analyses, key=lambda a: seniority_rank.get(a.seniority, 0)
     ).seniority

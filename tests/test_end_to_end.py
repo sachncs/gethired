@@ -45,7 +45,13 @@ SAMPLE_JD = JobDescription(
 
 
 def test_end_to_end_pipeline_runs() -> None:
-    tailor = Tailor(resume="resume.tex", job_description=SAMPLE_JD, debug=False, model="test", model_instance=TestModel())
+    tailor = Tailor(
+        resume="resume.tex",
+        job_description=SAMPLE_JD,
+        debug=False,
+        model="test",
+        model_instance=TestModel(),
+    )
     result = tailor.run()
     assert result.run.id
     run_dir = Path("tailored") / result.run.id
@@ -56,7 +62,13 @@ def test_end_to_end_pipeline_runs() -> None:
 
 
 def test_end_to_end_atg_gates_all_evaluated() -> None:
-    tailor = Tailor(resume="resume.tex", job_description=SAMPLE_JD, debug=False, model="test", model_instance=TestModel())
+    tailor = Tailor(
+        resume="resume.tex",
+        job_description=SAMPLE_JD,
+        debug=False,
+        model="test",
+        model_instance=TestModel(),
+    )
     result = tailor.run()
     tex = render_tex(result)
     txt = render_text(result)
@@ -66,7 +78,13 @@ def test_end_to_end_atg_gates_all_evaluated() -> None:
 
 
 def test_end_to_end_job_trail_emitted() -> None:
-    tailor = Tailor(resume="resume.tex", job_description=SAMPLE_JD, debug=False, model="test", model_instance=TestModel())
+    tailor = Tailor(
+        resume="resume.tex",
+        job_description=SAMPLE_JD,
+        debug=False,
+        model="test",
+        model_instance=TestModel(),
+    )
     result = tailor.run()
     job_types = {job.type for job in result.jobs}
     assert "tailor" in job_types
@@ -78,7 +96,13 @@ def test_end_to_end_job_trail_emitted() -> None:
 
 def test_end_to_end_section_headings_present() -> None:
     """The rendered TeX must contain the standard ATS section headings."""
-    tailor = Tailor(resume="resume.tex", job_description=SAMPLE_JD, debug=False, model="test", model_instance=TestModel())
+    tailor = Tailor(
+        resume="resume.tex",
+        job_description=SAMPLE_JD,
+        debug=False,
+        model="test",
+        model_instance=TestModel(),
+    )
     result = tailor.run()
     tex = render_tex(result)
     assert "\\section{Summary}" in tex

@@ -222,7 +222,10 @@ class MasterResume:
         if self.awards:
             lines.append("## Awards")
             for award in self.awards:
-                lines.append(f"- **{award.title}** ({award.organization}, {award.date}): {award.description}")
+                lines.append(
+                    f"- **{award.title}** "
+                    f"({award.organization}, {award.date}): {award.description}"
+                )
         return "\n".join(lines)
 
     def content_hash(self) -> str:

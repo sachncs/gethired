@@ -183,7 +183,10 @@ def style_check(
             violations.append(
                 StyleViolation(
                     path="tailored",
-                    detail=f"Banned word stem {word!r} matched {token!r} at position {match.start()}",
+                    detail=(
+                            f"Banned word stem {word!r} matched "
+                            f"{token!r} at position {match.start()}"
+                        ),
                 )
             )
 
@@ -516,7 +519,9 @@ def gate_action_verbs_first(tailored: TailoredResume) -> AtsGateResult:
     if not bad:
         return AtsGateResult(AtsGate.ACTION_VERBS_FIRST, passed=True, detail="OK")
     return AtsGateResult(
-        AtsGate.ACTION_VERBS_FIRST, passed=False, detail=f"{len(bad)} bullets don't start with action verbs"
+        AtsGate.ACTION_VERBS_FIRST,
+        passed=False,
+        detail=f"{len(bad)} bullets don't start with action verbs",
     )
 
 

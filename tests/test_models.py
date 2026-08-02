@@ -78,7 +78,14 @@ def test_all_models_are_frozen() -> None:
             continue
         # Build a minimal valid instance for each
         if model is ContactInformation:
-            obj = model(name="x", city="x", phone="x", email="x", github_url=None, linkedin_url=None)
+            obj = model(
+                name="x",
+                city="x",
+                phone="x",
+                email="x",
+                github_url=None,
+                linkedin_url=None,
+            )
         elif model is Bullet:
             obj = model(text="x")
         elif model is Experience:
@@ -86,7 +93,14 @@ def test_all_models_are_frozen() -> None:
         elif model is Project:
             obj = model(name="x", url="", bullets=())
         elif model is Education:
-            obj = model(institution="x", location="x", degree="x", major="x", graduation="x", gpa=None)
+            obj = model(
+                institution="x",
+                location="x",
+                degree="x",
+                major="x",
+                graduation="x",
+                gpa=None,
+            )
         elif model is Award:
             obj = model(title="x", organization="x", date="x", description="x")
         elif model is SkillsByCategory:

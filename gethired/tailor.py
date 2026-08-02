@@ -133,7 +133,11 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = analyze_description_multiple(jds) if len(jds) > 1 else (analyze_description(jds[0]) if jds else None)
+        analysis = (
+            analyze_description_multiple(jds)
+            if len(jds) > 1
+            else (analyze_description(jds[0]) if jds else None)
+        )
 
         run = Run(
             id=str(new_uuid()),
@@ -224,7 +228,11 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = analyze_description_multiple(jds) if len(jds) > 1 else (analyze_description(jds[0]) if jds else None)
+        analysis = (
+            analyze_description_multiple(jds)
+            if len(jds) > 1
+            else (analyze_description(jds[0]) if jds else None)
+        )
 
         bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
             len(p.bullets) for p in master.projects
@@ -387,7 +395,9 @@ class Tailor:
                 return jds_input
             urls: tuple[str, ...] = tuple(j for j in self._jd_input if isinstance(j, str))
             if urls and len(urls) != len(self._jd_input):
-                raise TypeError("job_description tuple must contain only JobDescription or only str")
+                raise TypeError(
+                    "job_description tuple must contain only JobDescription or only str"
+                )
             retriever = JobDescriptionRetriever(self._cache_dir)
             return tuple(retriever.retrieve(url) for url in urls)
         retriever = JobDescriptionRetriever(self._cache_dir)

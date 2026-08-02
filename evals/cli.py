@@ -21,7 +21,9 @@ from evals.harness import EvalHarness, GraderRegistry, load_suite
 def run(
     tasks_dir: Path = typer.Option(Path("evals"), "--tasks", "-t"),
     category: str | None = typer.Option(None, "--category", "-c"),
-    tag: str | None = typer.Option(None, "--tag", help="Filter by tag (e.g. capability, regression)"),
+    tag: str | None = typer.Option(
+        None, "--tag", help="Filter by tag (e.g. capability, regression)"
+    ),
     trials: int = typer.Option(1, "--trials", "-n"),
     model: str | None = typer.Option(None, "--model", "-m"),
     suite_name: str = typer.Option("default", "--suite", "-s"),

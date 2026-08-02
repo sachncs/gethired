@@ -133,7 +133,9 @@ def find_balanced_args(text: str, pos: int, count: int) -> tuple[tuple[str, ...]
     return tuple(args), pos
 
 
-def find_macro_invocations(text: str, macro: str, arg_count: int) -> list[tuple[int, tuple[str, ...]]]:
+def find_macro_invocations(
+    text: str, macro: str, arg_count: int
+) -> list[tuple[int, tuple[str, ...]]]:
     """Find all invocations of ``\\<macro>`` followed by ``arg_count`` braced groups."""
     pattern = re.compile(r"\\" + re.escape(macro) + r"\b\s*")
     results: list[tuple[int, tuple[str, ...]]] = []
@@ -310,7 +312,9 @@ def extract_projects(body: str) -> tuple[Project, ...]:
     section_text = match.group(1)
     projects: list[Project] = []
     pattern = re.compile(r"\\resumeProjectHeading\b\s*")
-    for idx, (_, args) in enumerate(find_macro_invocations(section_text, "resumeProjectHeading", 2)):
+    for idx, (_, args) in enumerate(
+        find_macro_invocations(section_text, "resumeProjectHeading", 2)
+    ):
         name, url = extract_heading_text_and_url(args[0])
         macro_matches = list(pattern.finditer(section_text))
         if idx < len(macro_matches):
@@ -374,7 +378,9 @@ def extract_awards(body: str) -> tuple[Award, ...]:
     section_text = match.group(1)
     awards: list[Award] = []
     pattern = re.compile(r"\\resumeProjectHeading\b\s*")
-    for idx, (_, args) in enumerate(find_macro_invocations(section_text, "resumeProjectHeading", 2)):
+    for idx, (_, args) in enumerate(
+        find_macro_invocations(section_text, "resumeProjectHeading", 2)
+    ):
         heading_raw = args[0]
         date = clean_inline(args[1])
         title, _ = extract_heading_text_and_url(heading_raw)
