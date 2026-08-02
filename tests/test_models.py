@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import dataclasses
-from dataclasses import FrozenInstanceError, fields, is_dataclass
+from dataclasses import fields
 
 import pytest
 
@@ -107,7 +107,10 @@ def test_all_models_are_frozen() -> None:
         JobMetadata: JobMetadata(url="x"),
         SourceReference: SourceReference(master_path="x", verbatim_span="x", master_hash="x"),
         WebSearch: WebSearch(step_number=1, query="x", result_snippet="x", reason="x"),
-        Run: Run(id="x", started_at="x", master_hash="x", jd_urls_hash="x", model="x", draft_model=None),
+        Run: Run(
+            id="x", started_at="x", master_hash="x",
+            jd_urls_hash="x", model="x", draft_model=None,
+        ),
         RunDescription: RunDescription(
             id="x", started_at="x", master_hash="x", jd_urls_hash="x",
             model="x", draft_model=None,

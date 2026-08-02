@@ -24,7 +24,6 @@ import pymupdf
 from pydantic_ai import Agent
 
 from gethired.exceptions import MasterParsingError
-from gethired.provider import resolve_model
 from gethired.models import (
     Award,
     Bullet,
@@ -35,6 +34,7 @@ from gethired.models import (
     Project,
     SkillsByCategory,
 )
+from gethired.provider import resolve_model
 
 __all__ = [
     "parse",

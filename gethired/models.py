@@ -627,7 +627,13 @@ def job_tailor(
     envelope: JobEnvelope | None = None,
 ) -> Job:
     """Construct a TAILOR-kind Job."""
-    return job(JobType.TAILOR, inputs=inputs, outputs=outputs, rationale=rationale, envelope=envelope)
+    return job(
+        JobType.TAILOR,
+        inputs=inputs,
+        outputs=outputs,
+        rationale=rationale,
+        envelope=envelope,
+    )
 
 
 def job_validate(

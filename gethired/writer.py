@@ -30,7 +30,6 @@ from gethired.models import (
     GroundedCitation,
     Job,
     JobEnvelope,
-    JobType,
     MasterResume,
     Project,
     SkillsByCategory,
