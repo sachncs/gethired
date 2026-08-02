@@ -6,7 +6,7 @@ task:
   tags: [capability]
   input:
     __master__: __load_master__
-    deterministic: true
+    use_test_model: true
     jd_text: |
       We are hiring a Senior Engineer to build robust, comprehensive ML platforms.
       You will leverage distributed systems to deliver seamless solutions.

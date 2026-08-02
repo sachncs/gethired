@@ -9,7 +9,7 @@ task:
   - regression
   input:
     __master__: __load_master__
-    deterministic: true
+    use_test_model: true
     jd_text: 'Senior Machine Learning Engineer role. Need Python, Kubernetes,
 
       PyTorch, and AWS experience. You will design and deploy ML

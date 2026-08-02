@@ -7,7 +7,7 @@ task:
   - capability
   input:
     __master__: __load_master__
-    deterministic: true
+    use_test_model: true
     jd_text: 'Platform Engineer role with Kubernetes, Go, distributed systems.
 
       '

@@ -6,7 +6,7 @@ task:
   tags: [capability]
   input:
     __master__: __load_master__
-    deterministic: true
+    use_test_model: true
     jd_text: Looking for an expert in gRPC, Apache Kafka, and Linkerd.
     jd_title: Distributed Systems Engineer
     must_have_keywords:

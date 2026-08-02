@@ -16,7 +16,7 @@ task:
     must_have_keywords:
     - python
     - kubernetes
-    deterministic: true
+    use_test_model: true
   graders:
   - name: code.no_banned_words
     args:

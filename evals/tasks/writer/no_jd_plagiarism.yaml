@@ -6,7 +6,7 @@ task:
   tags: [regression]
   input:
     __master__: __load_master__
-    deterministic: true
+    use_test_model: true
     jd_text: |
       We are looking for an expert in quantum computing and space exploration
       to pioneer novel approaches in molecular gastronomy for sustainable food

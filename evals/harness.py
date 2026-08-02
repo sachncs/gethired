@@ -562,10 +562,12 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     from gethired.profiler import build
     from gethired.writer import Writer
 
-    if task.input.get("deterministic", False):
-        os.environ.pop("MODEL", None)
-        os.environ.pop("DRAFT_MODEL", None)
-        if task.input.get("skip_if_deterministic", False):
+    test_model = None
+    if task.input.get("use_test_model", False):
+        from pydantic_ai.models.test import TestModel
+
+        test_model = TestModel()
+        if task.input.get("skip_if_test_model", False):
             return ({"text": "", "master": None, "tailored": None}, {"skipped": True})
 
     master = task.input["__master__"]
@@ -590,7 +592,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     )
     voice = build(master)
 
-    writer = Writer(model=task.input.get("model"))
+    writer = Writer(model=task.input.get("model"), model_instance=test_model)
     tailored, jobs = writer.tailor(
         master=master, analysis=analysis, voice=voice
     )
@@ -616,13 +618,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
 def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for critic tasks: run validators against a tailored resume."""
-    import os
-
     from gethired.models import FinalOutcome, JobDescription, Run, RunResult
-
-    if task.input.get("deterministic", False):
-        os.environ.pop("MODEL", None)
-        os.environ.pop("DRAFT_MODEL", None)
 
     master = task.input["__master__"]
     tailored_dict = task.input["tailored_dict"]
@@ -715,9 +711,11 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     from gethired.models import JobDescription
     from gethired.tailor import Tailor
 
-    if task.input.get("deterministic", False):
-        os.environ.pop("MODEL", None)
-        os.environ.pop("DRAFT_MODEL", None)
+    test_model = None
+    if task.input.get("use_test_model", False):
+        from pydantic_ai.models.test import TestModel
+
+        test_model = TestModel()
 
     master = task.input["__master__"]
     jd = JobDescription(
@@ -730,7 +728,12 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         nice_to_have_keywords=tuple(task.input.get("nice_to_have_keywords", ())),
         content_hash="eval",
     )
-    tailor = Tailor(resume=master, job_description=jd, model=task.input.get("model"))
+    tailor = Tailor(
+        resume=master,
+        job_description=jd,
+        model=task.input.get("model"),
+        model_instance=test_model,
+    )
     tailored = tailor.run()
 
     text = (

@@ -12,7 +12,7 @@ task:
     must_have_keywords:
     - kubernetes
     - ''
-    deterministic: true
+    use_test_model: true
   graders:
   - name: code.numbers_in_master
     args:

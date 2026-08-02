@@ -6,7 +6,7 @@ task:
   tags: [capability]
   input:
     __master__: __load_master__
-    deterministic: true
+    use_test_model: true
     jd_text: Senior Rust Engineer role with WebAssembly and Tokio.
     jd_title: Senior Rust Engineer
     must_have_keywords:

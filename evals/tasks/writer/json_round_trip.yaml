@@ -12,7 +12,7 @@ task:
     must_have_keywords:
     - kubernetes
     - ''
-    deterministic: true
+    use_test_model: true
   graders:
   - name: code.json_round_trip
     args:

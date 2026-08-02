@@ -15,7 +15,7 @@ task:
     - python
     - kubernetes
     - pytorch
-    deterministic: true
+    use_test_model: true
   graders:
   - name: code.text_contains
     args:

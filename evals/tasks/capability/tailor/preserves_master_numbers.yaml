@@ -6,7 +6,7 @@ task:
   tags: [capability]
   input:
     __master__: __load_master__
-    deterministic: true
+    use_test_model: true
     jd_text: Senior ML Engineer role with Python and Kubernetes.
     jd_title: Senior ML Engineer
     must_have_keywords:
