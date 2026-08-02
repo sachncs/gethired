@@ -17,8 +17,8 @@ from gethired.tailor import Tailor
 # Load .env manually
 _ENV_PATH = Path(__file__).parent.parent / ".env"
 if _ENV_PATH.exists():
-    for line in _ENV_PATH.read_text().splitlines():
-        line = line.strip()
+    for raw_line in _ENV_PATH.read_text().splitlines():
+        line = raw_line.strip()
         if not line or line.startswith("#"):
             continue
         key, _, value = line.partition("=")

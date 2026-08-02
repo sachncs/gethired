@@ -479,7 +479,7 @@ def parse_pdf(path: Path) -> MasterResume:
 
 def parse_image(path: Path) -> MasterResume:
     """Extract text from an image via vision-capable model, then parse."""
-    raise MasterParsingError(
+    raise MasterParsingError(  # noqa: ARG003 — path reserved for vision model routing
         "Image parsing requires a configured vision model; use parse_tex or parse_pdf."
     )
 

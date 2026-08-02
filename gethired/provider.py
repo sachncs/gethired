@@ -117,9 +117,7 @@ def __is_minimax(model_name: str, provider_name: str) -> bool:
     """Heuristic: MiniMax model names start with MiniMax-."""
     if provider_name == "minimax":
         return True
-    if model_name.startswith("MiniMax-") or model_name.startswith("MiniMax"):
-        return True
-    return False
+    return model_name.startswith("MiniMax-") or model_name.startswith("MiniMax")
 
 
 def build_anthropic_model(

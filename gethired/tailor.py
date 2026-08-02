@@ -336,7 +336,7 @@ class Tailor:
             dropped=tuple(DropReason(**d) for d in data.get("dropped", [])),
             rationale=data.get("rationale", ""),
             grounding=tuple(GroundedCitation(**g) for g in data.get("grounding", [])),
-            jobs=tuple(),
+            jobs=(),
             run_result=run_result,
         )
         tex_source = render_tex(tailored)
@@ -471,7 +471,7 @@ def hash_jd_urls(jds: tuple[JobDescription, ...]) -> str:
 def outcome_from_ats(report) -> FinalOutcome:
     if report.all_passed:
         return FinalOutcome.SUCCESS
-    for gate in report.failed_gates:
+    if report.failed_gates:
         return FinalOutcome.ATS_HARD_FAIL
     return FinalOutcome.SUCCESS
 

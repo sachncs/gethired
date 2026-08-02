@@ -12,7 +12,7 @@ The factory function ``job(...)`` creates a ``Job`` with auto-generated
 from __future__ import annotations
 
 import hashlib
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from dataclasses import fields as dc_fields
 from enum import StrEnum
 from typing import Any
@@ -557,45 +557,107 @@ class TailoredResume:
 
 
 # ---------------------------------------------------------------------------
-# Job factory
+# Job factories
 # ---------------------------------------------------------------------------
 
 
-def job(  # noqa: PLR0913 — factory convenience
-    type: JobType,
+@dataclass(frozen=True, slots=True)
+class JobEnvelope:
+    """Shared fields across all job types.
+
+    Per AGENTS.md §980-993 (configuration objects over long parameter lists),
+    the factory functions below accept only the envelope specific to their
+    kind plus a single ``JobEnvelope`` carrying the common metadata.
+    """
+
+    model: str = ""
+    tool_name: str | None = None
+    metadata: JobMetadata = field(default_factory=JobMetadata)
+    status: JobStatus = JobStatus.SUCCESS
+    started_at: str | None = None
+    completed_at: str | None = None
+    job_id: str | None = None
+
+
+def job(
+    kind: JobType,
     inputs: tuple[SourceReference, ...] = (),
     outputs: tuple[str, ...] = (),
     rationale: str = "",
-    model: str = "",
-    tool_name: str | None = None,
-    metadata: JobMetadata | None = None,
-    status: JobStatus = JobStatus.SUCCESS,
-    started_at: str | None = None,
-    completed_at: str | None = None,
-    *,
-    job_id: str | None = None,
+    envelope: JobEnvelope | None = None,
 ) -> Job:
-    """Factory that creates a ``Job`` with auto-generated id and timestamps.
+    """Construct a generic ``Job`` from a kind + envelope.
 
-    Example::
+    For most call sites, prefer one of the focused factories below
+    (``job_tailor``, ``job_validate``, ``job_lookup``). Use this generic
+    factory only for kinds that don't yet have a dedicated builder.
 
-        j = job(JobType.FETCH, outputs=("jds[0]",), rationale="...")
-        description = j.description()
+    Args:
+        kind: The pipeline stage or capability this Job represents.
+        inputs: Source references consumed by this step.
+        outputs: Stable identifiers of produced artefacts.
+        rationale: One-sentence explanation of why this step ran.
+        envelope: Shared metadata (model, status, timestamps, tool name).
+
+    Returns:
+        A fully-populated ``Job`` with auto-generated id and timestamps.
     """
+    env = envelope or JobEnvelope()
     timestamp = now()
     return Job(
-        id=job_id if job_id is not None else new_uuid(),
-        type=type,
-        started_at=started_at or timestamp,
-        completed_at=completed_at or timestamp,
-        status=status,
+        id=env.job_id if env.job_id is not None else new_uuid(),
+        type=kind,
+        started_at=env.started_at or timestamp,
+        completed_at=env.completed_at or timestamp,
+        status=env.status,
         inputs=inputs,
         outputs=outputs,
         rationale=rationale,
-        model=model,
-        tool_name=tool_name,
-        metadata=metadata or JobMetadata(),
+        model=env.model,
+        tool_name=env.tool_name,
+        metadata=env.metadata,
     )
+
+
+def job_tailor(
+    outputs: tuple[str, ...],
+    rationale: str,
+    *,
+    inputs: tuple[SourceReference, ...] = (),
+    envelope: JobEnvelope | None = None,
+) -> Job:
+    """Construct a TAILOR-kind Job."""
+    return job(JobType.TAILOR, inputs=inputs, outputs=outputs, rationale=rationale, envelope=envelope)
+
+
+def job_validate(
+    kind: JobType,
+    outputs: tuple[str, ...],
+    rationale: str,
+    *,
+    inputs: tuple[SourceReference, ...] = (),
+    envelope: JobEnvelope | None = None,
+) -> Job:
+    """Construct a VALIDATE_*-kind Job.
+
+    Args:
+        kind: Must be one of VALIDATE_GROUNDING, VALIDATE_STYLE,
+            VALIDATE_PLAGIARISM, VALIDATE_ATS.
+    """
+    return job(kind, inputs=inputs, outputs=outputs, rationale=rationale, envelope=envelope)
+
+
+def job_lookup(
+    tool_name: str,
+    outputs: tuple[str, ...],
+    rationale: str,
+    *,
+    inputs: tuple[SourceReference, ...] = (),
+    envelope: JobEnvelope | None = None,
+) -> Job:
+    """Construct a LOOKUP-kind Job (read-only tool call)."""
+    env = envelope or JobEnvelope(tool_name=tool_name)
+    return job(JobType.LOOKUP, inputs=inputs, outputs=outputs, rationale=rationale, envelope=env)
 
 
 __all__ = [
@@ -605,6 +667,7 @@ __all__ = [
     "ContactInformation",
     "CoverLetter",
     "CoverLetterParagraph",
+    "JobEnvelope",
     "PreflightReport",
     "DropReason",
     "Education",

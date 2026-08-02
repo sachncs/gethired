@@ -172,6 +172,10 @@ def render_match_report(
     lines.append("## Keyword Coverage")
     lines.append("(See Job Trail above for per-step keyword usage.)")
     lines.append("")
+    if tailored.summary:
+        lines.append("## Tailored Summary")
+        lines.append(tailored.summary)
+        lines.append("")
     return "\n".join(lines)
 
 

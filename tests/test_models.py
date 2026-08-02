@@ -19,6 +19,7 @@ from gethired.models import (
     Job,
     JobDescription,
     JobDescriptionData,
+    JobEnvelope,
     JobMetadata,
     JobStatus,
     JobType,
@@ -69,7 +70,7 @@ def test_all_models_are_frozen() -> None:
             kwargs = {
                 f.name: f.default if f.default is not f.default_factory else f.default_factory()
                 for f in fields(model)
-                if f.default is not f.default_factory or True
+                if f.default is not f.default_factory or True  # noqa: PLW2901 — generator expression intent
             }
             _ = kwargs  # used only to validate model can be constructed from defaults
         except (TypeError, AttributeError):
@@ -237,7 +238,12 @@ def test_job_factory_assigns_uuid() -> None:
 
 def test_job_description_round_trips() -> None:
     """``Job.description()`` should yield a serializable JobDescription."""
-    j = job(JobType.FETCH, outputs=("jds[0]",), rationale="fetched", metadata=JobMetadata(url="https://example.com"))
+    j = job(
+        JobType.FETCH,
+        outputs=("jds[0]",),
+        rationale="fetched",
+        envelope=JobEnvelope(metadata=JobMetadata(url="https://example.com")),
+    )
     desc = j.description()
     assert isinstance(desc, JobDescriptionData)
     assert desc.id == j.id
@@ -265,7 +271,10 @@ def test_run_id_is_uuid_format() -> None:
 def test_run_result_websearch_calls_derived() -> None:
     """``RunResult.websearch_calls`` is a derived property, not stored."""
     fetch_job = job(JobType.FETCH)
-    web_job = job(JobType.WEBSEARCH, metadata=JobMetadata(query="q"))
+    web_job = job(
+        JobType.WEBSEARCH,
+        envelope=JobEnvelope(metadata=JobMetadata(query="q")),
+    )
     run_result = RunResult(
         run=Run("x", "x", "x", "x", "x", None),
         completed_at="x",

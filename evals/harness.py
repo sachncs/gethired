@@ -22,7 +22,7 @@ from evals.graders.registry import GraderRegistry
 from gethired.description import DescriptionAnalysis, analyze
 
 # Backwards-compatible exception aliases (pre-0.4.0 import paths)
-from gethired.fetcher import CacheEntry, JobDescriptionRetriever
+from gethired.fetcher import CacheEntry
 from gethired.models import (
     FinalOutcome,
     JobDescription,
@@ -32,7 +32,13 @@ from gethired.models import (
     TailoredResume,
 )
 from gethired.parser import parse_tex
+from gethired.profiler import build as build_profile
 from gethired.tailor import Tailor, read_master_json
+from gethired.validator import (
+    grounding_check,
+    plagiarism_check,
+    style_check,
+)
 from gethired.writer import Writer
 
 # ---------------------------------------------------------------------------
@@ -191,7 +197,7 @@ def load_suite(suite_dir: Path) -> tuple[TaskDefinition, ...]:
     return tuple(tasks)
 
 
-def parse_task(data: dict[str, Any], source: str) -> TaskDefinition:
+def parse_task(data: dict[str, Any], source: str = "<unknown>") -> TaskDefinition:
     # Accept either flat (id at root) or wrapped under `task:` key.
     task_data = data.get("task", data)
     graders: list[GraderSpec] = []
@@ -587,7 +593,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         responsibilities=(),
         company_context=jd.company,
     )
-    voice = build(master)
+    voice = build_profile(master)
 
     writer = Writer(model=task.input.get("model"), model_instance=test_model)
     tailored, jobs = writer.tailor(
@@ -752,7 +758,6 @@ REGISTRY: dict[str, Callable[[TaskDefinition], tuple[dict[str, Any], dict[str, A
 
 __all__ = [
     "EvalHarness",
-    "EvalOutcome",
     "EvalSuiteResult",
     "GraderSpec",
     "TaskDefinition",

@@ -81,7 +81,7 @@ class AtsGateReport:
 def grounding_check(
     tailored: TailoredResume,
     master: MasterResume,
-    quantification_threshold: float = BULLET_QUANTIFICATION_THRESHOLD,
+    quantification_threshold: float = BULLET_QUANTIFICATION_THRESHOLD,  # noqa: ARG003 — reserved for future quantification rule
 ) -> tuple[GroundingViolation, ...]:
     """Verify every concrete claim in the tailored resume traces back to master.
 
@@ -440,7 +440,10 @@ def gate_font_size_10_12(tex_source: str) -> AtsGateResult:
     )
 
 
-def gate_length_within_limit(tailored: TailoredResume, tex_source: str) -> AtsGateResult:
+def gate_length_within_limit(
+    tailored: TailoredResume,  # noqa: ARG001 — reserved for future per-experience length check
+    tex_source: str,
+) -> AtsGateResult:
     # Estimate: count the number of \resumeItem invocations
     item_count = len(re.findall(r"\\resumeItem\b", tex_source))
     # ~4 bullets per page is typical for this template; conservative.

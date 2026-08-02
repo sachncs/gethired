@@ -29,13 +29,15 @@ from gethired.models import (
     Experience,
     GroundedCitation,
     Job,
+    JobEnvelope,
     JobType,
     MasterResume,
     Project,
     SkillsByCategory,
     TailoredResume,
     VoiceProfile,
-    job,
+    job_lookup,
+    job_tailor,
 )
 from gethired.observability import step_logger
 from gethired.provider import resolve_model
@@ -200,14 +202,13 @@ class Writer:
             else str(model)
         )
         all_jobs = tool_jobs + (
-            job(
-                JobType.TAILOR,
+            job_tailor(
                 outputs=("tailored_resume",),
                 rationale=(
                     f"LLM produced {len(writer_output.tailored_bullets)} rewritten bullets; "
                     f"rationale: {writer_output.rationale[:100]}"
                 ),
-                model=str(model_name) if model_name else "model",
+                envelope=JobEnvelope(model=str(model_name) if model_name else "model"),
             ),
         )
         tailored = TailoredResume(
@@ -399,7 +400,10 @@ def user_prompt(master: MasterResume, analysis: DescriptionAnalysis) -> str:
     )
 
 
-def jobs_from_tool_calls(result: Any, master: MasterResume) -> tuple[Job, ...]:
+def jobs_from_tool_calls(
+    result: Any,
+    master: MasterResume,  # noqa: ARG001 — reserved for future master-aware extraction
+) -> tuple[Job, ...]:
     """Extract Job records from the agent's tool calls.
 
     Best-effort: walks ``result.all_messages`` looking for tool-call parts.
@@ -412,12 +416,19 @@ def jobs_from_tool_calls(result: Any, master: MasterResume) -> tuple[Job, ...]:
             if part_type == "tool-call" or getattr(part, "tool_name", None):
                 tool_name = getattr(part, "tool_name", "unknown")
                 jobs.append(
-                    job(
-                        JobType.LOOKUP,
+                    job_lookup(
+                        tool_name=tool_name,
                         outputs=(f"tool:{tool_name}",),
                         rationale=f"Called read-only tool {tool_name}",
-                        model=str(getattr(getattr(message, "model", None), "model_name", "model")),
-                        tool_name=tool_name,
+                        envelope=JobEnvelope(
+                            model=str(
+                                getattr(
+                                    getattr(message, "model", None),
+                                    "model_name",
+                                    "model",
+                                )
+                            ),
+                        ),
                     )
                 )
     return tuple(jobs)

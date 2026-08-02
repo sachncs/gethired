@@ -12,10 +12,11 @@ from gethired.constants import BULLET_QUANTIFICATION_THRESHOLD
 from gethired.models import (
     Job,
     JobDescription,
+    JobEnvelope,
     JobType,
     MasterResume,
     TailoredResume,
-    job,
+    job_validate,
 )
 from gethired.observability import step_logger
 from gethired.validator import (
@@ -52,41 +53,41 @@ class Critic:
         jobs: list[Job] = []
 
         jobs.append(
-            job(
+            job_validate(
                 JobType.VALIDATE_GROUNDING,
                 outputs=("grounding_violations",),
                 rationale="Validated that every claim traces to master",
-                model="deterministic",
+                envelope=JobEnvelope(model="deterministic"),
             )
         )
-        grounding = grounding_check(tailored, master, quantification_threshold)
+        grounding = grounding_check(tailored, master)
 
         jobs.append(
-            job(
+            job_validate(
                 JobType.VALIDATE_STYLE,
                 outputs=("style_violations",),
                 rationale="Validated banned words, parallelism, quantification",
-                model="deterministic",
+                envelope=JobEnvelope(model="deterministic"),
             )
         )
         style = style_check(tailored, quantification_threshold)
 
         jobs.append(
-            job(
+            job_validate(
                 JobType.VALIDATE_PLAGIARISM,
                 outputs=("plagiarism_violations",),
                 rationale="Validated no verbatim JD phrase overlap",
-                model="deterministic",
+                envelope=JobEnvelope(model="deterministic"),
             )
         )
         plagiarism = plagiarism_check(tailored, jds)
 
         jobs.append(
-            job(
+            job_validate(
                 JobType.VALIDATE_ATS,
                 outputs=("ats_gates",),
                 rationale="Ran all 11 ATS gates (compile, extract, headings, layout, etc.)",
-                model="deterministic",
+                envelope=JobEnvelope(model="deterministic"),
             )
         )
         ats_report = ats_check(

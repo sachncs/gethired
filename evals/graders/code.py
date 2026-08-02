@@ -185,8 +185,7 @@ def resolve_path(obj: object, dotted: str) -> object:
         if token.startswith("[") and token.endswith("]"):
             index = int(token[1:-1])
             if (
-                isinstance(current, (tuple, list))
-                or isinstance(current, dict)
+                isinstance(current, (tuple, list, dict))
                 or hasattr(current, "__getitem__")
             ):
                 current = current[index]

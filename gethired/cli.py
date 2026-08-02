@@ -292,6 +292,7 @@ def validate(
             run_result=run_result,
         )
         master = read_master_json(Path("data/master.json"))
+        _ = master  # re-rendered for completeness; rendered below
         tex_source = render_tex(tailored)
         txt_source = render_text(tailored)
         report = ats_check(
