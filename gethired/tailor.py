@@ -1,11 +1,55 @@
-"""Tailor — orchestrator class (entry point).
+"""Tailor — orchestrator (entry point).
 
 Multi-agent coordination: parser → fetcher → description → profiler → writer → critic → renderer.
 """
 
 from __future__ import annotations
 
-from gethired.models import JobDescription, MasterResume, TailoredResume
+import hashlib
+from dataclasses import replace
+from pathlib import Path
+from typing import Final
+
+from gethired.constants import CONSENT_FILE_PATH, CONSENT_TEXT, MODEL_ENV_VAR
+from gethired.critic import Critic
+from gethired.description import analyze as analyze_description
+from gethired.exceptions import (
+    AtsGateFailureError,
+    GroundingViolationError,
+    JobDescriptionRetrievalError,
+    PlagiarismViolationError,
+    ResumeTailoringError,
+    StyleViolationError,
+)
+from gethired.fetcher import JobDescriptionRetriever
+from gethired.models import (
+    FinalOutcome,
+    JobDescription,
+    MasterResume,
+    Run,
+    RunResult,
+    TailoredResume,
+    job,
+)
+from gethired.observability import configure_logging, step_logger, utcnow_iso
+from gethired.parser import parse_tex
+from gethired.profiler import build as build_profile
+from gethired.renderer import (
+    render_json,
+    render_match_report,
+    render_tex,
+    render_text,
+)
+from gethired.writer import Writer
+
+import json
+import os
+
+
+DEFAULT_DATA_DIR: Final[Path] = Path("data")
+DEFAULT_TAILORED_DIR: Final[Path] = Path("tailored")
+DEFAULT_CACHE_DIR: Final[Path] = DEFAULT_DATA_DIR / "jd_cache"
+DEFAULT_MASTER_JSON: Final[Path] = DEFAULT_DATA_DIR / "master.json"
 
 
 class Tailor:
@@ -13,39 +57,378 @@ class Tailor:
 
     Example::
 
-        tailor = Tailor(resume=master_resume, job_description=job, debug=True)
+        tailor = Tailor(resume="resume.tex", job_description="https://example.com/jd", debug=True)
         result = tailor.run()
     """
 
     def __init__(
         self,
-        resume: MasterResume | str,
+        resume: MasterResume | str | Path,
         job_description: JobDescription | str,
         debug: bool = False,
         model: str | None = None,
         draft_model: str | None = None,
+        data_dir: Path = DEFAULT_DATA_DIR,
+        tailored_dir: Path = DEFAULT_TAILORED_DIR,
     ) -> None:
-        self._resume = resume
-        self._job_description = job_description
+        configure_logging(debug=debug)
+        self._resume_input = resume
+        self._jd_input = job_description
         self._debug = debug
-        self._model = model
+        self._model = model or os.environ.get(MODEL_ENV_VAR)
         self._draft_model = draft_model
+        self._data_dir = data_dir
+        self._tailored_dir = tailored_dir
+        self._cache_dir = data_dir / "jd_cache"
+        self._master_json = data_dir / "master.json"
+        self._logger = step_logger("tailor", debug=debug)
+
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
 
     def run(self) -> TailoredResume:
         """Execute the full tailoring pipeline."""
-        raise NotImplementedError("Tailor.run is not yet implemented")
+        master = self._load_master()
+        jds = self._load_jds()
+        profile = build_profile(master)
+        analysis = analyze_description(jds[0]) if jds else None
+
+        run = Run(
+            id=str(_new_uuid()),
+            started_at=utcnow_iso(),
+            master_hash=master.content_hash(),
+            jd_urls_hash=_hash_jd_urls(jds),
+            model=self._model or "deterministic",
+            draft_model=self._draft_model,
+        )
+
+        writer = Writer(model=self._model, debug=self._debug)
+        tailored, writer_jobs = writer.tailor(
+            master=master,
+            analysis=analysis,  # type: ignore[arg-type]
+            voice=profile,
+        )
+
+        critic = Critic(debug=self._debug)
+        tex_source = render_tex(tailored)
+        txt_source = render_text(tailored)
+        ats_report, critic_jobs = critic.evaluate(
+            tailored=tailored,
+            master=master,
+            jds=jds,
+            tex_source=tex_source,
+            txt_source=txt_source,
+            pdf_path=None,
+        )
+
+        all_jobs = writer_jobs + critic_jobs
+        tailored_with_jobs = replace(tailored, jobs=all_jobs)
+
+        run_result = RunResult(
+            run=run,
+            completed_at=utcnow_iso(),
+            duration_seconds=0.0,
+            total_input_tokens=0,
+            total_output_tokens=0,
+            retry_attempts=0,
+            final_outcome=_outcome_from_ats(ats_report),
+            jobs=all_jobs,
+        )
+        tailored_with_jobs = replace(tailored_with_jobs, run_result=run_result)
+
+        self._persist(tailored_with_jobs, tex_source, txt_source, ats_report)
+        return tailored_with_jobs
 
     def plan(self) -> dict[str, object]:
-        """Estimate cost without executing the agent."""
-        raise NotImplementedError("Tailor.plan is not yet implemented")
+        """Estimate cost without executing the agent.
 
-    def finalize(self, edited_json_path: object) -> TailoredResume:
-        """Re-render an edited tailored.json without calling the agent."""
-        raise NotImplementedError("Tailor.finalize is not yet implemented")
+        Returns:
+            A dict containing token estimates, gate expectations, and metadata.
+        """
+        master = self._load_master()
+        jds = self._load_jds()
+        profile = build_profile(master)
+        analysis = analyze_description(jds[0]) if jds else None
+
+        bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
+            len(p.bullets) for p in master.projects
+        )
+        tokens_estimate = 2_500 + bullets * 150
+        return {
+            "model": self._model or "deterministic",
+            "tokens_estimate": tokens_estimate,
+            "bullet_count": bullets,
+            "jd_count": len(jds),
+            "must_have_keywords": list(analysis.must_have_skills) if analysis else [],
+            "voice_profile": {
+                "avg_bullet_length": profile.avg_bullet_length,
+                "opening_verbs": list(profile.opening_verbs[:5]),
+            },
+        }
+
+    def finalize(self, edited_json_path: Path) -> TailoredResume:
+        """Re-render an edited tailored.json without invoking the agent.
+
+        Args:
+            edited_json_path: Path to a hand-edited TailoredResume JSON.
+
+        Returns:
+            The re-rendered TailoredResume.
+        """
+        data = json.loads(Path(edited_json_path).read_text())
+        from dataclasses import asdict
+
+        from gethired.models import (
+            Award,
+            Bullet,
+            ContactInformation,
+            Education,
+            Experience,
+            Project,
+            Run,
+            RunResult,
+            SkillsByCategory,
+            TailoredResume,
+        )
+
+        def _bullet(text: str) -> Bullet:
+            return Bullet(text=text)
+
+        def _bullets(items: list[dict]) -> tuple[Bullet, ...]:
+            return tuple(_bullet(b["text"]) for b in items)
+
+        contact = ContactInformation(**data["contact"])
+        skills = SkillsByCategory(
+            categories={k: tuple(v) for k, v in data["skills"]["categories"].items()}
+        )
+        experiences = tuple(
+            Experience(
+                role=e["role"],
+                company=e["company"],
+                start_date=e["start_date"],
+                end_date=e["end_date"],
+                bullets=_bullets(e["bullets"]),
+            )
+            for e in data["experiences"]
+        )
+        projects = tuple(
+            Project(name=p["name"], url=p["url"], bullets=_bullets(p["bullets"]))
+            for p in data["projects"]
+        )
+        education = tuple(Education(**e) for e in data["education"])
+        awards = tuple(Award(**a) for a in data["awards"])
+        run = Run(**data["run_result"]["run"])
+        run_result = RunResult(**data["run_result"])
+        tailored = TailoredResume(
+            contact=contact,
+            summary=data["summary"],
+            skills=skills,
+            experiences=experiences,
+            projects=projects,
+            education=education,
+            awards=awards,
+            dropped=tuple(DropReason(**d) for d in data.get("dropped", [])),
+            rationale=data.get("rationale", ""),
+            grounding=tuple(GroundedCitation(**g) for g in data.get("grounding", [])),
+            jobs=tuple(),
+            run_result=run_result,
+        )
+        tex_source = render_tex(tailored)
+        txt_source = render_text(tailored)
+        json_source = render_json(tailored)
+        ats_report = ats_check(
+            tailored,
+            tex_source=tex_source,
+            pdf_path=None,
+            txt_source=txt_source,
+            jds=(),
+        )
+        run_dir = Path(edited_json_path).parent
+        (run_dir / "tailored.tex").write_text(tex_source)
+        (run_dir / "tailored.txt").write_text(txt_source)
+        (run_dir / "tailored.json").write_text(json_source)
+        (run_dir / "match_report.md").write_text(
+            render_match_report(run, run_result, tailored, ats_report)
+        )
+        return tailored
 
     def diff(self, other_run_id: str) -> str:
         """Return a markdown diff between this run and a prior run."""
-        raise NotImplementedError("Tailor.diff is not yet implemented")
+        import difflib
+
+        current = self._load_report()
+        prior = (self._tailored_dir / other_run_id / "match_report.md").read_text()
+        return "\n".join(
+            difflib.unified_diff(
+                prior.splitlines(),
+                current.splitlines(),
+                fromfile=other_run_id,
+                tofile="current",
+                lineterm="",
+            )
+        )
+
+    # ------------------------------------------------------------------
+    # Internals
+    # ------------------------------------------------------------------
+
+    def _load_master(self) -> MasterResume:
+        if isinstance(self._resume_input, MasterResume):
+            return self._resume_input
+        if self._master_json.exists():
+            return _read_master_json(self._master_json)
+        master = parse_tex(Path(self._resume_input))
+        self._master_json.parent.mkdir(parents=True, exist_ok=True)
+        self._master_json.write_text(render_json(_to_tailored(master)))
+        return master
+
+    def _load_jds(self) -> tuple[JobDescription, ...]:
+        if isinstance(self._jd_input, JobDescription):
+            return (self._jd_input,)
+        retriever = JobDescriptionRetriever(self._cache_dir)
+        try:
+            jd = retriever.retrieve(self._jd_input)
+        except JobDescriptionRetrievalError:
+            raise
+        return (jd,)
+
+    def _persist(
+        self,
+        tailored: TailoredResume,
+        tex_source: str,
+        txt_source: str,
+        ats_report,
+    ) -> Path:
+        run_dir = self._tailored_dir / tailored.run.id
+        run_dir.mkdir(parents=True, exist_ok=True)
+        (run_dir / "tailored.tex").write_text(tex_source)
+        (run_dir / "tailored.txt").write_text(txt_source)
+        (run_dir / "tailored.json").write_text(render_json(tailored))
+        (run_dir / "match_report.md").write_text(
+            render_match_report(
+                tailored.run, tailored.run_result, tailored, ats_report
+            )
+        )
+        return run_dir
+
+    def _load_report(self) -> str:
+        runs = sorted(self._tailored_dir.iterdir(), key=lambda p: p.stat().st_mtime)
+        if not runs:
+            raise ResumeTailoringError("No runs found")
+        return (runs[-1] / "match_report.md").read_text()
 
 
-__all__ = ["Tailor"]
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _new_uuid() -> str:
+    from uuid import uuid4
+
+    return str(uuid4())
+
+
+def _hash_jd_urls(jds: tuple[JobDescription, ...]) -> str:
+    blob = "|".join(jd.url for jd in jds)
+    return hashlib.sha256(blob.encode()).hexdigest()[:16]
+
+
+def _outcome_from_ats(report) -> FinalOutcome:
+    if report.all_passed:
+        return FinalOutcome.SUCCESS
+    for gate in report.failed_gates:
+        return FinalOutcome.ATS_HARD_FAIL
+    return FinalOutcome.SUCCESS
+
+
+def _read_master_json(path: Path) -> MasterResume:
+    """Reconstruct a MasterResume from a previously written JSON snapshot.
+
+    The JSON snapshot is produced by ``render_json`` against a TailoredResume;
+    we recover only the master fields.
+    """
+    from gethired.models import (
+        Award,
+        Bullet,
+        ContactInformation,
+        Education,
+        Experience,
+        Project,
+        SkillsByCategory,
+    )
+
+    data = json.loads(path.read_text())
+    contact = ContactInformation(**data["contact"])
+    skills = SkillsByCategory(
+        categories={k: tuple(v) for k, v in data["skills"]["categories"].items()}
+    )
+
+    def _bullets(items: list[dict]) -> tuple[Bullet, ...]:
+        return tuple(Bullet(text=b["text"]) for b in items)
+
+    experiences = tuple(
+        Experience(
+            role=e["role"],
+            company=e["company"],
+            start_date=e["start_date"],
+            end_date=e["end_date"],
+            bullets=_bullets(e["bullets"]),
+        )
+        for e in data["experiences"]
+    )
+    projects = tuple(
+        Project(name=p["name"], url=p["url"], bullets=_bullets(p["bullets"]))
+        for p in data["projects"]
+    )
+    education = tuple(Education(**e) for e in data["education"])
+    awards = tuple(Award(**a) for a in data["awards"])
+    return MasterResume(
+        contact=contact,
+        summary=data["summary"],
+        skills=skills,
+        experiences=experiences,
+        projects=projects,
+        education=education,
+        awards=awards,
+    )
+
+
+def _to_tailored(master: MasterResume) -> TailoredResume:
+    """Wrap a master resume in a TailoredResume for JSON serialisation."""
+    from gethired.models import TailoredResume as _TR
+
+    return _TR(
+        contact=master.contact,
+        summary=master.summary,
+        skills=master.skills,
+        experiences=master.experiences,
+        projects=master.projects,
+        education=master.education,
+        awards=master.awards,
+        dropped=(),
+        rationale="Master snapshot",
+        grounding=(),
+        jobs=(),
+        run_result=RunResult(
+            run=Run(
+                id=str(_new_uuid()),
+                started_at=utcnow_iso(),
+                master_hash=master.content_hash(),
+                jd_urls_hash="",
+                model="master",
+                draft_model=None,
+            ),
+            completed_at=utcnow_iso(),
+            duration_seconds=0.0,
+            total_input_tokens=0,
+            total_output_tokens=0,
+            retry_attempts=0,
+            final_outcome=FinalOutcome.SUCCESS,
+            jobs=(),
+        ),
+    )
+
+
+__all__ = ["DEFAULT_CACHE_DIR", "DEFAULT_DATA_DIR", "DEFAULT_MASTER_JSON", "Tailor"]

@@ -66,3 +66,15 @@ CONSENT_TEXT: str = (
 
 TIMESTAMP_ISO_FORMAT: str = "%Y-%m-%dT%H:%M:%S.%fZ"
 """ISO-8601 UTC timestamp format with millisecond precision."""
+
+DEFAULT_DATA_DIR: str = "data"
+"""Default directory for master.json and JD cache."""
+
+DEFAULT_TAILORED_DIR: str = "tailored"
+"""Default directory for tailored run outputs."""
+
+DEFAULT_CACHE_DIR: str = "data/jd_cache"
+"""Default subdirectory for cached JDs."""
+
+DEFAULT_MASTER_JSON: str = "data/master.json"
+"""Default path for the master JSON snapshot."""
