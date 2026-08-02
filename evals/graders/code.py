@@ -11,6 +11,8 @@ import json
 import re
 from collections.abc import Callable
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
 
 from gethired.models import MasterResume, TailoredResume
 from gethired.normalize import (
@@ -168,6 +170,242 @@ def code_json_round_trip(name: str, tailored: TailoredResume) -> GraderResult:
         else "JSON round-trip missing fields"
     )
     return GraderResult(name=name, passed=passed, detail=detail)
+
+
+# ---------------------------------------------------------------------------
+# Agent-evaluation graders (deepeval-style component + reasoning + execution)
+# ---------------------------------------------------------------------------
+
+# Names of the Writer agent's read-only tools. Used by component-level graders
+# to assert that the agent picked the right tool for the right job.
+WRITER_TOOL_NAMES: frozenset[str] = frozenset(
+    {
+        "lookup_experience",
+        "lookup_project",
+        "list_skills",
+        "list_projects",
+        "list_education",
+        "list_awards",
+        "read_jd_summary",
+    }
+)
+
+
+def code_tool_correctness(
+    name: str,
+    trace_path: str,
+    expected_tools: tuple[str, ...] = (),
+) -> GraderResult:
+    """Component-level grader (deepeval ``ToolCorrectnessMetric``).
+
+    Compares the set of tool names the Writer agent actually invoked
+    (recorded in ``tailored/<run-id>/trace.jsonl`` as ``tool`` spans)
+    against the expected tool sequence. Passes iff the multisets match.
+    """
+    actual = _read_tool_names(trace_path)
+    expected_set = set(expected_tools)
+    if not actual:
+        return GraderResult(
+            name=name,
+            passed=False,
+            detail=f"no tool spans recorded; expected {sorted(expected_set)}",
+        )
+    if not expected_set:
+        return GraderResult(
+            name=name,
+            passed=True,
+            detail=f"agent invoked {sorted(actual)}; no expected set declared",
+            score=1.0,
+        )
+    missing = expected_set - actual
+    extra = actual - expected_set
+    passed = not missing
+    detail_parts: list[str] = []
+    if missing:
+        detail_parts.append(f"missing tools: {sorted(missing)}")
+    if extra:
+        detail_parts.append(f"extra tools: {sorted(extra)}")
+    if passed:
+        detail_parts.append("agent tool selection matches expected set")
+    expected_size = len(expected_set)
+    score = (
+        len(expected_set & actual) / expected_size if expected_size else 1.0
+    )
+    return GraderResult(
+        name=name,
+        passed=passed,
+        detail="; ".join(detail_parts) if detail_parts else "tools match",
+        score=score,
+    )
+
+
+def code_argument_correctness(
+    name: str,
+    trace_path: str,
+    zero_arg_tools: frozenset[str] = frozenset(
+        {"list_skills", "list_projects", "list_education", "list_awards", "read_jd_summary"}
+    ),
+) -> GraderResult:
+    """Component-level grader (deepeval ``ArgumentCorrectnessMetric``).
+
+    Verifies that every ``tool`` span in the trace that requires
+    arguments actually carries at least one attribute. Tools that
+    legitimately take no arguments (``list_skills`` etc.) are exempt.
+    """
+    spans = _read_spans(trace_path, kind="tool")
+    if not spans:
+        return GraderResult(
+            name=name,
+            passed=False,
+            detail="no tool spans in trace",
+        )
+    bad = [
+        span["name"]
+        for span in spans
+        if span["name"] not in zero_arg_tools and not span["attributes"]
+    ]
+    passed = not bad
+    detail = (
+        f"all {len(spans)} tool spans carry arguments"
+        if passed
+        else f"{len(bad)}/{len(spans)} tool spans missing arguments: {bad}"
+    )
+    return GraderResult(
+        name=name, passed=passed, detail=detail,
+        score=1.0 if passed else (len(spans) - len(bad)) / len(spans),
+    )
+
+
+def code_plan_adherence(
+    name: str,
+    trace_path: str,
+) -> GraderResult:
+    """Reasoning-layer grader (deepeval ``PlanAdherenceMetric``).
+
+    Flags the agent for repeated invocations of the same tool with
+    identical attributes — a sign that the agent deviated from its
+    own plan by re-asking the same question.
+    """
+    spans = _read_spans(trace_path, kind="tool")
+    seen: dict[tuple[str, str], int] = {}
+    for span in spans:
+        key = (span["name"], json.dumps(span["attributes"], sort_keys=True, default=str))
+        seen[key] = seen.get(key, 0) + 1
+    repeats = {key: count for key, count in seen.items() if count > 1}
+    passed = not repeats
+    detail = (
+        "no duplicate tool invocations"
+        if passed
+        else f"{len(repeats)} tool invocations repeated: {sorted(repeats)}"
+    )
+    return GraderResult(name=name, passed=passed, detail=detail)
+
+
+def code_plan_quality(
+    name: str,
+    trace_path: str,
+    expected_first_tool: str = "list_skills",
+) -> GraderResult:
+    """Reasoning-layer grader (deepeval ``PlanQualityMetric``).
+
+    Asserts the agent's first tool call is a survey tool
+    (``list_skills`` by default) rather than a deep lookup. Surveying
+    before diving is the documented plan; flunking this grader
+    indicates the agent jumped to detail without context.
+    """
+    spans = _read_spans(trace_path, kind="tool")
+    if not spans:
+        return GraderResult(
+            name=name, passed=False, detail="no tool spans in trace"
+        )
+    first = spans[0]["name"]
+    passed = first == expected_first_tool
+    detail = (
+        f"first tool was {first} (matches expected {expected_first_tool})"
+        if passed
+        else f"first tool was {first}, expected survey tool {expected_first_tool}"
+    )
+    return GraderResult(name=name, passed=passed, detail=detail)
+
+
+def code_step_efficiency(
+    name: str,
+    trace_path: str,
+    max_tool_calls: int = 6,
+) -> GraderResult:
+    """Overall-execution grader (deepeval ``StepEfficiencyMetric``).
+
+    Flags a run when the agent invokes more than ``max_tool_calls``
+    read-only tools. Exceeding the budget is a sign of inefficient
+    planning or repeated probing for already-known information.
+    """
+    spans = _read_spans(trace_path, kind="tool")
+    n = len(spans)
+    passed = n <= max_tool_calls
+    detail = (
+        f"{n} tool calls within budget {max_tool_calls}"
+        if passed
+        else f"{n} tool calls exceed budget {max_tool_calls}"
+    )
+    return GraderResult(
+        name=name, passed=passed, detail=detail,
+        score=min(1.0, max_tool_calls / n) if n else 1.0,
+    )
+
+
+def code_task_completion(
+    name: str,
+    trace_path: str,
+    tailored: TailoredResume,
+) -> GraderResult:
+    """Overall-execution grader (deepeval ``TaskCompletionMetric``).
+
+    Combines the agent-trace presence (the agent must have produced
+    at least one TAILOR span) with structural completeness of the
+    tailored resume. Passes iff the trace records a TAILOR and the
+    resume is well-formed.
+    """
+    spans = _read_spans(trace_path, kind="agent")
+    has_tailor_span = any(s["name"] == "tailor.run" for s in spans)
+    summary_present = bool(tailored.summary and tailored.summary.strip())
+    experiences_present = bool(tailored.experiences)
+    passed = has_tailor_span and summary_present and experiences_present
+    detail = (
+        "tailor.run span present, summary + experiences populated"
+        if passed
+        else (
+            f"missing: "
+            f"{[] if has_tailor_span else ['tailor.run']}"
+            f"{[] if summary_present else ['summary']}"
+            f"{[] if experiences_present else ['experiences']}"
+        )
+    )
+    return GraderResult(name=name, passed=passed, detail=detail)
+
+
+# ---------------------------------------------------------------------------
+# Helpers (private)
+# ---------------------------------------------------------------------------
+
+
+def _read_spans(trace_path: str, kind: str | None = None) -> list[dict[str, Any]]:
+    """Read span records from a trace.jsonl file."""
+    path = Path(trace_path)
+    if not path.exists():
+        return []
+    records: list[dict[str, Any]] = []
+    for line in path.read_text().splitlines():
+        if not line.strip():
+            continue
+        record = json.loads(line)
+        if kind is None or record.get("kind") == kind:
+            records.append(record)
+    return records
+
+
+def _read_tool_names(trace_path: str) -> set[str]:
+    """Return the set of tool names invoked (one per span, deduplicated)."""
+    return {span["name"] for span in _read_spans(trace_path, kind="tool")}
 
 
 # ---------------------------------------------------------------------------
