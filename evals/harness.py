@@ -407,11 +407,13 @@ def _resolve_args(
     """Resolve special argument placeholders against the output.
 
     Supported placeholders:
+        ``$output``     → the entire output dict
         ``$master``     → the parsed MasterResume from the shared cache
         ``$tailored``   → the TailoredResume if present
         ``$text``       → the tailored text (summary + bullets joined)
-        ``$jd``         → the JobDescription text if present
-        ``$value``      → a static value in the args dict
+        ``$jd_text``    → the JobDescription full text
+        ``$analysis``   → the DescriptionAnalysis object
+        ``$<key>``      → output[key] for any other output key
 
     The reserved key ``name`` in the YAML is treated as a display label
     and stripped before passing the rest to the grader function.
@@ -422,10 +424,12 @@ def _resolve_args(
             continue
         if isinstance(raw, str) and raw.startswith("$"):
             placeholder = raw[1:]
-            if placeholder in output:
-                resolved[key] = output[placeholder]
+            if placeholder == "output":
+                resolved[key] = output
             elif placeholder == "master":
                 resolved[key] = shared_master or task.input.get("__master__")
+            elif placeholder in output:
+                resolved[key] = output[placeholder]
             else:
                 resolved[key] = None
         else:

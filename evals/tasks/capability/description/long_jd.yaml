@@ -1,0 +1,19 @@
+task:
+  id: description_cap_long_jd
+  desc: Description agent handles very long JD text without truncating responsibilities
+  category: description
+  type: description
+  tags: [capability]
+  input:
+    jd_text: |
+      We are hiring an ML Platform Engineer. ${'X' * 4000}
+      Responsibilities include designing systems, deploying models,
+      leading architecture reviews, and mentoring junior engineers.
+    must_have_keywords:
+      - ml platform
+  graders:
+    - name: code.field_present
+      args:
+        name: analysis_present
+        resume: $analysis
+        path: role

@@ -1,0 +1,26 @@
+task:
+  id: writer_cap_keyword_injection
+  desc: Writer injects JD-specific keywords not already in master summary
+  category: writer
+  type: writer
+  tags: [capability]
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: Looking for an expert in gRPC, Apache Kafka, and Linkerd.
+    jd_title: Distributed Systems Engineer
+    must_have_keywords:
+      - grpc
+      - kafka
+      - linkerd
+  graders:
+    - name: code.text_contains
+      args:
+        name: grpc_in_text
+        text: $text
+        substring: gRPC
+    - name: code.text_contains
+      args:
+        name: kafka_in_text
+        text: $text
+        substring: Kafka

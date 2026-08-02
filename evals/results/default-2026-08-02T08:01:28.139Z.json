@@ -1,0 +1,737 @@
+{
+  "suite_name": "default",
+  "started_at": "2026-08-02T08:01:28.030Z",
+  "completed_at": "2026-08-02T08:01:28.139Z",
+  "n_tasks": 27,
+  "n_passing_tasks": 27,
+  "n_trials": 27,
+  "pass_rate": 1.0,
+  "task_outcomes": [
+    {
+      "task_id": "critic_ats_gate_evaluation_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'pdf_compiles' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'bullets_quantified' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "critic_grounding_violation_detected_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'QuantumScript' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "critic_plagiarism_violation_detected_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'designed and deployed isolated ai' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "critic_style_violation_detected_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'comprehensive' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "description_must_have_extraction_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "role='Unknown role'",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "description_responsibilities_extraction_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "role='Unknown role'",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "description_role_extraction_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Machine Learning' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "description_seniority_detection_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'senior' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "fetcher_cache_hit_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Cached body' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'cached-jd' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "fetcher_jsonld_parsing_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.equal",
+              "passed": true,
+              "detail": "values match",
+              "score": 1.0
+            },
+            {
+              "name": "code.equal",
+              "passed": true,
+              "detail": "values match",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'kubernetes' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "fetcher_retry_on_404_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'after 3 attempts' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "fetcher_url_extraction_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.equal",
+              "passed": true,
+              "detail": "values match",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_awards_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "awards=(Award(title='Winner & Team Lead', organization='Microsoft Devenger 2.0 Hackathon', date='September 2019', description='Led a multidisciplinary team to first place, developing machine learning solutions and supporting infrastructure on Azure.'), Award(title='Finalist & Division Winner', organization='Unilever Datathon (Skillenza)', date='February 2020', description='Developed demand forecasting models and end-to-end machine learning workflows on Azure, earning division winner recognition in the Unilever Datathon.'))",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Microsoft Devenger' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Unilever Datathon' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_basic_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "contact.name='Placeholder Name'",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "contact.email='placeholder@example.com'",
+              "score": 1.0
+            },
+            {
+              "name": "code.equal",
+              "passed": true,
+              "detail": "values match",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_bullet_count_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "experiences has length 10, expected 10",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "projects has length 3, expected 3",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "education has length 1, expected 1",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "awards has length 2, expected 2",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_contact_extraction_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring '5555550100' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Test City' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'github.com/gethired' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'linkedin.com/in/gethired' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_education_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 1.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 1.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "education=(Education(institution='Ramaiah Institute of Technology', location='Test City', degree='Bachelor of Engineering', major='Electronics and Communication Engineering', graduation='Graduated 2019', gpa='8.32'),)",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring '8.32' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_skills_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 1.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 1.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "skills.categories={'Programming Languages': ('Python', 'Golang', 'Rust', 'SQL'), 'Machine Learning & AI': ('PyTorch', 'TensorFlow', 'vLLM', 'Hugging Face'), 'Cloud & Infrastructure': ('AWS', 'GCP', 'Kubernetes', 'Docker', 'Modal'), 'Backend & Platform Engineering': ('FastAPI', 'OpenTelemetry'), 'Datastores & Retrieval': ('PostgreSQL', 'MongoDB', 'Redis', 'Elasticsearch')}",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Python' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "tailor_e2e_platform_engineer_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 21.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 21.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "contact=ContactInformation(name='Placeholder Name', city='Test City', phone='5555550100', email='placeholder@example.com', github_url='https://github.com/gethired', linkedin_url='https://linkedin.com/in/gethired')",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "experiences has length 10, expected 10",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "tailor_e2e_senior_ml_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 17.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 17.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "contact=ContactInformation(name='Placeholder Name', city='Test City', phone='5555550100', email='placeholder@example.com', github_url='https://github.com/gethired', linkedin_url='https://linkedin.com/in/gethired')",
+              "score": 1.0
+            },
+            {
+              "name": "code.no_banned_words",
+              "passed": true,
+              "detail": "no banned words present",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Python' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "tailor_e2e_traceability_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 16.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 16.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "run=Run(id='5edb0fe0-1525-4e34-bd9f-6f6739baddad', started_at='2026-08-02T08:01:28.113Z', master_hash='15c83d1b25c6ef220548a957286206eae99c1cad85d08e05d827c333ee56a72d', jd_urls_hash='c72ce086fafb9e92', model='deterministic', draft_model=None)",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "jobs has length 7, expected 7",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_anti_ai_no_banned_words_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.no_banned_words",
+              "passed": true,
+              "detail": "no banned words present",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_grounding_no_invention_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.no_banned_words",
+              "passed": true,
+              "detail": "no banned words present",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_not_contains",
+              "passed": true,
+              "detail": "forbidden '99999999' absent",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_json_round_trip_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.json_round_trip",
+              "passed": true,
+              "detail": "JSON round-trip succeeded",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_no_jd_plagiarism_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.no_jd_plagiarism",
+              "passed": true,
+              "detail": "no n-gram overlap",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_numbers_in_master_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.numbers_in_master",
+              "passed": true,
+              "detail": "all numbers present in master",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "writer_summary_keywords_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 0.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 0.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Python' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Kubernetes' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

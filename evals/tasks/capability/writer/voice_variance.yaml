@@ -1,0 +1,29 @@
+task:
+  id: writer_cap_voice_variance
+  desc: Writer preserves bullet-length variance from voice profile
+  category: writer
+  type: writer
+  tags: [capability]
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: Senior ML Engineer role with Python and Kubernetes.
+    jd_title: Senior ML Engineer
+    must_have_keywords:
+      - python
+      - kubernetes
+  graders:
+    - name: code.field_length
+      args:
+        name: experiences_present
+        resume: $tailored
+        path: experiences
+        expected: 10
+    - name: code.no_banned_words
+      args:
+        name: no_ai_tell
+        text: $text
+        banned:
+          - leverage
+          - robust
+          - seamless

@@ -1,0 +1,19 @@
+task:
+  id: tailor_cap_preserves_all_master_numbers
+  desc: Tailor output preserves every number that exists in the master
+  category: tailor
+  type: tailor
+  tags: [capability]
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: Senior ML Engineer role with Python and Kubernetes.
+    jd_title: Senior ML Engineer
+    must_have_keywords:
+      - python
+  graders:
+    - name: code.numbers_in_master
+      args:
+        name: no_invented_numbers
+        tailored_text: $text
+        master: $master

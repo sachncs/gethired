@@ -1,0 +1,26 @@
+task:
+  id: writer_cap_summary_includes_keyword
+  desc: Writer summary includes at least one JD must-have keyword
+  category: writer
+  type: writer
+  tags: [capability]
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: Senior Rust Engineer role with WebAssembly and Tokio.
+    jd_title: Senior Rust Engineer
+    must_have_keywords:
+      - rust
+      - webassembly
+      - tokio
+  graders:
+    - name: code.text_contains
+      args:
+        name: rust_in_text
+        text: $text
+        substring: Rust
+    - name: code.text_contains
+      args:
+        name: webassembly_in_text
+        text: $text
+        substring: WebAssembly

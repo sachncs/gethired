@@ -1,0 +1,37 @@
+task:
+  id: fetcher_cap_long_jd
+  desc: Fetcher handles very long JDs (>5k chars) without truncation
+  category: fetcher
+  type: code
+  tags: [capability]
+  input:
+    __output__:
+      url: https://example.com/long-jd
+      title: Principal Engineer
+      company: BigCo
+      text: |
+        We are hiring a Principal Engineer. ${'L' * 5000}Required skills: Python, Rust, Go, Kubernetes, AWS, GCP, Azure, Terraform, Docker, Helm, Kafka, Spark, Flink, Cassandra, Redis, PostgreSQL, MongoDB, DynamoDB, BigQuery, Snowflake, Databricks, Airflow, dbt, Looker, Tableau.
+      keywords:
+        - python
+        - rust
+        - go
+        - kubernetes
+        - aws
+      must_have_keywords:
+        - python
+        - rust
+      nice_to_have_keywords:
+        - go
+        - aws
+      content_hash: long-001
+  graders:
+    - name: code.text_contains
+      args:
+        name: title_extracted
+        text: Principal Engineer
+        substring: Principal Engineer
+    - name: code.field_present
+      args:
+        name: must_have_extracted
+        resume: $output
+        path: must_have_keywords

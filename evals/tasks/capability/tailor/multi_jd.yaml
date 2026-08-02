@@ -1,0 +1,61 @@
+task:
+  id: tailor_cap_multi_jd
+  desc: Tailor orchestrator runs full pipeline against a multi-paragraph JD
+  category: tailor
+  type: tailor
+  tags: [capability]
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: |
+      Senior Staff ML Engineer — Acme AI
+      Location: Remote
+
+      About the role:
+      You will own the ML platform across 50+ models in production.
+      Lead a team of 5 engineers. Define the technical roadmap.
+      Partner with research, product, and infrastructure teams.
+
+      Responsibilities:
+      - Architect and deploy training and serving infrastructure for LLM applications
+      - Build observability, evaluation, and rollback systems for production models
+      - Lead design reviews and mentor senior engineers
+      - Drive incident response and post-mortems for ML systems
+
+      Required:
+      - 7+ years building production ML systems
+      - Deep expertise in Kubernetes, Python, and distributed systems
+      - Track record of leading engineering teams
+
+      Nice to have:
+      - Experience with vLLM, TensorRT, or other inference optimizers
+      - Open-source contributions
+      - Publications in ML systems (MLSys, OSDI, SOSP)
+    jd_title: Senior Staff ML Engineer
+    jd_company: Acme AI
+    must_have_keywords:
+      - python
+      - kubernetes
+      - llm
+      - inference
+  graders:
+    - name: code.field_present
+      args:
+        name: tailored_present
+        resume: $tailored
+        path: contact
+    - name: code.field_length
+      args:
+        name: experiences_preserved
+        resume: $tailored
+        path: experiences
+        expected: 10
+    - name: code.no_banned_words
+      args:
+        name: no_ai_tell_in_long_jd
+        text: $text
+        banned:
+          - leverage
+          - robust
+          - seamless
+          - comprehensive

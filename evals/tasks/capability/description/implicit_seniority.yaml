@@ -1,0 +1,18 @@
+task:
+  id: description_cap_implicit_seniority
+  desc: Description agent infers seniority from experience years ("5+ years" implies senior)
+  category: description
+  type: description
+  tags: [capability]
+  input:
+    jd_text: |
+      We need a candidate with 7+ years of experience building production
+      systems. You will lead technical initiatives.
+    must_have_keywords:
+      - production systems
+  graders:
+    - name: code.text_contains
+      args:
+        name: seniority_in_text
+        text: senior
+        substring: senior

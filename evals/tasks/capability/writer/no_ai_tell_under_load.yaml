@@ -1,0 +1,35 @@
+task:
+  id: writer_cap_no_ai_tell_under_load
+  desc: Writer produces no AI-tell words even when JD text is dense
+  category: writer
+  type: writer
+  tags: [capability]
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: |
+      We are hiring a Senior Engineer to build robust, comprehensive ML platforms.
+      You will leverage distributed systems to deliver seamless solutions.
+      This role requires champion-level expertise and navigating complex
+      architectures. Must demonstrate elevating team capabilities.
+    jd_title: Senior Engineer
+    must_have_keywords:
+      - ml platforms
+      - distributed systems
+  graders:
+    - name: code.no_banned_words
+      args:
+        name: no_robust_comprehensive_leverage
+        text: $text
+        banned:
+          - robust
+          - comprehensive
+          - leverage
+          - leveraging
+          - seamless
+          - champion
+          - championed
+          - navigate
+          - navigating
+          - elevate
+          - elevating

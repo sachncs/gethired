@@ -21,6 +21,7 @@ from evals.harness import EvalHarness, GraderRegistry, load_suite
 def run(
     tasks_dir: Path = typer.Option(Path("evals"), "--tasks", "-t"),
     category: str | None = typer.Option(None, "--category", "-c"),
+    tag: str | None = typer.Option(None, "--tag", help="Filter by tag (e.g. capability, regression)"),
     trials: int = typer.Option(1, "--trials", "-n"),
     model: str | None = typer.Option(None, "--model", "-m"),
     suite_name: str = typer.Option("default", "--suite", "-s"),
@@ -33,6 +34,8 @@ def run(
     suite = load_suite(tasks_dir)
     if category:
         suite = tuple(t for t in suite if t.category == category)
+    if tag:
+        suite = tuple(t for t in suite if tag in t.tags)
 
     if not suite:
         typer.echo("No tasks found (or matched by filter).", err=True)
@@ -50,10 +53,21 @@ def run(
 
     typer.echo(
         f"Running {len(suite)} task(s) × {trials} trial(s) "
-        f"in category={category or 'all'}"
+        f"in category={category or 'all'}, tag={tag or 'all'}"
     )
     result = harness.run_suite(suite)
     typer.echo(result.to_markdown())
+
+    # Tag breakdown
+    cap_only = sum(1 for t in suite if t.tags == ("capability",))
+    reg_only = sum(1 for t in suite if t.tags == ("regression",))
+    both = sum(1 for t in suite if "capability" in t.tags and "regression" in t.tags)
+    if cap_only or reg_only or both:
+        typer.echo("")
+        typer.echo(
+            f"Tag breakdown: {reg_only} regression-only + "
+            f"{cap_only} capability-only + {both} both"
+        )
 
 
 def main() -> None:
