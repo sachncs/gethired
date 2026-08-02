@@ -1,0 +1,19 @@
+task:
+  id: description_responsibilities_extraction_001
+  desc: Description agent extracts responsibility statements from JD
+  category: description
+  type: description
+  tags:
+  - capability
+  input:
+    jd_text: 'You will design ML platforms and lead architecture reviews.
+
+      Responsibilities include productionisation of models.
+
+      '
+  graders:
+  - name: code.field_present
+    args:
+      name: analysis_present
+      resume: $analysis
+      path: role

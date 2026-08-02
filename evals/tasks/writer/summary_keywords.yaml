@@ -1,0 +1,29 @@
+task:
+  id: writer_summary_keywords_001
+  desc: Summary mentions key JD keywords naturally
+  category: writer
+  type: writer
+  tags:
+  - capability
+  input:
+    __master__: __load_master__
+    jd_text: 'Need Senior ML Engineer with Python, Kubernetes, and PyTorch.
+
+      '
+    jd_title: Senior ML Engineer
+    must_have_keywords:
+    - python
+    - kubernetes
+    - pytorch
+    deterministic: true
+  graders:
+  - name: code.text_contains
+    args:
+      name: summary_mentions_python
+      text: $text
+      substring: Python
+  - name: code.text_contains
+    args:
+      name: summary_mentions_kubernetes
+      text: $text
+      substring: Kubernetes

@@ -1,0 +1,19 @@
+task:
+  id: parser_skills_001
+  desc: Parser produces 5 skill categories with correct items
+  category: parser
+  type: parser
+  tags: [regression]
+  input:
+    tex_path: tests/fixtures/resume.tex
+  graders:
+    - name: code.field_present
+      args:
+        name: programming_languages
+        resume: $master
+        path: skills.categories
+    - name: code.text_contains
+      args:
+        name: python_in_skills
+        text: Python
+        substring: Python

@@ -1,0 +1,38 @@
+task:
+  id: writer_anti_ai_no_banned_words_001
+  desc: Writer avoids AI-tell vocabulary (leverage, robust, comprehensive, etc.)
+  category: writer
+  type: writer
+  tags:
+  - regression
+  input:
+    __master__: __load_master__
+    jd_text: 'Senior ML Engineer role with Python, Kubernetes, and PyTorch.
+
+      '
+    jd_title: Senior ML Engineer
+    must_have_keywords:
+    - python
+    - kubernetes
+    deterministic: true
+  graders:
+  - name: code.no_banned_words
+    args:
+      name: no_ai_vocabulary
+      text: $text
+      banned:
+      - leverage
+      - leveraging
+      - robust
+      - seamless
+      - comprehensive
+      - holistic
+      - spearheaded
+      - championed
+      - delve
+      - navigate
+      - elevate
+      - fostering
+      - pivotal
+      - paramount
+      - cutting-edge

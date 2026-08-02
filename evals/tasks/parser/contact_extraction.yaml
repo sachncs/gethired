@@ -1,0 +1,29 @@
+task:
+  id: parser_contact_extraction_001
+  desc: "Parser extracts contact info: phone, city, github, linkedin"
+  category: parser
+  type: parser
+  tags: [regression]
+  input:
+    tex_path: tests/fixtures/resume.tex
+  graders:
+    - name: code.text_contains
+      args:
+        name: phone
+        text: "5555550100"
+        substring: "5555550100"
+    - name: code.text_contains
+      args:
+        name: city
+        text: Test City
+        substring: Test City
+    - name: code.text_contains
+      args:
+        name: github
+        text: "github.com/gethired"
+        substring: "github.com/gethired"
+    - name: code.text_contains
+      args:
+        name: linkedin
+        text: "linkedin.com/in/gethired"
+        substring: "linkedin.com/in/gethired"

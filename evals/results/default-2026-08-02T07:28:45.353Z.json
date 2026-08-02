@@ -1,0 +1,215 @@
+{
+  "suite_name": "default",
+  "started_at": "2026-08-02T07:28:45.333Z",
+  "completed_at": "2026-08-02T07:28:45.353Z",
+  "n_tasks": 6,
+  "n_passing_tasks": 4,
+  "n_trials": 6,
+  "pass_rate": 0.6666666666666666,
+  "task_outcomes": [
+    {
+      "task_id": "parser_awards_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "awards=(Award(title='Winner & Team Lead', organization='Microsoft Devenger 2.0 Hackathon', date='September 2019', description='Led a multidisciplinary team to first place, developing machine learning solutions and supporting infrastructure on Azure.'), Award(title='Finalist & Division Winner', organization='Unilever Datathon (Skillenza)', date='February 2020', description='Developed demand forecasting models and end-to-end machine learning workflows on Azure, earning division winner recognition in the Unilever Datathon.'))",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Microsoft Devenger' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Unilever Datathon' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_basic_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 1.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 1.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "contact.name='Placeholder Name'",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "contact.email='placeholder@example.com'",
+              "score": 1.0
+            },
+            {
+              "name": "code.equal",
+              "passed": true,
+              "detail": "values match",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_bullet_count_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "experiences has length 10, expected 10",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "projects has length 3, expected 3",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "education has length 1, expected 1",
+              "score": 1.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": true,
+              "detail": "awards has length 2, expected 2",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_contact_extraction_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised AttributeError: 'int' object has no attribute 'lower'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Test City' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'github.com/gethired' found",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'linkedin.com/in/gethired' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_education_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "education=(Education(institution='Ramaiah Institute of Technology', location='Test City', degree='Bachelor of Engineering', major='Electronics and Communication Engineering', graduation='Graduated 2019', gpa='8.32'),)",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised AttributeError: 'float' object has no attribute 'lower'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_skills_001",
+      "pass_rate": 1.0,
+      "pass_at_1": 1.0,
+      "pass_at_k": 1.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": true,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": true,
+              "detail": "skills.categories={'Programming Languages': ('Python', 'Golang', 'Rust', 'SQL'), 'Machine Learning & AI': ('PyTorch', 'TensorFlow', 'vLLM', 'Hugging Face'), 'Cloud & Infrastructure': ('AWS', 'GCP', 'Kubernetes', 'Docker', 'Modal'), 'Backend & Platform Engineering': ('FastAPI', 'OpenTelemetry'), 'Datastores & Retrieval': ('PostgreSQL', 'MongoDB', 'Redis', 'Elasticsearch')}",
+              "score": 1.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": true,
+              "detail": "substring 'Python' found",
+              "score": 1.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

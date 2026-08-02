@@ -1,0 +1,21 @@
+task:
+  id: description_seniority_detection_001
+  desc: Description agent correctly classifies seniority from JD text
+  category: description
+  type: description
+  tags:
+  - capability
+  input:
+    jd_text: 'We are hiring a Senior ML Engineer with 5+ years of experience
+
+      to lead our ML platform team. You will architect and deploy
+
+      distributed training pipelines.
+
+      '
+  graders:
+  - name: code.text_contains
+    args:
+      name: seniority_senior
+      text: senior
+      substring: senior

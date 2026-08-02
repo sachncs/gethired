@@ -1,0 +1,16 @@
+task:
+  id: fetcher_url_extraction_001
+  desc: Fetcher extracts URL from cached JD entry
+  category: fetcher
+  type: code
+  tags: [regression]
+  input:
+    __output__:
+      url: https://example.com/jobs/senior-ml
+      text: <html>...</html>
+  graders:
+    - name: code.equal
+      args:
+        name: url_preserved
+        actual: https://example.com/jobs/senior-ml
+        expected: https://example.com/jobs/senior-ml

@@ -1,0 +1,19 @@
+task:
+  id: parser_education_001
+  desc: Parser extracts education with CGPA intact
+  category: parser
+  type: parser
+  tags: [regression]
+  input:
+    tex_path: tests/fixtures/resume.tex
+  graders:
+    - name: code.field_present
+      args:
+        name: education_institution
+        resume: $master
+        path: education
+    - name: code.text_contains
+      args:
+        name: cgpa_preserved
+        text: "8.32"
+        substring: "8.32"

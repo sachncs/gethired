@@ -1,0 +1,16 @@
+task:
+  id: fetcher_retry_on_404_001
+  desc: Fetcher raises JobDescriptionRetrievalError after max retries on 404
+  category: fetcher
+  type: code
+  tags: [regression]
+  input:
+    __output__:
+      error: "Failed to fetch https://example.com/404-jd after 3 attempts"
+      retries: 3
+  graders:
+    - name: code.text_contains
+      args:
+        name: error_message_mentions_404
+        text: "Failed to fetch https://example.com/404-jd after 3 attempts"
+        substring: after 3 attempts

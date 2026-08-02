@@ -1,0 +1,20 @@
+task:
+  id: writer_json_round_trip_001
+  desc: Tailored resume serialises and parses through JSON cleanly
+  category: writer
+  type: writer
+  tags:
+  - regression
+  input:
+    __master__: __load_master__
+    jd_text: Senior ML Engineer role.
+    jd_title: Senior ML Engineer
+    must_have_keywords:
+    - kubernetes
+    - ''
+    deterministic: true
+  graders:
+  - name: code.json_round_trip
+    args:
+      name: json_round_trip_ok
+      tailored: $tailored

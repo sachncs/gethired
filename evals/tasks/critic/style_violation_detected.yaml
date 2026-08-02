@@ -1,0 +1,49 @@
+task:
+  id: critic_style_violation_detected_001
+  desc: Critic detects style violations (banned AI words)
+  category: critic
+  type: code
+  tags: [regression]
+  input:
+    __output__:
+      master:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      tailored:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: null
+          linkedin_url: null
+        summary: "Leveraged Python to deliver comprehensive solutions."
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      grounding: []
+      style:
+        - path: tailored
+          detail: "Banned word 'comprehensive' at position 30"
+      plagiarism: []
+  graders:
+    - name: code.text_contains
+      args:
+        name: violation_detected
+        text: Banned word 'comprehensive'
+        substring: comprehensive

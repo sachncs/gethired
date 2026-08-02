@@ -1,0 +1,28 @@
+task:
+  id: tailor_e2e_traceability_001
+  desc: End-to-end pipeline emits Job trail and GroundedCitations
+  category: tailor
+  type: tailor
+  tags:
+    - regression
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: Senior ML Engineer role with Python and Kubernetes.
+    jd_title: Senior ML Engineer
+    jd_company: Acme AI
+    must_have_keywords:
+      - python
+      - kubernetes
+  graders:
+    - name: code.field_present
+      args:
+        name: run_present
+        resume: $tailored
+        path: run
+    - name: code.field_length
+      args:
+        name: jobs_emitted
+        resume: $tailored
+        path: jobs
+        expected: 7

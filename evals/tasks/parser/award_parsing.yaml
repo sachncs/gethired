@@ -1,0 +1,24 @@
+task:
+  id: parser_awards_001
+  desc: Parser extracts awards with organisation and date
+  category: parser
+  type: parser
+  tags: [capability]
+  input:
+    tex_path: tests/fixtures/resume.tex
+  graders:
+    - name: code.field_present
+      args:
+        name: awards_present
+        resume: $master
+        path: awards
+    - name: code.text_contains
+      args:
+        name: devenger_award
+        text: Microsoft Devenger
+        substring: Microsoft Devenger
+    - name: code.text_contains
+      args:
+        name: unilever_award
+        text: Unilever Datathon
+        substring: Unilever Datathon

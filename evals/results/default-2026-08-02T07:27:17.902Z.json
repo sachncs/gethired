@@ -1,0 +1,215 @@
+{
+  "suite_name": "default",
+  "started_at": "2026-08-02T07:27:17.882Z",
+  "completed_at": "2026-08-02T07:27:17.902Z",
+  "n_tasks": 6,
+  "n_passing_tasks": 0,
+  "n_trials": 6,
+  "pass_rate": 0.0,
+  "task_outcomes": [
+    {
+      "task_id": "parser_awards_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_present() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_basic_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_present() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.field_present",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_present() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.equal",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_equal() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_bullet_count_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 1.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 1.0,
+          "grader_results": [
+            {
+              "name": "code.field_length",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_length() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_length() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_length() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.field_length",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_length() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_contact_extraction_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 1.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 1.0,
+          "grader_results": [
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_education_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_present() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "task_id": "parser_skills_001",
+      "pass_rate": 0.0,
+      "pass_at_1": 0.0,
+      "pass_at_k": 0.0,
+      "avg_duration_ms": 2.0,
+      "trials": [
+        {
+          "trial_index": 0,
+          "passed": false,
+          "duration_ms": 2.0,
+          "grader_results": [
+            {
+              "name": "code.field_present",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_field_present() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            },
+            {
+              "name": "code.text_contains",
+              "passed": false,
+              "detail": "grader raised TypeError: evals.graders.code.code_text_contains() got multiple values for keyword argument 'name'",
+              "score": 0.0
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

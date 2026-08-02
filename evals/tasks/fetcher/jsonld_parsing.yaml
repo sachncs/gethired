@@ -1,0 +1,32 @@
+task:
+  id: fetcher_jsonld_parsing_001
+  desc: Fetcher correctly parses JSON-LD JobPosting structured data
+  category: fetcher
+  type: code
+  tags: [capability]
+  input:
+    __output__:
+      url: https://jobs.lever.co/example/123
+      title: Staff ML Engineer
+      company: Example Corp
+      text: "Job description for Staff ML Engineer at Example Corp"
+      keywords: (machine learning, kubernetes, python)
+      must_have_keywords: (kubernetes, python)
+      nice_to_have_keywords: (machine learning,)
+      content_hash: eval-test-001
+  graders:
+    - name: code.equal
+      args:
+        name: title_parsed
+        actual: Staff ML Engineer
+        expected: Staff ML Engineer
+    - name: code.equal
+      args:
+        name: company_parsed
+        actual: Example Corp
+        expected: Example Corp
+    - name: code.text_contains
+      args:
+        name: kubernetes_keyword
+        text: machine learning, kubernetes, python
+        substring: kubernetes

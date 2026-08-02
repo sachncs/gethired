@@ -1,0 +1,21 @@
+task:
+  id: writer_numbers_in_master_001
+  desc: Any number in the tailored output must also exist in master.json
+  category: writer
+  type: writer
+  tags:
+  - capability
+  input:
+    __master__: __load_master__
+    jd_text: Need ML engineer with Kubernetes.
+    jd_title: Senior ML Engineer
+    must_have_keywords:
+    - kubernetes
+    - ''
+    deterministic: true
+  graders:
+  - name: code.numbers_in_master
+    args:
+      name: no_fabricated_numbers
+      tailored_text: $text
+      master: $master

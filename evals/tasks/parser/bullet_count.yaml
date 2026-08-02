@@ -1,0 +1,33 @@
+task:
+  id: parser_bullet_count_001
+  desc: Parser extracts all 10 experiences, 3 projects, 1 education, 2 awards
+  category: parser
+  type: parser
+  tags: [regression]
+  input:
+    tex_path: tests/fixtures/resume.tex
+  graders:
+    - name: code.field_length
+      args:
+        name: experiences_count
+        resume: $master
+        path: experiences
+        expected: 10
+    - name: code.field_length
+      args:
+        name: projects_count
+        resume: $master
+        path: projects
+        expected: 3
+    - name: code.field_length
+      args:
+        name: education_count
+        resume: $master
+        path: education
+        expected: 1
+    - name: code.field_length
+      args:
+        name: awards_count
+        resume: $master
+        path: awards
+        expected: 2

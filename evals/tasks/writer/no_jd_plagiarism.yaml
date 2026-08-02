@@ -1,0 +1,26 @@
+task:
+  id: writer_no_jd_plagiarism_001
+  desc: Writer does not verbatim copy 5-grams from JD into tailored bullets
+  category: writer
+  type: writer
+  tags: [regression]
+  input:
+    __master__: __load_master__
+    deterministic: true
+    jd_text: |
+      We are looking for an expert in quantum computing and space exploration
+      to pioneer novel approaches in molecular gastronomy for sustainable food
+      production across diverse planetary environments.
+    jd_title: Futurist Engineer
+    jd_company: SpaceFood Inc
+    must_have_keywords:
+      - quantum computing
+      - space exploration
+  graders:
+    - name: code.no_jd_plagiarism
+      args:
+        name: no_5gram_overlap
+        tailored_text: $text
+        jd_text: $jd_text
+        technical_allowlist:
+          - machine learning
