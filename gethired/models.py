@@ -508,6 +508,17 @@ class CoverLetter:
     recipient: str | None = None
 
 
+@dataclass(frozen=True, slots=True)
+class PreflightReport:
+    """Result of a Tailor preflight check (no LLM call)."""
+
+    tokens_estimate: int
+    expected_gates: tuple[str, ...]
+    jd_keyword_coverage: dict[str, float]
+    voice_drift_risk: float
+    missing_must_haves: tuple[str, ...]
+
+
 # ---------------------------------------------------------------------------
 # Tailored resume
 # ---------------------------------------------------------------------------
@@ -593,6 +604,7 @@ __all__ = [
     "ContactInformation",
     "CoverLetter",
     "CoverLetterParagraph",
+    "PreflightReport",
     "DropReason",
     "Education",
     "Experience",

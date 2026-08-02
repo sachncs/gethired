@@ -29,6 +29,7 @@ from gethired.models import (
     GroundedCitation,
     JobDescription,
     MasterResume,
+    PreflightReport,
     Run,
     RunResult,
     TailoredResume,
@@ -203,7 +204,6 @@ class Tailor:
             return tailored_with_jobs
 
         return tailored_with_jobs
-        return tailored_with_jobs
 
     def plan(self) -> dict[str, object]:
         """Estimate cost without executing the agent.
@@ -231,6 +231,48 @@ class Tailor:
                 "opening_verbs": list(profile.opening_verbs[:5]),
             },
         }
+
+    def preflight(self) -> PreflightReport:
+        """Estimate cost and gate outcomes without invoking the LLM.
+
+        Returns:
+            A ``PreflightReport`` summarising token estimate, expected ATS
+            gates, JD keyword coverage, voice drift risk, and any must-have
+            keywords missing from the master.
+        """
+        master = self.__load_master()
+        jds = self.__load_jds()
+        profile = build_profile(master)
+        analysis = (
+            analyze_description_multiple(jds)
+            if len(jds) > 1
+            else (analyze_description(jds[0]) if jds else None)
+        )
+        bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
+            len(p.bullets) for p in master.projects
+        )
+        tokens_estimate = 2_500 + bullets * 150
+        coverage: dict[str, float] = {}
+        master_text = master.to_markdown().lower()
+        if analysis is not None:
+            for keyword in analysis.must_have_skills:
+                coverage[keyword] = float(keyword.lower() in master_text)
+        missing = tuple(
+            kw for kw, score in coverage.items() if score < 1.0
+        ) if analysis is not None else ()
+        expected_gates = (
+            "ATS_HARD_PASS",
+            "BULLETS_QUANTIFIED",
+            "ACTION_VERBS_FIRST",
+        )
+        voice_drift_risk = min(1.0, bullets / max(profile.avg_bullet_length, 1) / 100)
+        return PreflightReport(
+            tokens_estimate=tokens_estimate,
+            expected_gates=expected_gates,
+            jd_keyword_coverage=coverage,
+            voice_drift_risk=voice_drift_risk,
+            missing_must_haves=missing,
+        )
 
     def finalize(self, edited_json_path: Path) -> TailoredResume:
         """Re-render an edited tailored.json without invoking the agent.

@@ -206,6 +206,29 @@ def cover(
 
 
 @app.command()
+def preflight(
+    urls: list[str] = typer.Argument(...),
+    resume: Path = typer.Option(Path("resume.tex"), "--resume", "-r"),
+    model: str | None = typer.Option(None, "--model", "-m"),
+) -> None:
+    """Dry-run preflight: estimate cost and gate outcomes without invoking the LLM."""
+    configure_logging()
+    ensure_consent()
+    jd = fetch_first_jd(urls)
+    tailor = Tailor(
+        resume=resume, job_description=jd, model=model, debug=False
+    )
+    report = tailor.preflight()
+    typer.echo("Preflight report")
+    typer.echo(f"  Tokens estimate: {report.tokens_estimate}")
+    typer.echo(f"  Expected gates:  {', '.join(report.expected_gates)}")
+    typer.echo(f"  Voice drift risk: {report.voice_drift_risk:.2f}")
+    typer.echo(f"  Missing must-haves: {', '.join(report.missing_must_haves) or 'none'}")
+    for keyword, coverage in report.jd_keyword_coverage.items():
+        typer.echo(f"  Keyword '{keyword}': {coverage:.0%}")
+
+
+@app.command()
 def validate(
     target: Path = typer.Argument(..., exists=True),
 ) -> None:
