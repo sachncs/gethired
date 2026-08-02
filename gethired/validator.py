@@ -10,6 +10,8 @@ from collections import Counter
 from dataclasses import dataclass
 from pathlib import Path
 
+import pymupdf
+
 from gethired.constants import BULLET_QUANTIFICATION_THRESHOLD
 from gethired.models import (
     AtsGate,
@@ -335,55 +337,39 @@ def gate_pdf_compiles(pdf_path: Path | None) -> AtsGateResult:
 def gate_pdf_text_extractable(pdf_path: Path | None) -> AtsGateResult:
     if pdf_path is None or not pdf_path.exists():
         return AtsGateResult(AtsGate.PDF_TEXT_EXTRACTABLE, passed=False, detail="PDF missing")
+    document = pymupdf.open(pdf_path)
     try:
-        import pymupdf  # type: ignore[import-not-found]
-
-        document = pymupdf.open(pdf_path)
-        try:
-            text = "\n".join(page.get_text() for page in document)
-        finally:
-            document.close()
-        if not text.strip():
-            return AtsGateResult(
-                AtsGate.PDF_TEXT_EXTRACTABLE,
-                passed=False,
-                detail="No text extractable from PDF",
-            )
-        return AtsGateResult(AtsGate.PDF_TEXT_EXTRACTABLE, passed=True, detail="OK")
-    except ImportError:
+        text = "\n".join(document[i].get_text() for i in range(len(document)))
+    finally:
+        document.close()
+    if not text.strip():
         return AtsGateResult(
             AtsGate.PDF_TEXT_EXTRACTABLE,
             passed=False,
-            detail="pymupdf not installed",
+            detail="No text extractable from PDF",
         )
+    return AtsGateResult(AtsGate.PDF_TEXT_EXTRACTABLE, passed=True, detail="OK")
 
 
 def gate_pdf_text_matches_txt(pdf_path: Path | None, txt_source: str) -> AtsGateResult:
     if pdf_path is None or not pdf_path.exists():
         return AtsGateResult(AtsGate.PDF_TEXT_MATCHES_TXT, passed=False, detail="PDF missing")
+    document = pymupdf.open(pdf_path)
     try:
-        import pymupdf  # type: ignore[import-not-found]
-
-        document = pymupdf.open(pdf_path)
-        try:
-            pdf_text = "\n".join(page.get_text() for page in document)
-        finally:
-            document.close()
-        pdf_normalised = normalise_whitespace(pdf_text)
-        txt_normalised = normalise_whitespace(txt_source)
-        if pdf_normalised == txt_normalised:
-            return AtsGateResult(AtsGate.PDF_TEXT_MATCHES_TXT, passed=True, detail="OK")
-        return AtsGateResult(
-            AtsGate.PDF_TEXT_MATCHES_TXT,
-            passed=False,
-            detail="PDF text and tailored.txt differ after normalisation",
+        pdf_text = "\n".join(
+            document[i].get_text() for i in range(len(document))
         )
-    except ImportError:
-        return AtsGateResult(
-            AtsGate.PDF_TEXT_MATCHES_TXT,
-            passed=False,
-            detail="pymupdf not installed",
-        )
+    finally:
+        document.close()
+    pdf_normalised = normalise_whitespace(pdf_text)
+    txt_normalised = normalise_whitespace(txt_source)
+    if pdf_normalised == txt_normalised:
+        return AtsGateResult(AtsGate.PDF_TEXT_MATCHES_TXT, passed=True, detail="OK")
+    return AtsGateResult(
+        AtsGate.PDF_TEXT_MATCHES_TXT,
+        passed=False,
+        detail="PDF text and tailored.txt differ after normalisation",
+    )
 
 
 def gate_section_headings_standard(tex_source: str) -> AtsGateResult:

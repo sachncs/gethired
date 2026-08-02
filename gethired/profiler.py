@@ -9,6 +9,7 @@ from __future__ import annotations
 import re
 from collections import Counter
 from statistics import mean, pstdev
+from typing import Final
 
 from gethired.models import Bullet, MasterResume, VoiceProfile
 

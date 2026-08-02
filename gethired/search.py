@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import os
 
+from pydantic_ai.capabilities import WebSearch
+
 from gethired.constants import WEBSEARCH_DEFAULT_PROVIDER, WEBSEARCH_PROVIDER_ENV_VAR
 from gethired.observability import step_logger
 
@@ -25,17 +27,13 @@ class Search:
     def provider(self) -> str:
         return self._provider
 
-    def capability(self):
+    def capability(self) -> WebSearch:
         """Return a configured WebSearch capability for a Pydantic AI Agent.
 
-        Importing pydantic_ai lazily to keep this module dependency-free for
-        unit tests that don't need the WebSearch capability itself.
+        The ``provider`` name is recorded as a description for audit logging;
+        the underlying tool selection is delegated to Pydantic AI.
         """
-        try:
-            from pydantic_ai.capabilities import WebSearch  # type: ignore[import-not-found]
-        except ImportError as exc:  # pragma: no cover - pydantic_ai always present
-            raise RuntimeError("pydantic-ai is required for WebSearch capability") from exc
-        return WebSearch(provider=self._provider)
+        return WebSearch(description=f"gethired web search ({self._provider})")
 
 
 __all__ = ["Search"]

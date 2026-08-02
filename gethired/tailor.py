@@ -95,7 +95,15 @@ class Tailor:
         self._resume_input = resume
         self._jd_input = job_description
         self._debug = debug
-        self._model = model or os.environ.get(MODEL_ENV_VAR)
+        resolved_model = model or os.environ.get(MODEL_ENV_VAR)
+        if not resolved_model and model_instance is None:
+            raise ConfigurationError(
+                "MODEL is required. Set the MODEL env var (e.g. 'MiniMax-M3', "
+                "'anthropic:claude-sonnet-4-5', 'openai:gpt-5') and API_KEY "
+                "(or ANTHROPIC_API_KEY / OPENAI_API_KEY), or pass "
+                "model_instance=TestModel() for offline tests."
+            )
+        self._model: str = resolved_model if resolved_model else "test"
         self._model_instance = model_instance
         self._draft_model = draft_model
         self._produce_cover_letter = produce_cover_letter
@@ -104,13 +112,6 @@ class Tailor:
         self._cache_dir = Path(data_dir) / "jd_cache"
         self._master_json = Path(data_dir) / "master.json"
         self._logger = step_logger("tailor", debug=debug)
-        if not self._model and self._model_instance is None:
-            raise ConfigurationError(
-                "MODEL is required. Set the MODEL env var (e.g. 'MiniMax-M3', "
-                "'anthropic:claude-sonnet-4-5', 'openai:gpt-5') and API_KEY "
-                "(or ANTHROPIC_API_KEY / OPENAI_API_KEY), or pass "
-                "model_instance=TestModel() for offline tests."
-            )
 
     # ------------------------------------------------------------------
     # Public API
@@ -394,7 +395,8 @@ class Tailor:
             return (self._jd_input,)
         if isinstance(self._jd_input, tuple):
             if all(isinstance(j, JobDescription) for j in self._jd_input):
-                return self._jd_input
+                jds_input = tuple(j for j in self._jd_input if isinstance(j, JobDescription))
+                return jds_input
             urls: tuple[str, ...] = tuple(j for j in self._jd_input if isinstance(j, str))
             if urls and len(urls) != len(self._jd_input):
                 raise TypeError("job_description tuple must contain only JobDescription or only str")
@@ -419,11 +421,12 @@ class Tailor:
         (run_dir / "tailored.tex").write_text(tex_source)
         (run_dir / "tailored.txt").write_text(txt_source)
         (run_dir / "tailored.json").write_text(render_json(tailored))
-        (run_dir / "match_report.md").write_text(
-            render_match_report(
-                tailored.run, tailored.run_result, tailored, ats_report
+        if tailored.run_result is not None:
+            (run_dir / "match_report.md").write_text(
+                render_match_report(
+                    tailored.run, tailored.run_result, tailored, ats_report
+                )
             )
-        )
         return run_dir
 
     def __load_report(self) -> str:

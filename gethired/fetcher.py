@@ -10,12 +10,14 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+from collections import Counter
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Final
 
 import httpx
+import trafilatura
 
 from gethired.constants import CACHE_MAX_AGE_DAYS, JD_FETCH_MAX_ATTEMPTS
 from gethired.exceptions import JobDescriptionRetrievalError
@@ -167,14 +169,10 @@ def extract_jsonld(html: str) -> dict | None:
 
 
 def extract_text_trafilatura(html: str) -> str:
-    try:
-        import trafilatura  # type: ignore[import-not-found]
-    except ImportError:
-        return ""
-    try:
-        return trafilatura.extract(html) or ""
-    except Exception:
-        return ""
+    import trafilatura
+
+    extracted = trafilatura.extract(html)
+    return extracted or ""
 
 
 def build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescription:
@@ -257,8 +255,8 @@ def categorize_keywords(data: dict, text: str) -> tuple[tuple[str, ...], tuple[s
         for token in KEYWORD_RE.finditer(requirements):
             must_have.add(token.group(0).lower())
     if not must_have:
-        for token in extract_keywords(text)[:15]:
-            must_have.add(token)
+        for fallback_token in extract_keywords(text)[:15]:
+            must_have.add(fallback_token)
     return tuple(must_have), tuple(nice_to_have)
 
 

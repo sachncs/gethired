@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Any
 
 from gethired.critic import Critic
 from gethired.exceptions import ResumeTailoringError
@@ -143,12 +144,12 @@ def render_audit_markdown(report: AuditReport) -> str:
 def __load_tailored_and_master(
     tailored_path: Path, master_path: Path
 ) -> tuple[TailoredResume, MasterResume]:
-    tailored_raw = json.loads(tailored_path.read_text())
-    master_raw = json.loads(master_path.read_text())
+    tailored_raw: Any = json.loads(tailored_path.read_text())
+    master_raw: Any = json.loads(master_path.read_text())
     return __coerce_tailored(tailored_raw), __coerce_master(master_raw)
 
 
-def __coerce_tailored(raw: dict[str, object]) -> TailoredResume:
+def __coerce_tailored(raw: Any) -> TailoredResume:
     from gethired.models import Run, RunResult
 
     contact = ContactInformation(**raw["contact"])
@@ -179,7 +180,7 @@ def __coerce_tailored(raw: dict[str, object]) -> TailoredResume:
     education = tuple(Education(**e) for e in raw["education"])
     awards = tuple(Award(**a) for a in raw["awards"])
     run = Run(**raw["run_result"]["run"])
-    run_data = {**raw["run_result"], "run": run}
+    run_data: dict[str, Any] = {**raw["run_result"], "run": run}
     run_result = RunResult(**run_data)
     return TailoredResume(
         contact=contact,
@@ -197,7 +198,7 @@ def __coerce_tailored(raw: dict[str, object]) -> TailoredResume:
     )
 
 
-def __coerce_master(raw: dict[str, object]) -> MasterResume:
+def __coerce_master(raw: Any) -> MasterResume:
     contact = ContactInformation(**raw["contact"])
     skills = SkillsByCategory(
         categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()}

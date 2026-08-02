@@ -9,12 +9,12 @@ from __future__ import annotations
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from loguru import logger as default_logger
-from loguru._logger import Logger
 
-_configured: bool = False
+if TYPE_CHECKING:
+    from loguru import Logger
 
 
 def utcnow_iso() -> str:
@@ -37,7 +37,6 @@ def configure_logging(
     Returns:
         The configured ``loguru`` ``Logger`` instance.
     """
-    global _configured
     default_logger.remove()
 
     level = "DEBUG" if debug else "INFO"
@@ -69,12 +68,13 @@ def configure_logging(
     if run_id is not None:
         default_logger.configure(extra={"run_id": run_id})
 
-    _configured = True
     return default_logger
 
 
 def step_logger(step_name: str, run_id: str | None = None, **fields: Any) -> Logger:
     """Return a logger bound to the step name and optional run id.
+
+    Assumes ``configure_logging()`` has been called at process entry.
 
     Args:
         step_name: Stable identifier for the step (e.g. ``"fetch_jd"``).
@@ -84,8 +84,6 @@ def step_logger(step_name: str, run_id: str | None = None, **fields: Any) -> Log
     Returns:
         A ``Logger`` with bound context.
     """
-    if not _configured:
-        configure_logging(run_id=run_id)
     bound: Logger = default_logger.bind(step=step_name)
     if run_id is not None:
         bound = bound.bind(run_id=run_id)
@@ -112,4 +110,3 @@ __all__ = [
     "step_logger",
     "utcnow_iso",
 ]
-

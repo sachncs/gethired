@@ -1,8 +1,8 @@
 """Streaming event emitter for live progress reporting.
 
-Wraps a pipeline run in a context manager that yields ``ProgressEvent``
-instances as the writer / critic / renderer produce them. The default
-callback is a no-op; consumers (CLI, notebook, web UI) supply their own.
+Wraps a pipeline run in a context manager that exposes an ``emit`` callable.
+Consumers (CLI, notebook, web UI) supply their own callback to receive
+``ProgressEvent`` instances as the writer / critic / renderer produce them.
 """
 
 from __future__ import annotations
@@ -25,26 +25,27 @@ class ProgressEvent:
 
 
 @contextmanager
-def progress_reporter(callback: ProgressCallback | None = None) -> Iterator[ProgressEvent]:
-    """Context manager that yields ``ProgressEvent`` instances.
+def progress_reporter(
+    callback: ProgressCallback | None = None,
+) -> Iterator[ProgressCallback]:
+    """Context manager that yields the emit callable.
 
     Args:
-        callback: Optional callable invoked on each event. When None, events
-            are buffered but not delivered externally.
+        callback: Optional callable invoked on each event. When ``None``,
+            events are silently dropped.
 
     Yields:
-        ``ProgressEvent`` instances from ``emit()``.
+        A ``ProgressCallback`` accepting ``ProgressEvent`` instances.
     """
-    pending: list[ProgressEvent] = []
+    if callback is None:
 
-    def emit(event: ProgressEvent) -> None:
-        pending.append(event)
-        if callback is not None:
-            callback(event)
+        def emit(_event: ProgressEvent) -> None:
+            return None
 
-    sentinel = {"emit": emit}
-    yield sentinel  # type: ignore[misc] -- sentinel container for shared emit
-    del pending
+        yield emit
+        return
+
+    yield callback
 
 
 __all__ = ["ProgressCallback", "ProgressEvent", "progress_reporter"]

@@ -127,9 +127,12 @@ def build_anthropic_model(
     from pydantic_ai.providers.anthropic import AnthropicProvider
 
     provider_kwargs: dict[str, str] = {"api_key": api_key}
-    if base_url:
+    if base_url is not None:
         provider_kwargs["base_url"] = base_url
-    provider = AnthropicProvider(**provider_kwargs)
+    provider = AnthropicProvider(
+        api_key=provider_kwargs.get("api_key"),
+        base_url=provider_kwargs.get("base_url"),
+    )
     model = AnthropicModel(model_name, provider=provider)
     return ResolvedModel(
         model=model,

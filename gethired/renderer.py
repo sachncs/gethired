@@ -95,16 +95,17 @@ def render_json(tailored: TailoredResume) -> str:
     """Serialise the full TailoredResume including traceability to JSON."""
 
     def as_dict(obj: object) -> object:
-        if hasattr(obj, "__dataclass_fields__"):
-            from dataclasses import asdict as _asdict
+        from dataclasses import asdict as _asdict, is_dataclass
 
+        if is_dataclass(obj) and not isinstance(obj, type):
             return _asdict(obj)
         if isinstance(obj, dict):
             return {k: as_dict(v) for k, v in obj.items()}
         if isinstance(obj, (list, tuple)):
             return [as_dict(v) for v in obj]
         if hasattr(obj, "value"):  # StrEnum
-            return obj.value
+            value: object = getattr(obj, "value")
+            return value
         return obj
 
     return json.dumps(as_dict(tailored), indent=2, default=str)

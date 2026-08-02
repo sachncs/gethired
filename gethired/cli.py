@@ -30,7 +30,7 @@ from gethired.exceptions import (
     StyleViolationError,
 )
 from gethired.fetcher import JobDescriptionRetriever
-from gethired.models import JobDescription
+from gethired.models import JobDescription, MasterResume, TailoredResume
 from gethired.observability import configure_logging
 from gethired.parser import parse_tex
 from gethired.renderer import render_json
@@ -235,7 +235,7 @@ def validate(
     """Run ATS gates against a tailored.tex or tailored.json."""
     configure_logging()
     if target.suffix == ".json":
-        from gethired.tailor import _read_master_json
+        from gethired.tailor import read_master_json
 
         data = json.loads(target.read_text())
         from gethired.models import (
@@ -293,7 +293,7 @@ def validate(
             jobs=(),
             run_result=run_result,
         )
-        master = _read_master_json(Path("data/master.json"))
+        master = read_master_json(Path("data/master.json"))
         tex_source = target.read_text() if target.suffix == ".tex" else ""
         from gethired.renderer import render_tex
 
@@ -398,7 +398,7 @@ def fetch_first_jd(urls: list[str]) -> JobDescription:
     return retriever.retrieve(urls[0])
 
 
-def master_to_snapshot(master) -> object:
+def master_to_snapshot(master: MasterResume) -> TailoredResume:
     """Wrap a master into a TailoredResume-like snapshot for JSON serialisation."""
     from uuid import uuid4
 

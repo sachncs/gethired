@@ -11,10 +11,10 @@ from __future__ import annotations
 
 import os
 from dataclasses import asdict
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Callable
 
 if TYPE_CHECKING:
-    from gethired.streaming import ProgressEvent
+    from gethired.streaming import ProgressCallback, ProgressEvent
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
@@ -109,7 +109,7 @@ class Writer:
         analysis: DescriptionAnalysis,
         voice: VoiceProfile,
         previous_violations: tuple[str, ...] = (),
-        on_progress: Callable[[ProgressEvent], None] | None = None,
+        on_progress: ProgressCallback | None = None,
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
         """Produce a tailored resume and the Job trail.
 
@@ -145,7 +145,7 @@ class Writer:
         analysis: DescriptionAnalysis,
         voice: VoiceProfile,
         previous_violations: tuple[str, ...],
-        on_progress: Callable[[ProgressEvent], None] | None = None,
+        on_progress: ProgressCallback | None = None,
     ) -> tuple[TailoredResume, tuple[Job, ...]]:
         """Run the Pydantic AI Agent against the configured model.
 
@@ -174,7 +174,7 @@ class Writer:
                 )
             )
 
-        agent = Agent(
+        agent: Agent[WriterDeps, WriterOutput] = Agent(
             model,
             deps_type=WriterDeps,
             output_type=WriterOutput,
@@ -236,9 +236,11 @@ class Writer:
     # Read-only tools
     # ------------------------------------------------------------------
 
-    def __register_read_only_tools(self, agent: Agent) -> None:
+    def __register_read_only_tools(self, agent: Agent[WriterDeps, WriterOutput]) -> None:
         @agent.tool
-        async def lookup_experience(ctx: RunContext[WriterDeps], role_or_company: str) -> dict[str, Any]:
+        async def lookup_experience(
+            ctx: RunContext[WriterDeps], role_or_company: str
+        ) -> dict[str, Any]:
             """Look up an experience in the master by role or company."""
             master = ctx.deps.master
             lowered = role_or_company.lower()
@@ -248,7 +250,9 @@ class Writer:
             return {}
 
         @agent.tool
-        async def lookup_project(ctx: RunContext[WriterDeps], name: str) -> dict[str, Any]:
+        async def lookup_project(
+            ctx: RunContext[WriterDeps], name: str
+        ) -> dict[str, Any]:
             """Look up a project in the master by name."""
             master = ctx.deps.master
             lowered = name.lower()

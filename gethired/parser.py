@@ -18,6 +18,8 @@ import re
 from pathlib import Path
 from typing import Final
 
+import pymupdf
+
 from gethired.exceptions import MasterParsingError
 from gethired.models import (
     Award,
@@ -459,14 +461,11 @@ def parse_text(text: str) -> MasterResume:
 
 def parse_pdf(path: Path) -> MasterResume:
     """Extract text from a PDF and route through the TeX-style parser."""
-    try:
-        import pymupdf  # type: ignore[import-not-found]
-    except ImportError as exc:
-        raise MasterParsingError("pymupdf is required for PDF parsing") from exc
-
     document = pymupdf.open(path)
     try:
-        raw_text = "\n".join(page.get_text() for page in document)
+        raw_text = "\n".join(
+            document[i].get_text() for i in range(len(document))
+        )
     finally:
         document.close()
 
