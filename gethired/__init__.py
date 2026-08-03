@@ -1,75 +1,59 @@
-"""gethired — multi-agent CV tailoring system."""
+"""gethired — multi-agent CV tailoring system.
+
+Public surface (intentionally small):
+
+* :class:`Tailor` — orchestrator
+* :class:`Master` — parsed master resume
+* :class:`Tailored` — produced tailored resume
+* :class:`Job` — job description (the JD)
+* :func:`parse` — convenience: parse a master resume from any supported format
+* :func:`fetch` — convenience: fetch a JD with caching + retry
+"""
+
+from __future__ import annotations
 
 from gethired.exceptions import (
-    AtsGateFailureError,
-    ConfigurationError,
-    GroundingViolationError,
-    JobDescriptionRetrievalError,
-    MasterParsingError,
-    PlagiarismViolationError,
-    ResumeTailoringError,
-    StyleViolationError,
+    AtsError,
+    CompileError,
+    ConfigError,
+    FetchError,
+    GroundingError,
+    ParseError,
+    PlagiarismError,
+    StyleError,
+    TailorError,
 )
 from gethired.models import (
-    Award,
-    Bullet,
-    ContactInformation,
-    DropReason,
-    Education,
-    Experience,
-    GroundedCitation,
+    Citation,
+    Contact,
     Job,
-    JobDescription,
-    JobDescriptionData,
-    JobMetadata,
-    JobStatus,
-    JobType,
-    MasterResume,
-    Project,
-    Run,
-    RunResult,
-    SkillsByCategory,
-    SourceReference,
-    StepType,
-    TailoredResume,
-    VoiceProfile,
-    WebSearch,
-    job,
+    Master,
+    Tailored,
 )
+from gethired.parse import parse
+from gethired.fetch import fetch
 from gethired.tailor import Tailor
+from gethired.version import __version__
+
+__version__: str
 
 __all__ = [
-    "Award",
-    "AtsGateFailureError",
-    "Bullet",
-    "ConfigurationError",
-    "ContactInformation",
-    "DropReason",
-    "Education",
-    "Experience",
-    "GroundedCitation",
-    "GroundingViolationError",
+    "AtsError",
+    "Citation",
+    "CompileError",
+    "ConfigError",
+    "Contact",
+    "FetchError",
+    "GroundingError",
     "Job",
-    "JobDescription",
-    "JobDescriptionData",
-    "JobDescriptionRetrievalError",
-    "JobMetadata",
-    "JobStatus",
-    "JobType",
-    "MasterParsingError",
-    "MasterResume",
-    "PlagiarismViolationError",
-    "Project",
-    "ResumeTailoringError",
-    "Run",
-    "RunResult",
-    "SkillsByCategory",
-    "SourceReference",
-    "StepType",
-    "StyleViolationError",
+    "Master",
+    "ParseError",
+    "PlagiarismError",
+    "StyleError",
     "Tailor",
-    "TailoredResume",
-    "VoiceProfile",
-    "WebSearch",
-    "job",
+    "TailorError",
+    "Tailored",
+    "__version__",
+    "fetch",
+    "dispatch",
 ]
