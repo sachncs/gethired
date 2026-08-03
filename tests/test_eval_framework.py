@@ -24,7 +24,7 @@ from evals.harness import (
     load_suite,
     load_task,
 )
-from gethired.models import ContactInformation, MasterResume, SkillsByCategory
+from gethired.models import Contact, Master, Skills
 
 # ---------------------------------------------------------------------------
 # Grader tests
@@ -45,7 +45,7 @@ def test_code_equal_fails_on_mismatch() -> None:
 
 def test_code_field_present_on_dataclass() -> None:
     """``_resolve_path`` supports dotted paths on dataclasses."""
-    contact = ContactInformation(
+    contact = Contact(
         name="Placeholder Name",
         city="Test City",
         phone="5555550100",
@@ -71,24 +71,28 @@ def test_code_field_present_missing_returns_false() -> None:
 
 
 def test_code_field_length_correct_count() -> None:
-    contact = ContactInformation(
-        name="A", city="X", phone="0", email="a@b.c",
-        github_url=None, linkedin_url=None,
+    contact = Contact(
+        name="A",
+        city="X",
+        phone="0",
+        email="a@b.c",
+        github_url=None,
+        linkedin_url=None,
     )
-    result = code_field_length(
-        "test", resume=contact, path="name", expected=1
-    )
+    result = code_field_length("test", resume=contact, path="name", expected=1)
     assert result.passed
 
 
 def test_code_field_length_wrong_count() -> None:
-    contact = ContactInformation(
-        name="AB", city="X", phone="0", email="a@b.c",
-        github_url=None, linkedin_url=None,
+    contact = Contact(
+        name="AB",
+        city="X",
+        phone="0",
+        email="a@b.c",
+        github_url=None,
+        linkedin_url=None,
     )
-    result = code_field_length(
-        "test", resume=contact, path="name", expected=1
-    )
+    result = code_field_length("test", resume=contact, path="name", expected=1)
     assert not result.passed
 
 
@@ -136,20 +140,22 @@ def test_code_no_jd_plagiarism_no_overlap() -> None:
 def test_code_no_jd_plagiarism_detects_5gram() -> None:
     jd = "designed and deployed isolated ai platforms for enterprise customers"
     tailored = "We designed and deployed isolated ai platforms for enterprise customers today"
-    result = code_no_jd_plagiarism(
-        "test", tailored_text=tailored, jd_text=jd
-    )
+    result = code_no_jd_plagiarism("test", tailored_text=tailored, jd_text=jd)
     assert not result.passed
 
 
 def test_code_numbers_in_master_no_invention() -> None:
-    master = MasterResume(
-        contact=ContactInformation(
-            name="A", city="X", phone="0", email="a@b.c",
-            github_url=None, linkedin_url=None,
+    master = Master(
+        contact=Contact(
+            name="A",
+            city="X",
+            phone="0",
+            email="a@b.c",
+            github_url=None,
+            linkedin_url=None,
         ),
         summary="Engineer",
-        skills=SkillsByCategory(categories={}),
+        skills=Skills(categories={}),
         experiences=(),
         projects=(),
         education=(),
@@ -162,32 +168,38 @@ def test_code_numbers_in_master_no_invention() -> None:
 
 
 def test_code_numbers_in_master_passes_when_present() -> None:
-    master = MasterResume(
-        contact=ContactInformation(
-            name="A", city="X", phone="0", email="a@b.c",
-            github_url=None, linkedin_url=None,
+    master = Master(
+        contact=Contact(
+            name="A",
+            city="X",
+            phone="0",
+            email="a@b.c",
+            github_url=None,
+            linkedin_url=None,
         ),
         summary="Built 10000 requests",
-        skills=SkillsByCategory(categories={}),
+        skills=Skills(categories={}),
         experiences=(),
         projects=(),
         education=(),
         awards=(),
     )
-    result = code_numbers_in_master(
-        "test", tailored_text="Built 10000 requests", master=master
-    )
+    result = code_numbers_in_master("test", tailored_text="Built 10000 requests", master=master)
     assert result.passed
 
 
 def test_code_json_round_trip() -> None:
-    master = MasterResume(
-        contact=ContactInformation(
-            name="A", city="X", phone="0", email="a@b.c",
-            github_url=None, linkedin_url=None,
+    master = Master(
+        contact=Contact(
+            name="A",
+            city="X",
+            phone="0",
+            email="a@b.c",
+            github_url=None,
+            linkedin_url=None,
         ),
         summary="Engineer",
-        skills=SkillsByCategory(categories={"Programming": ("Python",)}),
+        skills=Skills(categories={"Programming": ("Python",)}),
         experiences=(),
         projects=(),
         education=(),
@@ -287,12 +299,8 @@ type: writer
 def test_load_suite_loads_all_yaml(tmp_path: Path) -> None:
     (tmp_path / "tasks" / "parser").mkdir(parents=True)
     (tmp_path / "tasks" / "writer").mkdir(parents=True)
-    (tmp_path / "tasks" / "parser" / "a.yaml").write_text(
-        "id: a\ncategory: parser\ntype: code\n"
-    )
-    (tmp_path / "tasks" / "writer" / "b.yaml").write_text(
-        "id: b\ncategory: writer\ntype: code\n"
-    )
+    (tmp_path / "tasks" / "parser" / "a.yaml").write_text("id: a\ncategory: parser\ntype: code\n")
+    (tmp_path / "tasks" / "writer" / "b.yaml").write_text("id: b\ncategory: writer\ntype: code\n")
     suite = load_suite(tmp_path)
     assert len(suite) == 2
     assert {t.id for t in suite} == {"a", "b"}
@@ -352,9 +360,7 @@ task:
       args: {name: x, actual: 1, expected: 1}
 """
     )
-    harness = EvalHarness(
-        suite_name="metric", output_dir=tmp_path / "results"
-    )
+    harness = EvalHarness(suite_name="metric", output_dir=tmp_path / "results")
     result = harness.run_suite(load_suite(tmp_path))
     assert result.task_outcomes[0].pass_at_1 == 1.0
     assert result.task_outcomes[0].pass_at_k == 1.0

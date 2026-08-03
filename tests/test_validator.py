@@ -9,27 +9,28 @@ import pymupdf
 from gethired.models import (
     Bullet,
     Experience,
-    FinalOutcome,
-    JobDescription,
-    MasterResume,
+    Outcome,
+    Job,
+    Master,
     Run,
     RunResult,
-    SkillsByCategory,
-    TailoredResume,
+    Skills,
+    Tailored,
 )
-from gethired.renderer import render_tex, render_text
+from gethired.renderer import tex, text
 from gethired.validator import (
     AtsGate,
     GateStatus,
     GateTier,
-    ats_check,
-    grounding_check,
-    plagiarism_check,
-    style_check,
+    ats,
+    grounding,
+    pdf_guard,
+    plagiarism,
+    style,
 )
 
 
-def _make_tailored(master: MasterResume) -> TailoredResume:
+def _make_tailored(master: Master) -> Tailored:
     """Build a tailored resume that's an identity transform of master."""
     run_result = RunResult(
         run=Run("test-id", "2026-08-02T00:00:00.000Z", "x", "y", "model", None),
@@ -38,10 +39,10 @@ def _make_tailored(master: MasterResume) -> TailoredResume:
         total_input_tokens=0,
         total_output_tokens=0,
         retry_attempts=0,
-        final_outcome=FinalOutcome.SUCCESS,
+        final_outcome=Outcome.SUCCESS,
         jobs=(),
     )
-    return TailoredResume(
+    return Tailored(
         contact=master.contact,
         summary=master.summary,
         skills=master.skills,
@@ -59,16 +60,16 @@ def _make_tailored(master: MasterResume) -> TailoredResume:
 
 def test_grounding_passes_for_identity_transform(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    violations = grounding_check(tailored, master_resume)
+    violations = grounding(tailored, master_resume)
     assert violations == ()
 
 
 def test_grounding_detects_invented_skill(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    fake = TailoredResume(
+    fake = Tailored(
         contact=tailored.contact,
         summary=tailored.summary,
-        skills=SkillsByCategory(
+        skills=Skills(
             categories={
                 "Programming Languages": ("Python", "QuantumScript"),
             }
@@ -83,13 +84,13 @@ def test_grounding_detects_invented_skill(master_resume) -> None:
         jobs=(),
         run_result=tailored.run_result,
     )
-    violations = grounding_check(fake, master_resume)
+    violations = grounding(fake, master_resume)
     assert any(v.detail.startswith("Skill 'QuantumScript'") for v in violations)
 
 
 def test_grounding_detects_invented_number(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    fake = TailoredResume(
+    fake = Tailored(
         contact=master_resume.contact,
         summary=master_resume.summary + " Achieved 99999999% growth.",
         skills=master_resume.skills,
@@ -103,13 +104,13 @@ def test_grounding_detects_invented_number(master_resume) -> None:
         jobs=(),
         run_result=tailored.run_result,
     )
-    violations = grounding_check(fake, master_resume)
+    violations = grounding(fake, master_resume)
     assert any("99999999" in v.detail for v in violations)
 
 
 def test_style_detects_banned_word(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    fake = TailoredResume(
+    fake = Tailored(
         contact=master_resume.contact,
         summary="Leveraged Python to deliver comprehensive solutions.",
         skills=master_resume.skills,
@@ -123,13 +124,13 @@ def test_style_detects_banned_word(master_resume) -> None:
         jobs=(),
         run_result=tailored.run_result,
     )
-    violations = style_check(fake)
+    violations = style(fake)
     assert any("leverage" in v.detail.lower() for v in violations)
 
 
 def test_plagiarism_passes_for_identity_transform(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    jd = JobDescription(
+    jd = Job(
         url="https://example.com/jd",
         title="ML Engineer",
         company="Acme",
@@ -139,7 +140,7 @@ def test_plagiarism_passes_for_identity_transform(master_resume) -> None:
         nice_to_have_keywords=("python",),
         content_hash="abc",
     )
-    violations = plagiarism_check(tailored, (jd,))
+    violations = plagiarism(tailored, (jd,))
     assert violations == ()
 
 
@@ -147,7 +148,7 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
     """JD and tailored share a 5-gram → violation."""
     shared_phrase = "designed and deployed isolated ai platforms"
     jd_text = f"Requirements include {shared_phrase} for enterprise customers in fintech."
-    jd = JobDescription(
+    jd = Job(
         url="https://example.com/jd",
         title="ML Engineer",
         company="Acme",
@@ -158,7 +159,7 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
         content_hash="abc",
     )
     tailored = _make_tailored(master_resume)
-    fake = TailoredResume(
+    fake = Tailored(
         contact=master_resume.contact,
         summary=master_resume.summary,
         skills=master_resume.skills,
@@ -181,7 +182,7 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
         jobs=(),
         run_result=tailored.run_result,
     )
-    violations = plagiarism_check(fake, (jd,))
+    violations = plagiarism(fake, (jd,))
     expected_5gram = "designed and deployed isolated ai"
     assert any(expected_5gram in v.ngram for v in violations), (
         f"Expected 5-gram {expected_5gram!r} not found in violations: "
@@ -191,26 +192,26 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
 
 def test_ats_check_produces_full_report(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
-    report = ats_check(tailored, tex, None, txt, ())
+    t = tex(tailored)
+    txt = text(tailored)
+    report = ats(tailored, t, None, txt, ())
     assert len(report.results) == len(list(AtsGate))
 
 
 def test_ats_section_headings_pass_for_master(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
-    report = ats_check(tailored, tex, None, txt, ())
+    t = tex(tailored)
+    txt = text(tailored)
+    report = ats(tailored, t, None, txt, ())
     section_gate = next(r for r in report.results if r.gate == AtsGate.SECTION_HEADINGS_STANDARD)
     assert section_gate.passed
 
 
 def test_pdf_gates_skip_when_no_pdf(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
-    report = ats_check(tailored, tex, None, txt, ())
+    t = tex(tailored)
+    txt = text(tailored)
+    report = ats(tailored, t, None, txt, ())
     pdf_gates = {
         AtsGate.PDF_COMPILES,
         AtsGate.PDF_TEXT_EXTRACTABLE,
@@ -224,10 +225,10 @@ def test_pdf_gates_skip_when_no_pdf(master_resume) -> None:
 
 def test_pdf_gates_fail_when_pdf_path_missing(master_resume, tmp_path: Path) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
+    t = tex(tailored)
+    txt = text(tailored)
     missing_pdf = tmp_path / "missing.pdf"
-    report = ats_check(tailored, tex, missing_pdf, txt, ())
+    report = ats(tailored, t, missing_pdf, txt, ())
     for gate in (AtsGate.PDF_COMPILES, AtsGate.PDF_TEXT_EXTRACTABLE, AtsGate.LENGTH_WITHIN_LIMIT):
         result = next(r for r in report.results if r.gate == gate)
         assert result.status is GateStatus.FAIL
@@ -245,10 +246,10 @@ def test_gate_tiers_partition_all_gates() -> None:
 
 def test_hard_gate_failure_is_blocking(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
+    t = tex(tailored)
+    txt = text(tailored)
     tex_with_layout = tex + r"\begin{multicols}{2}"
-    report = ats_check(tailored, tex_with_layout, None, txt, ())
+    report = ats(tailored, tex_with_layout, None, txt, ())
     assert AtsGate.NO_TABLES_FOR_LAYOUT in report.hard_failed_gates
     assert AtsGate.NO_TABLES_FOR_LAYOUT in report.failed_gates
     assert AtsGate.NO_TABLES_FOR_LAYOUT.tier is GateTier.HARD
@@ -256,9 +257,9 @@ def test_hard_gate_failure_is_blocking(master_resume) -> None:
 
 def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
-    jd = JobDescription(
+    t = tex(tailored)
+    txt = text(tailored)
+    jd = Job(
         url="https://example.com/jd",
         title="Senior Engineer",
         company="Acme",
@@ -268,7 +269,7 @@ def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
         nice_to_have_keywords=(),
         content_hash="jd",
     )
-    report = ats_check(tailored, tex, None, txt, (jd,))
+    report = ats(tailored, t, None, txt, (jd,))
     assert AtsGate.KEYWORDS_COVERED in report.advisory_failed_gates
     assert AtsGate.KEYWORDS_COVERED.tier is GateTier.ADVISORY
     assert report.hard_failed_gates == ()
@@ -276,11 +277,11 @@ def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
 
 def test_length_gate_passes_for_single_page_pdf(master_resume, tmp_path) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
+    t = tex(tailored)
+    txt = text(tailored)
     pdf_path = tmp_path / "one_page.pdf"
     _write_pdf(pdf_path, pages=1)
-    report = ats_check(tailored, tex, pdf_path, txt, ())
+    report = ats(tailored, t, pdf_path, txt, ())
     result = next(r for r in report.results if r.gate == AtsGate.LENGTH_WITHIN_LIMIT)
     assert result.status is GateStatus.PASS
     assert "1 page(s)" in result.detail
@@ -288,11 +289,11 @@ def test_length_gate_passes_for_single_page_pdf(master_resume, tmp_path) -> None
 
 def test_length_gate_fails_for_multi_page_pdf(master_resume, tmp_path) -> None:
     tailored = _make_tailored(master_resume)
-    tex = render_tex(tailored)
-    txt = render_text(tailored)
+    t = tex(tailored)
+    txt = text(tailored)
     pdf_path = tmp_path / "two_pages.pdf"
     _write_pdf(pdf_path, pages=2)
-    report = ats_check(tailored, tex, pdf_path, txt, ())
+    report = ats(tailored, t, pdf_path, txt, ())
     result = next(r for r in report.results if r.gate == AtsGate.LENGTH_WITHIN_LIMIT)
     assert result.status is GateStatus.FAIL
     assert AtsGate.LENGTH_WITHIN_LIMIT in report.hard_failed_gates
@@ -305,3 +306,39 @@ def _write_pdf(path: Path, pages: int) -> None:
         document.new_page()
     document.save(path)
     document.close()
+
+
+def test_pdf_artefact_status_skips_when_pdf_path_is_none() -> None:
+    """No PDF path returns SKIP, never FAIL."""
+    result = pdf_guard(None, AtsGate.PDF_COMPILES)
+    assert result is not None
+    assert result.status is GateStatus.SKIP
+    assert "not compiled" in result.detail
+
+
+def test_pdf_artefact_status_fails_when_path_set_but_missing(tmp_path: Path) -> None:
+    """A set-but-missing PDF path returns FAIL with the path in the detail."""
+    missing_path = tmp_path / "does-not-exist.pdf"
+    result = pdf_guard(missing_path, AtsGate.PDF_COMPILES)
+    assert result is not None
+    assert result.status is GateStatus.FAIL
+    assert "does-not-exist" in result.detail
+
+
+def test_pdf_artefact_status_returns_none_when_pdf_exists(tmp_path: Path) -> None:
+    """An existing PDF returns None so the caller runs the real gate logic."""
+    pdf_path = tmp_path / "exists.pdf"
+    _write_pdf(pdf_path, pages=1)
+    assert pdf_guard(pdf_path, AtsGate.PDF_COMPILES) is None
+
+
+def test_pdf_artefact_status_accepts_custom_skip_and_missing_details() -> None:
+    """Custom detail strings override the defaults for both branches."""
+    skip = pdf_guard(None, AtsGate.PDF_COMPILES, skip_detail="custom skip")
+    assert skip is not None and skip.detail == "custom skip"
+    missing = pdf_guard(
+        Path("/nope.pdf"),
+        AtsGate.PDF_COMPILES,
+        missing_detail="custom missing",
+    )
+    assert missing is not None and missing.detail == "custom missing"

@@ -16,7 +16,7 @@ def test_harness_runs_writer_tasks_with_deepeval_graders(
     """The eval harness must execute the writer YAML suite and score the
     new deepeval-style graders against the trace.jsonl emitted by Tailor.
 
-    End-to-end smoke: parse the YAML suite, run each task once with
+    End-to-end smoke: dispatch the YAML suite, run each task once with
     TestModel, then assert that the new component-level graders are
     actually present in the run output (even if they fail with no tool
     spans in the test mode).
@@ -48,9 +48,7 @@ def test_harness_runs_writer_tasks_with_deepeval_graders(
         "code.argument_correctness",
         "code.step_efficiency",
     ):
-        assert new_grader in suite_grader_names, (
-            f"{new_grader} not present in any writer task"
-        )
+        assert new_grader in suite_grader_names, f"{new_grader} not present in any writer task"
 
     harness = EvalHarness(
         suite_name="integration_smoke",
@@ -66,9 +64,9 @@ def test_harness_runs_writer_tasks_with_deepeval_graders(
         assert outcome.trials, f"{outcome.task_id} produced no trials"
         # The new graders that the YAML declared for this task must
         # appear in trial grader_results.
-        declared = {g.name for g in next(
-            t for t in writer_tasks if t.id == outcome.task_id
-        ).graders}
+        declared = {
+            g.name for g in next(t for t in writer_tasks if t.id == outcome.task_id).graders
+        }
         grader_names = {gr.name for trial in outcome.trials for gr in trial.grader_results}
         for required in declared & {
             "code.tool_correctness",

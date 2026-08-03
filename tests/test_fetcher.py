@@ -5,8 +5,8 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from gethired.exceptions import JobDescriptionRetrievalError
-from gethired.fetcher import JobDescriptionRetriever
+from gethired.exceptions import FetchError
+from gethired.fetcher import Fetcher
 
 
 def test_fetch_failure_retries_with_exponential_backoff(
@@ -27,8 +27,8 @@ def test_fetch_failure_retries_with_exponential_backoff(
     )
     monkeypatch.setattr("gethired.fetcher.time.sleep", sleep_calls.append)
 
-    retriever = JobDescriptionRetriever(cache_dir=tmp_path, max_attempts=3)
-    with pytest.raises(JobDescriptionRetrievalError):
+    retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
+    with pytest.raises(FetchError):
         retriever.retrieve("https://example.com/jd")
 
     assert sleep_calls == [1, 2]
@@ -61,7 +61,7 @@ def test_fetch_recovers_after_first_failure(
     )
     monkeypatch.setattr("gethired.fetcher.time.sleep", sleep_calls.append)
 
-    retriever = JobDescriptionRetriever(cache_dir=tmp_path, max_attempts=3)
+    retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
     job_description = retriever.retrieve("https://example.com/jd")
 
     assert attempts == 2

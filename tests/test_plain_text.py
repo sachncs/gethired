@@ -2,8 +2,8 @@ from pathlib import Path
 
 import pytest
 
-from gethired.exceptions import MasterParsingError
-from gethired.parser import parse_text
+from gethired.exceptions import ParseError
+from gethired.parser import parse_tex as text
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -13,7 +13,7 @@ def fixture(name: str) -> str:
 
 
 def test_plain_text_contact_is_extracted() -> None:
-    resume = parse_text(fixture("plain_text_resume.txt"))
+    resume = text(fixture("plain_text_resume.txt"))
     assert resume.contact.name == "Jane Smith"
     assert resume.contact.city == "Austin"
     assert resume.contact.phone == "(512) 555-0142"
@@ -23,12 +23,12 @@ def test_plain_text_contact_is_extracted() -> None:
 
 
 def test_plain_text_summary_is_extracted() -> None:
-    resume = parse_text(fixture("plain_text_resume.txt"))
+    resume = text(fixture("plain_text_resume.txt"))
     assert resume.summary == "Full-stack engineer with 8 years building web platforms at scale."
 
 
 def test_plain_text_skills_are_categorised() -> None:
-    resume = parse_text(fixture("plain_text_resume.txt"))
+    resume = text(fixture("plain_text_resume.txt"))
     assert resume.skills.categories == {
         "Languages": ("Python", "TypeScript", "SQL"),
         "Frameworks": ("Django", "React", "FastAPI"),
@@ -37,7 +37,7 @@ def test_plain_text_skills_are_categorised() -> None:
 
 
 def test_plain_text_experiences_are_extracted() -> None:
-    resume = parse_text(fixture("plain_text_resume.txt"))
+    resume = text(fixture("plain_text_resume.txt"))
     assert len(resume.experiences) == 2
     first, second = resume.experiences
     assert first.role == "Senior Software Engineer"
@@ -55,7 +55,7 @@ def test_plain_text_experiences_are_extracted() -> None:
 
 
 def test_plain_text_projects_are_extracted() -> None:
-    resume = parse_text(fixture("plain_text_resume.txt"))
+    resume = text(fixture("plain_text_resume.txt"))
     assert len(resume.projects) == 1
     assert resume.projects[0].name == "gethired — resume linter"
     assert resume.projects[0].url == "https://github.com/janesmith/gethired"
@@ -65,7 +65,7 @@ def test_plain_text_projects_are_extracted() -> None:
 
 
 def test_plain_text_education_is_extracted() -> None:
-    resume = parse_text(fixture("plain_text_resume.txt"))
+    resume = text(fixture("plain_text_resume.txt"))
     assert len(resume.education) == 1
     entry = resume.education[0]
     assert entry.degree == "BSc in Computer Science"
@@ -75,7 +75,7 @@ def test_plain_text_education_is_extracted() -> None:
 
 
 def test_plain_text_awards_are_extracted() -> None:
-    resume = parse_text(fixture("plain_text_resume.txt"))
+    resume = text(fixture("plain_text_resume.txt"))
     assert len(resume.awards) == 2
     first, second = resume.awards
     assert first.title == "Employee of the Year"
@@ -88,8 +88,8 @@ def test_plain_text_awards_are_extracted() -> None:
 
 
 def test_plain_text_missing_contact_fails_fast() -> None:
-    with pytest.raises(MasterParsingError) as exc:
-        parse_text("Some Person\nNo city or contact info here.")
+    with pytest.raises(ParseError) as exc:
+        text("Some Person\nNo city or contact info here.")
     assert "missing required contact fields" in str(exc.value)
 
 
@@ -101,7 +101,7 @@ def test_plain_text_title_line_is_skipped() -> None:
         "\n"
         "SUMMARY\nGreat engineer.\n"
     )
-    resume = parse_text(text)
+    resume = text(text)
     assert resume.contact.name == "Bob Jones"
     assert resume.contact.city == "Paris"
 
@@ -115,7 +115,7 @@ def test_plain_text_education_major_split() -> None:
         "MSc, Data Science — University College London\n"
         "2020\n"
     )
-    resume = parse_text(text)
+    resume = text(text)
     entry = resume.education[0]
     assert entry.degree == "MSc"
     assert entry.major == "Data Science"
@@ -124,5 +124,5 @@ def test_plain_text_education_major_split() -> None:
 
 
 def test_parse_text_routes_tex_to_parse_tex() -> None:
-    with pytest.raises(MasterParsingError):
-        parse_text("\\documentclass{article}\n\\begin{document}\n\\end{document}")
+    with pytest.raises(ParseError):
+        text("\\documentclass{article}\n\\begin{document}\n\\end{document}")

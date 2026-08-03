@@ -1,7 +1,7 @@
 """End-to-end smoke test using a synthetic JD.
 
 This test runs the full pipeline against the bundled sample resume and a
-synthetic JobDescription, and asserts that all 12 ATS gates are evaluated.
+synthetic Job, and asserts that all 12 ATS gates are evaluated.
 """
 
 from __future__ import annotations
@@ -11,12 +11,12 @@ from pathlib import Path
 import pymupdf
 from pydantic_ai.models.test import TestModel
 
-from gethired.models import FinalOutcome, JobDescription, JobType, job_validate
-from gethired.renderer import render_tex, render_text
-from gethired.tailor import VALIDATION_JOB_TYPES, Tailor, merge_critic_jobs
-from gethired.validator import AtsGate, AtsGateReport, ats_check
+from gethired.models import Outcome, Job, StepKind, job_validate
+from gethired.renderer import tex, text
+from gethired.tailor import VALIDATION, Tailor, merge_steps
+from gethired.validator import AtsGate, AtsReport, ats
 
-SAMPLE_JD = JobDescription(
+SAMPLE_JD = Job(
     url="https://example.com/jd",
     title="Senior Machine Learning Engineer",
     company="Acme AI",
@@ -71,10 +71,10 @@ def test_end_to_end_atg_gates_all_evaluated() -> None:
         model_instance=TestModel(),
     )
     result = tailor.run()
-    tex = render_tex(result)
-    txt = render_text(result)
-    report = ats_check(result, tex, None, txt, (SAMPLE_JD,))
-    assert isinstance(report, AtsGateReport)
+    tex = tex(result)
+    txt = text(result)
+    report = ats(result, tex, None, txt, (SAMPLE_JD,))
+    assert isinstance(report, AtsReport)
     assert len(report.results) == len(list(AtsGate))
     for gate_result in report.results:
         assert gate_result.status.value in {"pass", "fail", "skip"}
@@ -107,7 +107,7 @@ def test_end_to_end_section_headings_present() -> None:
         model_instance=TestModel(),
     )
     result = tailor.run()
-    tex = render_tex(result)
+    tex = tex(result)
     assert "\\section{Summary}" in tex
     assert "\\section{Experience}" in tex
     assert "\\section{Education}" in tex
@@ -118,19 +118,19 @@ def test_end_to_end_section_headings_present() -> None:
 def test_merge_critic_jobs_replaces_all_prior_validation_jobs() -> None:
     """Re-running the critic after PDF compile must not duplicate validation jobs."""
     existing = (
-        job_validate(JobType.VALIDATE_GROUNDING, outputs=(), rationale="first"),
-        job_validate(JobType.VALIDATE_STYLE, outputs=(), rationale="first"),
-        job_validate(JobType.VALIDATE_PLAGIARISM, outputs=(), rationale="first"),
-        job_validate(JobType.VALIDATE_ATS, outputs=(), rationale="first"),
+        job_validate(StepKind.VALIDATE_GROUNDING, outputs=(), rationale="first"),
+        job_validate(StepKind.VALIDATE_STYLE, outputs=(), rationale="first"),
+        job_validate(StepKind.VALIDATE_PLAGIARISM, outputs=(), rationale="first"),
+        job_validate(StepKind.VALIDATE_ATS, outputs=(), rationale="first"),
     )
     authoritative = (
-        job_validate(JobType.VALIDATE_GROUNDING, outputs=(), rationale="second"),
-        job_validate(JobType.VALIDATE_STYLE, outputs=(), rationale="second"),
-        job_validate(JobType.VALIDATE_PLAGIARISM, outputs=(), rationale="second"),
-        job_validate(JobType.VALIDATE_ATS, outputs=(), rationale="second"),
+        job_validate(StepKind.VALIDATE_GROUNDING, outputs=(), rationale="second"),
+        job_validate(StepKind.VALIDATE_STYLE, outputs=(), rationale="second"),
+        job_validate(StepKind.VALIDATE_PLAGIARISM, outputs=(), rationale="second"),
+        job_validate(StepKind.VALIDATE_ATS, outputs=(), rationale="second"),
     )
-    merged = merge_critic_jobs(existing, authoritative)
-    validate_jobs = [j for j in merged if j.type in VALIDATION_JOB_TYPES]
+    merged = merge_steps(existing, authoritative)
+    validate_jobs = [j for j in merged if j.type in VALIDATION]
     assert len(validate_jobs) == 4
     assert all(j.rationale == "second" for j in validate_jobs)
 
@@ -159,7 +159,7 @@ def test_pipeline_pdf_pass_revalidates_and_recomputes_outcome(tmp_path: Path, mo
         tailored_dir=tmp_path,
     )
     result = tailor.run()
-    for job_type in VALIDATION_JOB_TYPES:
+    for job_type in VALIDATION:
         matches = [job for job in result.jobs if job.type is job_type]
         assert len(matches) == 1, f"{job_type.value} duplicated: {len(matches)}"
-    assert result.run_result.final_outcome is FinalOutcome.ATS_HARD_FAIL
+    assert result.run_result.final_outcome is Outcome.ATS_HARD_FAIL

@@ -9,11 +9,11 @@ import pytest
 
 from gethired.audit import (
     AuditReport,
-    audit_run,
-    render_audit_json,
-    render_audit_markdown,
+    audit,
+    audit_json,
+    audit_markdown,
 )
-from gethired.exceptions import ResumeTailoringError
+from gethired.exceptions import TailorError
 
 
 def _write_run(run_dir: Path, master: dict[str, object], tailored: dict[str, object]) -> None:
@@ -82,36 +82,36 @@ def _sample_run_payloads() -> tuple[dict[str, object], dict[str, object]]:
 
 
 def test_audit_run_returns_report(tmp_path: Path) -> None:
-    """audit_run returns an AuditReport with all four validator outputs."""
+    """audit returns an AuditReport with all four validator outputs."""
     master, tailored = _sample_run_payloads()
     _write_run(tmp_path, master, tailored)
-    report = audit_run(tmp_path)
+    report = audit(tmp_path)
     assert isinstance(report, AuditReport)
     assert report.run_id == "test-run-id"
 
 
 def test_audit_run_raises_when_tailored_missing(tmp_path: Path) -> None:
-    """audit_run raises ResumeTailoringError when tailored.json is missing."""
+    """audit raises TailorError when tailored.json is missing."""
     master, _ = _sample_run_payloads()
     (tmp_path / "master.json").write_text(json.dumps(master))
-    with pytest.raises(ResumeTailoringError, match="tailored.json"):
-        audit_run(tmp_path)
+    with pytest.raises(TailorError, match="tailored.json"):
+        audit(tmp_path)
 
 
 def test_audit_run_raises_when_master_missing(tmp_path: Path) -> None:
-    """audit_run raises ResumeTailoringError when master.json is missing."""
+    """audit raises TailorError when master.json is missing."""
     _, tailored = _sample_run_payloads()
     (tmp_path / "tailored.json").write_text(json.dumps(tailored))
-    with pytest.raises(ResumeTailoringError, match="master.json"):
-        audit_run(tmp_path)
+    with pytest.raises(TailorError, match="master.json"):
+        audit(tmp_path)
 
 
 def test_render_audit_json_includes_all_sections(tmp_path: Path) -> None:
-    """render_audit_json produces JSON with all expected keys."""
+    """audit_json produces JSON with all expected keys."""
     master, tailored = _sample_run_payloads()
     _write_run(tmp_path, master, tailored)
-    report = audit_run(tmp_path)
-    payload = json.loads(render_audit_json(report))
+    report = audit(tmp_path)
+    payload = json.loads(audit_json(report))
     assert payload["run_id"] == "test-run-id"
     assert "grounding_violations" in payload
     assert "style_violations" in payload
@@ -123,10 +123,10 @@ def test_render_audit_json_includes_all_sections(tmp_path: Path) -> None:
 
 
 def test_render_audit_markdown_includes_run_id(tmp_path: Path) -> None:
-    """render_audit_markdown includes the run id in the header."""
+    """audit_markdown includes the run id in the header."""
     master, tailored = _sample_run_payloads()
     _write_run(tmp_path, master, tailored)
-    report = audit_run(tmp_path)
-    md = render_audit_markdown(report)
+    report = audit(tmp_path)
+    md = audit_markdown(report)
     assert "test-run-id" in md
     assert "# Audit report" in md

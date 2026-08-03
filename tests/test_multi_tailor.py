@@ -4,11 +4,11 @@ from __future__ import annotations
 
 from pydantic_ai.models.test import TestModel
 
-from gethired.description import analyze_multiple
-from gethired.models import JobDescription
+from gethired.description import consolidate
+from gethired.models import Job
 from gethired.tailor import Tailor
 
-SAMPLE_JD_A = JobDescription(
+SAMPLE_JD_A = Job(
     url="https://example.com/jd-a",
     title="Senior ML Engineer",
     company="Acme AI",
@@ -22,13 +22,12 @@ SAMPLE_JD_A = JobDescription(
     content_hash="a",
 )
 
-SAMPLE_JD_B = JobDescription(
+SAMPLE_JD_B = Job(
     url="https://example.com/jd-b",
     title="Staff ML Engineer",
     company="Beta Co",
     full_text=(
-        "Staff ML Engineer at Beta Co. You will lead platform design. "
-        "Must have: Python, AWS."
+        "Staff ML Engineer at Beta Co. You will lead platform design. Must have: Python, AWS."
     ),
     keywords=("python", "aws"),
     must_have_keywords=("python", "aws"),
@@ -38,7 +37,7 @@ SAMPLE_JD_B = JobDescription(
 
 
 def test_tailor_accepts_multiple_job_descriptions(master_resume) -> None:
-    """Tailor accepts a tuple of JobDescription values."""
+    """Tailor accepts a tuple of Job values."""
     tailor = Tailor(
         resume=master_resume,
         job_description=(SAMPLE_JD_A, SAMPLE_JD_B),
@@ -50,12 +49,12 @@ def test_tailor_accepts_multiple_job_descriptions(master_resume) -> None:
 
 
 def test_tailor_with_multiple_jds_consolidates_analysis() -> None:
-    """analyze_multiple unions must-haves and intersects nice-to-haves."""
-    consolidated = analyze_multiple((SAMPLE_JD_A, SAMPLE_JD_B))
-    assert "python" in consolidated.must_have_skills
-    assert "kubernetes" in consolidated.must_have_skills
-    assert "aws" in consolidated.must_have_skills
-    assert "pytorch" in consolidated.nice_to_have_skills
+    """consolidate unions must-haves and intersects nice-to-haves."""
+    consolidated = consolidate((SAMPLE_JD_A, SAMPLE_JD_B))
+    assert "python" in consolidated.keywords
+    assert "kubernetes" in consolidated.keywords
+    assert "aws" in consolidated.keywords
+    assert "pytorch" in consolidated.nice_to_have
 
 
 def test_tailor_run_with_multiple_jds_persists_artifacts(master_resume) -> None:

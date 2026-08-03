@@ -9,16 +9,16 @@ from pathlib import Path
 from gethired.tracing import (
     Tracer,
     TraceSpan,
-    _new_span_id,
-    tracer_for_run,
+    span_id,
+    tracer,
 )
 
 
-def test_new_span_id_is_hex_uuid4() -> None:
+def test_span_id_is_hex_uuid4() -> None:
     """Span IDs are 32-char hex (UUID4 without dashes)."""
-    span_id = _new_span_id()
-    assert len(span_id) == 32
-    int(span_id, 16)
+    sid = span_id()
+    assert len(sid) == 32
+    int(sid, 16)
 
 
 def test_tracer_writes_jsonl_with_span_kind_and_attributes(tmp_path: Path) -> None:
@@ -67,15 +67,15 @@ def test_tracer_noop_when_path_is_none(tmp_path: Path) -> None:
 
 
 def test_tracer_for_run_writes_under_run_directory() -> None:
-    """tracer_for_run creates tailored/<run-id>/trace.jsonl."""
+    """tracer creates tailored/<run-id>/trace.jsonl."""
     with tempfile.TemporaryDirectory() as d:
         output_dir = Path(d)
-        tracer = tracer_for_run("abc123", output_dir)
+        t = tracer("abc123", output_dir)
         try:
-            with tracer.span("init", "agent", run_id="abc123"):
+            with t.span("init", "agent", run_id="abc123"):
                 pass
         finally:
-            tracer.close()
+            t.close()
         trace_file = output_dir / "abc123" / "trace.jsonl"
         assert trace_file.exists()
         assert "init" in trace_file.read_text()

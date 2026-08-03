@@ -3,30 +3,30 @@
 from __future__ import annotations
 
 from gethired.cover_letter import (
-    render_cover_letter_markdown,
-    tailor_cover_letter,
+    markdown,
+    compose,
 )
-from gethired.description import DescriptionAnalysis
+from gethired.description import Analysis
 from gethired.profiler import build as build_profile
 
 
-def _sample_analysis() -> DescriptionAnalysis:
-    return DescriptionAnalysis(
+def _sample_analysis() -> Analysis:
+    return Analysis(
         role="Senior ML Engineer",
         seniority="senior",
-        must_have_skills=("python", "kubernetes"),
-        nice_to_have_skills=("pytorch",),
-        keywords_to_mirror=("python", "kubernetes"),
+        must_have=("python", "kubernetes"),
+        nice_to_have=("pytorch",),
+        keywords=("python", "kubernetes"),
         responsibilities=("design ML platforms", "lead reviews"),
-        company_context="Acme",
+        company="Acme",
     )
 
 
 def test_tailor_cover_letter_returns_structured_letter(master_resume) -> None:
-    """tailor_cover_letter returns a CoverLetter with opening, body, closing."""
+    """compose returns a CoverLetter with opening, body, closing."""
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
-    result = tailor_cover_letter(master_resume, analysis, voice)
+    result = compose(master_resume, analysis, voice)
     assert result.cover_letter.salutation.startswith("Dear ")
     assert len(result.cover_letter.paragraphs) == 3
     assert result.cover_letter.paragraphs[0].opening is True
@@ -38,17 +38,17 @@ def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
     """The cover letter opening includes must-have keywords from the analysis."""
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
-    result = tailor_cover_letter(master_resume, analysis, voice)
+    result = compose(master_resume, analysis, voice)
     opening = result.cover_letter.paragraphs[0].text
     assert "python" in opening.lower() or "kubernetes" in opening.lower()
 
 
 def test_render_cover_letter_markdown_includes_salutation(master_resume) -> None:
-    """render_cover_letter_markdown emits salutation, paragraphs, signoff."""
+    """markdown emits salutation, paragraphs, signoff."""
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
-    result = tailor_cover_letter(master_resume, analysis, voice)
-    md = render_cover_letter_markdown(result.cover_letter)
+    result = compose(master_resume, analysis, voice)
+    md = markdown(result.cover_letter)
     assert "Dear " in md
     assert "Sincerely" in md
     assert result.cover_letter.sender_name in md
@@ -58,7 +58,5 @@ def test_tailor_cover_letter_honours_recipient(master_resume) -> None:
     """Passing recipient overrides the default 'Hiring Team' salutation."""
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
-    result = tailor_cover_letter(
-        master_resume, analysis, voice, recipient="Hiring Manager"
-    )
+    result = compose(master_resume, analysis, voice, recipient="Hiring Manager")
     assert "Hiring Manager" in result.cover_letter.salutation

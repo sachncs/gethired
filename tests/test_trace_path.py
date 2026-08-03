@@ -11,9 +11,9 @@ import yaml
 
 from evals.harness import GraderSpec, TaskDefinition, resolve_args, tailor_runner
 from gethired.models import (
-    ContactInformation,
-    SkillsByCategory,
-    TailoredResume,
+    Contact,
+    Skills,
+    Tailored,
 )
 
 
@@ -58,12 +58,12 @@ def test_resolve_args_strips_name_placeholder() -> None:
 
 def test_resolve_args_passes_lit_through_unchanged() -> None:
     """Non-string and non-prefixed values are passed through verbatim."""
-    spec_args = {"max_tool_calls": 6, "expected_tools": ["list_skills"], "name": "x"}
+    spec_args = {"max_tool_calls": 6, "expected_tools": ["skills"], "name": "x"}
     output: dict[str, Any] = {"trace_path": "ignored"}
     task = _build_task([])
     resolved = resolve_args(spec_args, output, task)
     assert resolved["max_tool_calls"] == 6
-    assert resolved["expected_tools"] == ["list_skills"]
+    assert resolved["expected_tools"] == ["skills"]
 
 
 def test_resolve_args_returns_none_for_unknown_placeholder() -> None:
@@ -83,9 +83,7 @@ def test_yaml_writer_tasks_announce_expected_tools() -> None:
         payload = yaml.safe_load(path.read_text())
         graders = payload["task"]["graders"]
         grader_names = {g["name"] for g in graders}
-        assert "code.tool_correctness" in grader_names, (
-            f"{path.name} missing code.tool_correctness"
-        )
+        assert "code.tool_correctness" in grader_names, f"{path.name} missing code.tool_correctness"
         assert "code.argument_correctness" in grader_names, (
             f"{path.name} missing code.argument_correctness"
         )
@@ -106,20 +104,12 @@ def test_yaml_tailor_tasks_include_plan_graders() -> None:
         payload = yaml.safe_load(path.read_text())
         graders = payload["task"]["graders"]
         grader_names = {g["name"] for g in graders}
-        assert "code.task_completion" in grader_names, (
-            f"{path.name} missing code.task_completion"
-        )
-        assert "code.tool_correctness" in grader_names, (
-            f"{path.name} missing code.tool_correctness"
-        )
-        assert "code.step_efficiency" in grader_names, (
-            f"{path.name} missing code.step_efficiency"
-        )
+        assert "code.task_completion" in grader_names, f"{path.name} missing code.task_completion"
+        assert "code.tool_correctness" in grader_names, f"{path.name} missing code.tool_correctness"
+        assert "code.step_efficiency" in grader_names, f"{path.name} missing code.step_efficiency"
 
 
-def test_tailor_runner_surfaces_trace_path(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
+def test_tailor_runner_surfaces_trace_path(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     """The tailor runner must surface trace_path through output and metrics."""
     trace_dir = tmp_path
 
@@ -128,10 +118,10 @@ def test_tailor_runner_surfaces_trace_path(
             self.tailored_dir = trace_dir
 
         def run(self) -> Any:
-            return TailoredResume(
-                contact=ContactInformation("x", "x", "x", "x", None, None),
+            return Tailored(
+                contact=Contact("x", "x", "x", "x", None, None),
                 summary="x",
-                skills=SkillsByCategory(categories={}),
+                skills=Skills(categories={}),
                 experiences=(),
                 projects=(),
                 education=(),

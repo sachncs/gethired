@@ -1,8 +1,8 @@
 """Tests over the adversarial resume fixtures.
 
 Each fixture probes a failure mode of the parser. Tests encode the
-desired behaviour: valid-but-awkward resumes must parse faithfully, and
-genuinely invalid resumes must fail fast with ``MasterParsingError``.
+desired behaviour: valid-but-awkward resumes must dispatch faithfully, and
+genuinely invalid resumes must fail fast with ``ParseError``.
 """
 
 from __future__ import annotations
@@ -11,8 +11,8 @@ from pathlib import Path
 
 import pytest
 
-from gethired.exceptions import MasterParsingError
-from gethired.parser import parse_tex
+from gethired.exceptions import ParseError
+from gethired.parser import parse_tex as tex
 
 ADVERSARIAL_DIR = Path(__file__).parent / "fixtures" / "adversarial"
 
@@ -22,17 +22,17 @@ def fixture(name: str) -> Path:
 
 
 def test_empty_body_raises_master_parsing_error() -> None:
-    with pytest.raises(MasterParsingError):
-        parse_tex(fixture("empty_body"))
+    with pytest.raises(ParseError):
+        tex(fixture("empty_body"))
 
 
 def test_missing_contact_fields_raise_master_parsing_error() -> None:
-    with pytest.raises(MasterParsingError):
-        parse_tex(fixture("minimal_contact"))
+    with pytest.raises(ParseError):
+        tex(fixture("minimal_contact"))
 
 
 def test_contact_variants_parse_faithfully() -> None:
-    resume = parse_tex(fixture("contact_variants"))
+    resume = tex(fixture("contact_variants"))
     assert resume.contact.name == "Sam Lee"
     assert resume.contact.city == "San Francisco"
     assert resume.contact.phone == "+1 415 555 0132"
@@ -42,7 +42,7 @@ def test_contact_variants_parse_faithfully() -> None:
 
 
 def test_missing_sections_parse_with_empty_optional_fields() -> None:
-    resume = parse_tex(fixture("missing_sections"))
+    resume = tex(fixture("missing_sections"))
     assert resume.contact.name == "Alex Kim"
     assert resume.summary
     assert resume.skills.categories == {}
@@ -52,23 +52,21 @@ def test_missing_sections_parse_with_empty_optional_fields() -> None:
 
 
 def test_empty_skill_categories_are_dropped() -> None:
-    resume = parse_tex(fixture("empty_skills"))
+    resume = tex(fixture("empty_skills"))
     assert resume.skills.categories == {"Languages": ("Python", "C#", "R")}
 
 
 def test_nested_braces_and_font_commands_are_cleaned() -> None:
-    resume = parse_tex(fixture("nested_braces"))
+    resume = tex(fixture("nested_braces"))
     bullets = resume.experiences[0].bullets
     assert len(bullets) == 2
     assert "Designed a control plane that orchestrates" in bullets[0].text
     assert "under 30 seconds" in bullets[0].text
-    assert bullets[1].text == (
-        "Operated a platform handling 99.99% availability across 3 regions."
-    )
+    assert bullets[1].text == ("Operated a platform handling 99.99% availability across 3 regions.")
 
 
 def test_multi_line_bullets_are_collected() -> None:
-    resume = parse_tex(fixture("multi_line_bullets"))
+    resume = tex(fixture("multi_line_bullets"))
     bullets = resume.experiences[0].bullets
     assert len(bullets) == 2
     assert "reduces release time by 40%" in bullets[0].text
@@ -76,7 +74,7 @@ def test_multi_line_bullets_are_collected() -> None:
 
 
 def test_multiple_education_entries_are_extracted() -> None:
-    resume = parse_tex(fixture("education_variants"))
+    resume = tex(fixture("education_variants"))
     assert len(resume.education) == 2
     first, second = resume.education
     assert first.institution == "University of Tokyo"
@@ -90,7 +88,7 @@ def test_multiple_education_entries_are_extracted() -> None:
 
 
 def test_single_date_experience_parses() -> None:
-    resume = parse_tex(fixture("experience_variants"))
+    resume = tex(fixture("experience_variants"))
     assert len(resume.experiences) == 3
     first = resume.experiences[0]
     assert first.start_date == "Summer 2019"
@@ -99,7 +97,7 @@ def test_single_date_experience_parses() -> None:
 
 
 def test_unicode_and_math_escapes_are_cleaned() -> None:
-    resume = parse_tex(fixture("unicode_latex"))
+    resume = tex(fixture("unicode_latex"))
     assert resume.contact.name == "Evariste Regnault"
     assert resume.contact.city == "Montreal"
     assert "O(1)" in resume.summary
@@ -109,7 +107,7 @@ def test_unicode_and_math_escapes_are_cleaned() -> None:
 
 
 def test_long_resume_parses_all_experiences() -> None:
-    resume = parse_tex(fixture("long_resume"))
+    resume = tex(fixture("long_resume"))
     assert len(resume.experiences) == 10
     total_bullets = sum(len(experience.bullets) for experience in resume.experiences)
     assert total_bullets == 40

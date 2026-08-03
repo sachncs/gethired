@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from gethired.exceptions import MasterParsingError
-from gethired.parser import parse_tex
+from gethired.exceptions import ParseError
+from gethired.parser import parse_tex as tex
 
 
 def test_contact_information_is_extracted(master_resume) -> None:
@@ -90,11 +90,11 @@ def test_content_hash_is_deterministic(master_resume) -> None:
 
 def test_parse_tex_with_string_input(master_resume, resume_tex_text) -> None:
     """Passing raw TeX text should work too."""
-    parsed = parse_tex(resume_tex_text)
+    parsed = tex(resume_tex_text)
     assert parsed.contact.name == master_resume.contact.name
 
 
 def test_parse_tex_with_invalid_source_raises(tmp_path) -> None:
     bad_path = tmp_path / "nonexistent.tex"
-    with __import__("pytest").raises(MasterParsingError):
-        parse_tex(bad_path)
+    with __import__("pytest").raises(ParseError):
+        tex(bad_path)

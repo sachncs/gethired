@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-from gethired.streaming import ProgressEvent, progress_reporter
+from gethired.streaming import ProgressEvent, reporter
 
 
 def test_progress_reporter_invokes_callback() -> None:
-    """progress_reporter yields the callback so the caller can invoke it."""
+    """reporter yields the callback so the caller can invoke it."""
     received: list[ProgressEvent] = []
 
     def callback(event: ProgressEvent) -> None:
         received.append(event)
 
-    with progress_reporter(callback) as emit:
+    with reporter(callback) as emit:
         emit(ProgressEvent(step="writer", message="start"))
         emit(ProgressEvent(step="writer", message="done", job_id="abc"))
 
@@ -23,5 +23,5 @@ def test_progress_reporter_invokes_callback() -> None:
 
 def test_progress_reporter_without_callback_runs() -> None:
     """When no callback is supplied, emits are silently dropped."""
-    with progress_reporter() as emit:
+    with reporter() as emit:
         emit(ProgressEvent(step="writer", message="noop"))

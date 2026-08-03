@@ -10,8 +10,8 @@ import os
 import sys
 from pathlib import Path
 
-from gethired.models import JobDescription
-from gethired.parser import parse_tex
+from gethired.models import Job
+from gethired.parser import parse_tex as tex
 from gethired.tailor import Tailor
 
 # Load .env manually
@@ -26,10 +26,10 @@ if _ENV_PATH.exists():
 
 
 def main() -> int:
-    master = parse_tex("resume.tex")
+    master = tex("resume.tex")
 
     # Synthetic JD to avoid network dependency
-    jd = JobDescription(
+    jd = Job(
         url="test://synthetic",
         title="Senior Machine Learning Engineer",
         company="Acme AI",

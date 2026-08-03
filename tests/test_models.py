@@ -13,32 +13,30 @@ from gethired.models import (
     AtsGate,
     Award,
     Bullet,
-    ContactInformation,
-    DropReason,
+    Contact,
+    Reason,
     Education,
     Experience,
-    FinalOutcome,
+    Outcome,
     GateTier,
-    GroundedCitation,
+    Citation,
     Job,
-    JobDescription,
-    JobDescriptionData,
-    JobEnvelope,
-    JobMetadata,
-    JobStatus,
-    JobType,
+    Job,
+    JobData,
+    StepEnv,
+    StepMeta,
+    StepStatus,
+    StepKind,
     KeywordTier,
-    MasterResume,
+    Master,
     Project,
     Run,
-    RunDescription,
+    RunView,
     RunResult,
-    SkillsByCategory,
-    SourceReference,
-    StepType,
-    TailoredResume,
-    VoiceProfile,
-    WebSearch,
+    Skills,
+    Source,
+    Tailored,
+    Voice,
     job,
 )
 
@@ -50,9 +48,9 @@ def test_all_models_are_frozen() -> None:
     The test then verifies (1) the model has frozen semantics and (2) every
     declared field is accessible on the resulting instance.
     """
-    contact = ContactInformation("x", "x", "x", "x", None, None)
+    contact = Contact("x", "x", "x", "x", None, None)
     placeholder_objs: dict[type, object] = {
-        ContactInformation: contact,
+        Contact: contact,
         Bullet: Bullet(text="x"),
         Experience: Experience(role="x", company="x", start_date="x", end_date="x", bullets=()),
         Project: Project(name="x", url="", bullets=()),
@@ -60,46 +58,46 @@ def test_all_models_are_frozen() -> None:
             institution="x", location="x", degree="x", major="x", graduation="x", gpa=None
         ),
         Award: Award(title="x", organization="x", date="x", description="x"),
-        SkillsByCategory: SkillsByCategory(categories={}),
-        MasterResume: MasterResume(
+        Skills: Skills(categories={}),
+        Master: Master(
             contact=contact,
             summary="x",
-            skills=SkillsByCategory(categories={}),
+            skills=Skills(categories={}),
             experiences=(),
             projects=(),
             education=(),
             awards=(),
         ),
-        VoiceProfile: VoiceProfile(
+        Voice: Voice(
             avg_bullet_length=0.0,
             bullet_length_stddev=0.0,
             opening_verbs=(),
             punctuation_density={},
             sentence_count_per_bullet=(0, 0),
         ),
-        DropReason: DropReason(item_id="x", reason="x"),
-        GroundedCitation: GroundedCitation(
+        Reason: Reason(item_id="x", reason="x"),
+        Citation: Citation(
             tailored_path="x", master_path="x", verbatim_span="x", job_id="x"
         ),
-        Job: Job(
+        Step: Step(
             id="x",
-            type=JobType.FETCH,
+            type=StepKind.FETCH,
             started_at="x",
             completed_at="x",
-            status=JobStatus.SUCCESS,
+            status=StepStatus.SUCCESS,
             inputs=(),
             outputs=(),
             rationale="x",
             model="x",
             tool_name=None,
-            metadata=JobMetadata(),
+            metadata=StepMeta(),
         ),
-        JobDescriptionData: JobDescriptionData(
+        JobData: JobData(
             id="x",
-            type=JobType.FETCH,
+            type=StepKind.FETCH,
             started_at="x",
             completed_at="x",
-            status=JobStatus.SUCCESS,
+            status=StepStatus.SUCCESS,
             inputs=(),
             outputs=(),
             rationale="x",
@@ -107,9 +105,9 @@ def test_all_models_are_frozen() -> None:
             tool_name=None,
             metadata={"url": None},
         ),
-        JobMetadata: JobMetadata(url="x"),
-        SourceReference: SourceReference(master_path="x", verbatim_span="x", master_hash="x"),
-        WebSearch: WebSearch(step_number=1, query="x", result_snippet="x", reason="x"),
+        StepMeta: StepMeta(url="x"),
+        Source: Source(master_path="x", verbatim_span="x", master_hash="x"),
+        # WebSearch was deleted; old test removed
         Run: Run(
             id="x",
             started_at="x",
@@ -118,7 +116,7 @@ def test_all_models_are_frozen() -> None:
             model="x",
             draft_model=None,
         ),
-        RunDescription: RunDescription(
+        RunView: RunView(
             id="x",
             started_at="x",
             master_hash="x",
@@ -133,13 +131,13 @@ def test_all_models_are_frozen() -> None:
             total_input_tokens=0,
             total_output_tokens=0,
             retry_attempts=0,
-            final_outcome=FinalOutcome.SUCCESS,
+            final_outcome=Outcome.SUCCESS,
             jobs=(),
         ),
-        TailoredResume: TailoredResume(
+        Tailored: Tailored(
             contact=contact,
             summary="x",
-            skills=SkillsByCategory(categories={}),
+            skills=Skills(categories={}),
             experiences=(),
             projects=(),
             education=(),
@@ -149,7 +147,7 @@ def test_all_models_are_frozen() -> None:
             grounding=(),
             jobs=(),
         ),
-        JobDescription: JobDescription(
+        Job: Job(
             url="x",
             title="x",
             company="x",
@@ -173,27 +171,27 @@ def test_all_models_are_frozen() -> None:
 
 def test_job_factory_assigns_uuid() -> None:
     """The ``job`` factory must assign a UUID and current timestamp."""
-    j = job(JobType.FETCH, outputs=("jds[0]",), rationale="fetched")
+    j = job(StepKind.FETCH, outputs=("jds[0]",), rationale="fetched")
     assert isinstance(j.id, str)
     assert len(j.id) == 36  # standard UUID4 format with hyphens
-    assert j.type == JobType.FETCH
+    assert j.type == StepKind.FETCH
     assert j.outputs == ("jds[0]",)
     assert j.rationale == "fetched"
-    assert j.metadata == JobMetadata()
+    assert j.metadata == StepMeta()
 
 
 def test_job_description_round_trips() -> None:
-    """``Job.description()`` should yield a serializable JobDescription."""
+    """``Job.description()`` should yield a serializable Job."""
     j = job(
-        JobType.FETCH,
+        StepKind.FETCH,
         outputs=("jds[0]",),
         rationale="fetched",
-        envelope=JobEnvelope(metadata=JobMetadata(url="https://example.com")),
+        envelope=StepEnv(metadata=StepMeta(url="https://example.com")),
     )
     desc = j.description()
-    assert isinstance(desc, JobDescriptionData)
+    assert isinstance(desc, JobData)
     assert desc.id == j.id
-    assert desc.type == JobType.FETCH
+    assert desc.type == StepKind.FETCH
     assert desc.metadata == {"url": "https://example.com"}
     as_dict = desc.to_dict()
     assert as_dict["id"] == j.id
@@ -216,10 +214,10 @@ def test_run_id_is_uuid_format() -> None:
 
 def test_run_result_websearch_calls_derived() -> None:
     """``RunResult.websearch_calls`` is a derived property, not stored."""
-    fetch_job = job(JobType.FETCH)
+    fetch_job = job(StepKind.FETCH)
     web_job = job(
-        JobType.WEBSEARCH,
-        envelope=JobEnvelope(metadata=JobMetadata(query="q")),
+        StepKind.WEBSEARCH,
+        envelope=StepEnv(metadata=StepMeta(query="q")),
     )
     run_result = RunResult(
         run=Run("x", "x", "x", "x", "x", None),
@@ -228,20 +226,15 @@ def test_run_result_websearch_calls_derived() -> None:
         total_input_tokens=0,
         total_output_tokens=0,
         retry_attempts=0,
-        final_outcome=FinalOutcome.SUCCESS,
+        final_outcome=Outcome.SUCCESS,
         jobs=(fetch_job, web_job),
     )
     assert run_result.websearch_calls == (web_job,)
 
 
-def test_step_type_enum_values() -> None:
-    assert StepType.LOOKUP.value == "lookup"
-    assert StepType.VALIDATE.value == "validate"
-
-
 def test_final_outcome_enum_values() -> None:
-    assert FinalOutcome.SUCCESS.value == "success"
-    assert FinalOutcome.ATS_HARD_FAIL.value == "ats_hard_fail"
+    assert Outcome.SUCCESS.value == "success"
+    assert Outcome.ATS_HARD_FAIL.value == "ats_hard_fail"
 
 
 def test_ats_gate_has_twelve_values() -> None:

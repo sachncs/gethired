@@ -4,10 +4,10 @@ from __future__ import annotations
 
 from pydantic_ai.models.test import TestModel
 
-from gethired.models import JobDescription, PreflightReport
+from gethired.models import Job, Report
 from gethired.tailor import Tailor
 
-SAMPLE_JD = JobDescription(
+SAMPLE_JD = Job(
     url="https://example.com/jd",
     title="Senior ML Engineer",
     company="Acme AI",
@@ -20,7 +20,7 @@ SAMPLE_JD = JobDescription(
 
 
 def test_preflight_returns_report(master_resume) -> None:
-    """preflight returns a PreflightReport with the expected fields."""
+    """preflight returns a Report with the expected fields."""
     tailor = Tailor(
         resume=master_resume,
         job_description=SAMPLE_JD,
@@ -28,7 +28,7 @@ def test_preflight_returns_report(master_resume) -> None:
         model_instance=TestModel(),
     )
     report = tailor.preflight()
-    assert isinstance(report, PreflightReport)
+    assert isinstance(report, Report)
     assert report.tokens_estimate > 0
     assert "BULLETS_QUANTIFIED" in report.expected_gates
     assert 0.0 <= report.voice_drift_risk <= 1.0

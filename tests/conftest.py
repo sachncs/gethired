@@ -7,7 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from gethired.parser import parse_tex
+from gethired.parser import parse_tex as tex
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
@@ -30,8 +30,8 @@ def resume_tex_text(resume_tex_path: Path) -> str:
 
 @pytest.fixture(scope="session")
 def master_resume(resume_tex_path: Path):
-    """Parsed MasterResume from the fixture resume.tex."""
-    return parse_tex(resume_tex_path)
+    """Parsed Master from the fixture resume.tex."""
+    return tex(resume_tex_path)
 
 
 @pytest.fixture(scope="session")

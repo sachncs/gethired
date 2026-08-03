@@ -2,7 +2,7 @@
 
 The corpus exercises realistic variation in contact formatting, skill
 categories, role counts, project counts, education, and awards. Every
-fixture must parse into a fully-populated ``MasterResume`` and the full
+fixture must dispatch into a fully-populated ``Master`` and the full
 tailoring pipeline must run against it.
 """
 
@@ -13,8 +13,8 @@ from pathlib import Path
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from gethired.models import JobDescription
-from gethired.parser import parse_tex
+from gethired.models import Job
+from gethired.parser import parse_tex as tex
 from gethired.tailor import Tailor
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -29,11 +29,10 @@ def corpus_paths() -> list[Path]:
 
 
 CORPUS_IDS = [
-    f"canonical:{path.name}" if path == CANONICAL else path.name
-    for path in corpus_paths()
+    f"canonical:{path.name}" if path == CANONICAL else path.name for path in corpus_paths()
 ]
 
-SAMPLE_JD = JobDescription(
+SAMPLE_JD = Job(
     url="https://example.com/jd",
     title="Senior Machine Learning Engineer",
     company="Acme AI",
@@ -52,7 +51,7 @@ SAMPLE_JD = JobDescription(
 
 @pytest.mark.parametrize("fixture_path", corpus_paths(), ids=CORPUS_IDS)
 def test_corpus_fixture_parses_to_populated_resume(fixture_path: Path) -> None:
-    resume = parse_tex(fixture_path)
+    resume = tex(fixture_path)
 
     assert resume.contact.name, "contact.name must be non-empty"
     assert resume.contact.city, "contact.city must be non-empty"
@@ -75,8 +74,8 @@ def test_corpus_fixture_parses_to_populated_resume(fixture_path: Path) -> None:
 
 @pytest.mark.parametrize("fixture_path", corpus_paths(), ids=CORPUS_IDS)
 def test_corpus_fixture_hash_is_deterministic(fixture_path: Path) -> None:
-    first = parse_tex(fixture_path)
-    second = parse_tex(fixture_path)
+    first = tex(fixture_path)
+    second = tex(fixture_path)
     assert first.content_hash() == second.content_hash()
 
 

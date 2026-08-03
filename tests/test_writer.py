@@ -5,27 +5,27 @@ from __future__ import annotations
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from gethired.description import DescriptionAnalysis
-from gethired.exceptions import ConfigurationError
+from gethired.description import Analysis
+from gethired.exceptions import ConfigError
 from gethired.profiler import build as build_profile
 from gethired.tailor import Tailor
-from gethired.writer import Writer, WriterOutput, apply_writer_output
+from gethired.writer import Writer, WriterOutput, apply
 
 
-def _sample_analysis() -> DescriptionAnalysis:
-    return DescriptionAnalysis(
+def _sample_analysis() -> Analysis:
+    return Analysis(
         role="Senior ML Engineer",
         seniority="senior",
-        must_have_skills=("python", "kubernetes"),
-        nice_to_have_skills=("distributed",),
-        keywords_to_mirror=("python", "kubernetes"),
+        must_have=("python", "kubernetes"),
+        nice_to_have=("distributed",),
+        keywords=("python", "kubernetes"),
         responsibilities=("design ML platforms",),
-        company_context="Acme",
+        company="Acme",
     )
 
 
 def test_writer_with_test_model_produces_tailored_resume(master_resume) -> None:
-    """The writer can produce a TailoredResume when given a TestModel.
+    """The writer can produce a Tailored when given a TestModel.
 
     Uses pydantic-ai's TestModel which returns structured data matching
     the output type without making an actual API call.
@@ -51,21 +51,21 @@ def test_writer_with_test_model_produces_tailored_resume(master_resume) -> None:
 def test_writer_raises_configuration_error_when_model_missing(
     monkeypatch: pytest.MonkeyPatch, master_resume
 ) -> None:
-    """Writer.tailor raises ConfigurationError when neither model nor model_instance."""
+    """Writer.tailor raises ConfigError when neither model nor model_instance."""
     monkeypatch.delenv("MODEL", raising=False)
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     writer = Writer(model=None)
-    with pytest.raises(ConfigurationError, match="MODEL is required"):
+    with pytest.raises(ConfigError, match="MODEL is required"):
         writer.tailor(master=master_resume, analysis=analysis, voice=voice)
 
 
 def test_tailor_raises_configuration_error_when_model_missing(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Tailor raises ConfigurationError at construction when MODEL is unset."""
+    """Tailor raises ConfigError at construction when MODEL is unset."""
     monkeypatch.delenv("MODEL", raising=False)
-    with pytest.raises(ConfigurationError, match="MODEL is required"):
+    with pytest.raises(ConfigError, match="MODEL is required"):
         Tailor(
             resume="resume.tex",
             job_description="https://example.com/jd",
@@ -106,7 +106,7 @@ def test_apply_writer_output_removes_dropped_entries(master_resume) -> None:
         rationale="Drop irrelevant experience and project entries.",
     )
 
-    tailored = apply_writer_output(master_resume, output, _sample_analysis())
+    tailored = apply(master_resume, output, _sample_analysis())
 
     assert len(tailored.experiences) == len(master_resume.experiences) - 1
     assert tailored.experiences[0].role == master_resume.experiences[1].role
