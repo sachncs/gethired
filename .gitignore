@@ -66,6 +66,8 @@ coverage.xml
 
 # ── User-personal files (per user directive) ─────────────────────────
 todo.md
+AGENTS.md
+agents.md
 
 # ── Project runtime data ─────────────────────────────────────────────
 data/master.json
