@@ -6,38 +6,38 @@ All exceptions inherit from ``Exception`` and end with ``Error`` per AGENTS.md.
 from __future__ import annotations
 
 
-class ResumeTailoringError(Exception):
+class TailorError(Exception):
     """Base exception for all gethired errors.
 
     Catch this to handle any gethired-specific failure.
     """
 
 
-class ConfigurationError(ResumeTailoringError):
+class ConfigError(TailorError):
     """Raised when configuration is invalid or missing required values."""
 
 
-class MasterParsingError(ResumeTailoringError):
+class ParseError(TailorError):
     """Raised when the master resume cannot be parsed from its source format."""
 
 
-class JobDescriptionRetrievalError(ResumeTailoringError):
+class FetchError(TailorError):
     """Raised when a job description URL cannot be retrieved or extracted."""
 
 
-class GroundingViolationError(ResumeTailoringError):
+class GroundingError(TailorError):
     """Raised when the tailored resume contains a fact not grounded in master."""
 
 
-class StyleViolationError(ResumeTailoringError):
+class StyleError(TailorError):
     """Raised when the tailored resume fails style checks (banned words, parallelism)."""
 
 
-class PlagiarismViolationError(ResumeTailoringError):
+class PlagiarismError(TailorError):
     """Raised when the tailored resume contains unacceptably long JD phrase overlap."""
 
 
-class AtsGateFailureError(ResumeTailoringError):
+class AtsError(TailorError):
     """Raised when one or more ATS gates fail.
 
     Attributes:
@@ -49,5 +49,5 @@ class AtsGateFailureError(ResumeTailoringError):
         self.failed_gates: tuple[str, ...] = failed_gates
 
 
-class PdfCompilationError(ResumeTailoringError):
+class CompileError(TailorError):
     """Raised when the LaTeX-to-PDF compilation step fails or the engine is missing."""
