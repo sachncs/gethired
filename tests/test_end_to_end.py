@@ -8,11 +8,12 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import pymupdf
 from pydantic_ai.models.test import TestModel
 
-from gethired.models import JobDescription
+from gethired.models import FinalOutcome, JobDescription, JobType, job_validate
 from gethired.renderer import render_tex, render_text
-from gethired.tailor import Tailor
+from gethired.tailor import VALIDATION_JOB_TYPES, Tailor, merge_critic_jobs
 from gethired.validator import AtsGate, AtsGateReport, ats_check
 
 SAMPLE_JD = JobDescription(
@@ -112,3 +113,53 @@ def test_end_to_end_section_headings_present() -> None:
     assert "\\section{Education}" in tex
     assert "\\section{Technical Skills}" in tex
     assert "\\section{Selected Projects}" in tex
+
+
+def test_merge_critic_jobs_replaces_all_prior_validation_jobs() -> None:
+    """Re-running the critic after PDF compile must not duplicate validation jobs."""
+    existing = (
+        job_validate(JobType.VALIDATE_GROUNDING, outputs=(), rationale="first"),
+        job_validate(JobType.VALIDATE_STYLE, outputs=(), rationale="first"),
+        job_validate(JobType.VALIDATE_PLAGIARISM, outputs=(), rationale="first"),
+        job_validate(JobType.VALIDATE_ATS, outputs=(), rationale="first"),
+    )
+    authoritative = (
+        job_validate(JobType.VALIDATE_GROUNDING, outputs=(), rationale="second"),
+        job_validate(JobType.VALIDATE_STYLE, outputs=(), rationale="second"),
+        job_validate(JobType.VALIDATE_PLAGIARISM, outputs=(), rationale="second"),
+        job_validate(JobType.VALIDATE_ATS, outputs=(), rationale="second"),
+    )
+    merged = merge_critic_jobs(existing, authoritative)
+    validate_jobs = [j for j in merged if j.type in VALIDATION_JOB_TYPES]
+    assert len(validate_jobs) == 4
+    assert all(j.rationale == "second" for j in validate_jobs)
+
+
+def test_pipeline_pdf_pass_revalidates_and_recomputes_outcome(tmp_path: Path, monkeypatch) -> None:
+    """When a PDF compiles, the critic re-runs and the outcome reflects PDF gates."""
+
+    def fake_compile(tex_source: str, output_dir: Path) -> Path:
+        run_dir = Path(output_dir)
+        run_dir.mkdir(parents=True, exist_ok=True)
+        pdf_path = run_dir / "tailored.pdf"
+        document = pymupdf.open()
+        document.new_page()
+        document.new_page()
+        document.save(pdf_path)
+        document.close()
+        return pdf_path
+
+    monkeypatch.setattr("gethired.tailor.compile_pdf", fake_compile)
+    tailor = Tailor(
+        resume="resume.tex",
+        job_description=SAMPLE_JD,
+        debug=False,
+        model="test",
+        model_instance=TestModel(),
+        tailored_dir=tmp_path,
+    )
+    result = tailor.run()
+    for job_type in VALIDATION_JOB_TYPES:
+        matches = [job for job in result.jobs if job.type is job_type]
+        assert len(matches) == 1, f"{job_type.value} duplicated: {len(matches)}"
+    assert result.run_result.final_outcome is FinalOutcome.ATS_HARD_FAIL

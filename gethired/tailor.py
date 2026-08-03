@@ -36,7 +36,9 @@ from gethired.models import (
     Experience,
     FinalOutcome,
     GroundedCitation,
+    Job,
     JobDescription,
+    JobType,
     MasterResume,
     PreflightReport,
     Project,
@@ -220,11 +222,13 @@ class Tailor:
                 txt_source=txt_source,
                 pdf_path=pdf_path,
             )
-            tailored_with_jobs = replace(
-                tailored_with_jobs,
-                jobs=tuple(j for j in tailored_with_jobs.jobs if j.type.value != "validate_ats")
-                + critic_jobs,
+            all_jobs = merge_critic_jobs(tailored_with_jobs.jobs, critic_jobs)
+            run_result = replace(
+                run_result,
+                final_outcome=outcome_from_ats(ats_report),
+                jobs=all_jobs,
             )
+            tailored_with_jobs = replace(tailored_with_jobs, jobs=all_jobs, run_result=run_result)
 
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
 
@@ -494,6 +498,29 @@ def outcome_from_ats(report: AtsGateReport) -> FinalOutcome:
     if report.hard_failed_gates:
         return FinalOutcome.ATS_HARD_FAIL
     return FinalOutcome.SUCCESS
+
+
+VALIDATION_JOB_TYPES: frozenset[JobType] = frozenset(
+    {
+        JobType.VALIDATE_GROUNDING,
+        JobType.VALIDATE_STYLE,
+        JobType.VALIDATE_PLAGIARISM,
+        JobType.VALIDATE_ATS,
+    }
+)
+
+
+def merge_critic_jobs(
+    existing_jobs: tuple[Job, ...], critic_jobs: tuple[Job, ...]
+) -> tuple[Job, ...]:
+    """Replace previously emitted validation jobs with an authoritative critic pass.
+
+    The critic is re-run after PDF compilation so PDF-dependent gates are
+    evaluated against the real artefact. Without dropping every earlier
+    validation job, that second pass would duplicate the grounding, style,
+    and plagiarism records in the job trail.
+    """
+    return tuple(job for job in existing_jobs if job.type not in VALIDATION_JOB_TYPES) + critic_jobs
 
 
 def read_master_json(path: Path) -> MasterResume:
