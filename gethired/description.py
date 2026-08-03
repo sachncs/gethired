@@ -87,6 +87,54 @@ def analyze(description: Job) -> Analysis:
     )
 
 
+def _union_skills(analyses: tuple[Analysis, ...]) -> list[str]:
+    """Union of must-have skills across all JDs (preserves first-seen order)."""
+    seen: set[str] = set()
+    result: list[str] = []
+    for analysis in analyses:
+        for skill in analysis.must_have:
+            if skill not in seen:
+                result.append(skill)
+                seen.add(skill)
+    return result
+
+
+def _intersect_skills(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
+    """Nice-to-have skills common to all JDs (intersection)."""
+    if not analyses:
+        return ()
+    counts: dict[str, int] = {}
+    for analysis in analyses:
+        for skill in analysis.nice_to_have:
+            counts[skill] = counts.get(skill, 0) + 1
+    return tuple(skill for skill, count in counts.items() if count == len(analyses))
+
+
+def _merged_keywords(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
+    """Deduplicated union of must-haves (first) then nice-to-haves (after)."""
+    must_have = _union_skills(analyses)
+    seen: set[str] = set(must_have)
+    extras: list[str] = []
+    for analysis in analyses:
+        for skill in analysis.nice_to_have:
+            if skill not in seen:
+                extras.append(skill)
+                seen.add(skill)
+    return tuple(must_have + extras)
+
+
+def _union_responsibilities(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
+    """Union of responsibility sentences across all JDs (preserves first-seen order)."""
+    seen: set[str] = set()
+    result: list[str] = []
+    for analysis in analyses:
+        for sentence in analysis.responsibilities:
+            if sentence not in seen:
+                result.append(sentence)
+                seen.add(sentence)
+    return tuple(result)
+
+
 def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
     """Consolidate analyses across multiple job descriptions.
 
@@ -108,41 +156,18 @@ def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
     if not descriptions:
         raise ValueError("at least one Job is required")
     analyses = tuple(analyze_description(jd) for jd in descriptions)
-    must_have: list[str] = []
-    seen_must: set[str] = set()
-    for analysis in analyses:
-        for skill in analysis.must_have:
-            if skill not in seen_must:
-                must_have.append(skill)
-                seen_must.add(skill)
-    nice_counts: dict[str, int] = {}
-    for analysis in analyses:
-        for skill in analysis.nice_to_have:
-            nice_counts[skill] = nice_counts.get(skill, 0) + 1
-    nice_to_have = tuple(skill for skill, count in nice_counts.items() if count == len(analyses))
-    keywords: list[str] = []
-    seen_kw: set[str] = set()
-    for skill in list(must_have) + list(nice_to_have):
-        if skill not in seen_kw:
-            keywords.append(skill)
-            seen_kw.add(skill)
-    responsibilities: list[str] = []
-    seen_resp: set[str] = set()
-    for analysis in analyses:
-        for sentence in analysis.responsibilities:
-            if sentence not in seen_resp:
-                responsibilities.append(sentence)
-                seen_resp.add(sentence)
-    rank = SENIORITY_RANK
-    top_seniority = max(analyses, key=lambda a: rank.get(a.seniority, 0)).seniority
+    top_seniority = max(
+        analyses,
+        key=lambda a: SENIORITY_RANK.get(a.seniority, 0),
+    ).seniority
     companies = tuple(dict.fromkeys(jd.company for jd in descriptions if jd.company))
     return Analysis(
         role=descriptions[0].title or UNKNOWN_ROLE,
         seniority=top_seniority,
-        must_have=tuple(must_have),
-        nice_to_have=nice_to_have,
-        keywords=tuple(keywords),
-        responsibilities=tuple(responsibilities),
+        must_have=tuple(_union_skills(analyses)),
+        nice_to_have=_intersect_skills(analyses),
+        keywords=_merged_keywords(analyses),
+        responsibilities=_union_responsibilities(analyses),
         company=", ".join(companies),
     )
 

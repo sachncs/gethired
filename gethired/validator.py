@@ -185,14 +185,9 @@ def flatten(tailored: Tailored) -> str:
 # ---------------------------------------------------------------------------
 
 
-def style(
-    tailored: Tailored,
-    threshold_ratio: float = QUANTIFY,
-) -> tuple[StyleFault, ...]:
-    """Check for banned words, parallelism, length variance, and quantification."""
+def _banned_word_violations(full_text: str) -> list[StyleFault]:
+    """Return violations for banned words (exact and stem-matched)."""
     violations: list[StyleFault] = []
-
-    full_text = flatten(tailored).lower()
     for word in BANNED:
         pattern = re.compile(rf"\b{re.escape(word)}\b", re.IGNORECASE)
         for match in pattern.finditer(full_text):
@@ -217,40 +212,68 @@ def style(
                     ),
                 )
             )
+    return violations
 
-    for construction in CONSTRUCTIONS:
-        if construction.lower() in full_text:
+
+def _construction_violations(full_text: str) -> list[StyleFault]:
+    """Return violations for banned construction phrases."""
+    return [
+        StyleFault(path="tailored", detail=f"Banned construction {construction!r}")
+        for construction in CONSTRUCTIONS
+        if construction.lower() in full_text
+    ]
+
+
+def _quantification_violations(
+    tailored: Tailored, threshold_ratio: float
+) -> list[StyleFault]:
+    """Return violations for experiences whose bullets are not quantified enough."""
+    violations: list[StyleFault] = []
+    for experience in tailored.experiences:
+        if not experience.bullets:
+            continue
+        quantified = sum(1 for bullet in experience.bullets if numbers(bullet.text))
+        ratio = quantified / len(experience.bullets)
+        if ratio < threshold_ratio:
             violations.append(
                 StyleFault(
-                    path="tailored",
-                    detail=f"Banned construction {construction!r}",
+                    path=f"experiences[{experience.role}]",
+                    detail=(
+                        f"Only {ratio:.0%} of bullets quantified; "
+                        f"threshold {threshold_ratio:.0%}"
+                    ),
                 )
             )
+    return violations
 
-    for experience in tailored.experiences:
-        violations.extend(parallelism(experience.role, experience.bullets))
-        if experience.bullets:
-            quantified = sum(1 for bullet in experience.bullets if numbers(bullet.text))
-            ratio = quantified / len(experience.bullets)
-            if ratio < threshold_ratio:
-                violations.append(
-                    StyleFault(
-                        path=f"experiences[{experience.role}]",
-                        detail=(
-                            f"Only {ratio:.0%} of bullets quantified; "
-                            f"threshold {threshold_ratio:.0%}"
-                        ),
-                    )
-                )
 
+def _summary_violations(tailored: Tailored) -> list[StyleFault]:
+    """Return a violation when the summary does not start with an action verb."""
     if tailored.summary and not verb(tailored.summary.split(maxsplit=1)[0]):
-        violations.append(
+        return [
             StyleFault(
                 path="summary",
-                detail=f"Summary does not start with an action verb: {tailored.summary[:60]!r}",
+                detail=(
+                    f"Summary does not start with an action verb: {tailored.summary[:60]!r}"
+                ),
             )
-        )
+        ]
+    return []
 
+
+def style(
+    tailored: Tailored,
+    threshold_ratio: float = QUANTIFY,
+) -> tuple[StyleFault, ...]:
+    """Check for banned words, parallelism, length variance, and quantification."""
+    violations: list[StyleFault] = []
+    full_text = flatten(tailored).lower()
+    violations.extend(_banned_word_violations(full_text))
+    violations.extend(_construction_violations(full_text))
+    for experience in tailored.experiences:
+        violations.extend(parallelism(experience.role, experience.bullets))
+    violations.extend(_quantification_violations(tailored, threshold_ratio))
+    violations.extend(_summary_violations(tailored))
     return tuple(violations)
 
 
