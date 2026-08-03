@@ -31,6 +31,7 @@ if TYPE_CHECKING:
         StyleError,
         TailorError,
     )
+    from gethired.fetch import fetch
     from gethired.models import (
         Citation,
         Contact,
@@ -39,7 +40,6 @@ if TYPE_CHECKING:
         Tailored,
     )
     from gethired.parse import parse
-    from gethired.fetch import fetch
     from gethired.tailor import Tailor
     from gethired.version import __version__
 
@@ -73,6 +73,7 @@ def __getattr__(name: str) -> Any:
     }
     if name in lazy_loads:
         import importlib
+
         module = importlib.import_module(lazy_loads[name])
         attr = getattr(module, name)
         globals()[name] = attr

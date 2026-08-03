@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 from gethired.normalize import (
-    numbers,
-    ngrams,
-    verb,
     flatten,
+    ngrams,
+    numbers,
     strip_latex,
     tokenize,
+    verb,
 )
 
 

@@ -235,9 +235,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
         start_date, end_date = extract_dates(lines)
         role, company = split_heading(heading_text)
         bullets = tuple(
-            Bullet(text=clean(_strip(line)))
-            for line in lines
-            if BULLET_PREFIX_RE.match(line)
+            Bullet(text=clean(_strip(line))) for line in lines if BULLET_PREFIX_RE.match(line)
         )
         experiences.append(
             Experience(
@@ -262,9 +260,7 @@ def extract_projects(body: str) -> tuple[Project, ...]:
         url_match = next((URL_RE.search(line) for line in lines if URL_RE.search(line)), None)
         url = clean(url_match.group(0)) if url_match else ""
         bullets = tuple(
-            Bullet(text=clean(_strip(line)))
-            for line in lines
-            if BULLET_PREFIX_RE.match(line)
+            Bullet(text=clean(_strip(line))) for line in lines if BULLET_PREFIX_RE.match(line)
         )
         projects.append(Project(name=name, url=url, bullets=bullets))
     return tuple(projects)
@@ -325,11 +321,7 @@ def extract_awards(body: str) -> tuple[Award, ...]:
         if not date:
             year_match = SINGLE_YEAR_RE.search(block)
             date = year_match.group(0) if year_match else ""
-        description_lines = [
-            clean(_strip(line))
-            for line in lines
-            if BULLET_PREFIX_RE.match(line)
-        ]
+        description_lines = [clean(_strip(line)) for line in lines if BULLET_PREFIX_RE.match(line)]
         awards.append(
             Award(
                 title=clean(title),

@@ -13,16 +13,14 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from typing import Union
 
-from gethired.constants import CACHE_DIR
 from gethired.fetcher import Fetcher
 from gethired.models import Job
 
 __all__ = ["fetch"]
 
 
-def fetch(url: str, cache_dir: Union[str, Path, None] = None) -> Job:
+def fetch(url: str, cache_dir: str | Path | None = None) -> Job:
     """Fetch and cache a job description.
 
     Args:

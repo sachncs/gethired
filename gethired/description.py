@@ -119,9 +119,7 @@ def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
     for analysis in analyses:
         for skill in analysis.nice_to_have:
             nice_counts[skill] = nice_counts.get(skill, 0) + 1
-    nice_to_have = tuple(
-        skill for skill, count in nice_counts.items() if count == len(analyses)
-    )
+    nice_to_have = tuple(skill for skill, count in nice_counts.items() if count == len(analyses))
     keywords: list[str] = []
     seen_kw: set[str] = set()
     for skill in list(must_have) + list(nice_to_have):
@@ -136,12 +134,8 @@ def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
                 responsibilities.append(sentence)
                 seen_resp.add(sentence)
     rank = SENIORITY_RANK
-    top_seniority = max(
-        analyses, key=lambda a: rank.get(a.seniority, 0)
-    ).seniority
-    companies = tuple(
-        dict.fromkeys(jd.company for jd in descriptions if jd.company)
-    )
+    top_seniority = max(analyses, key=lambda a: rank.get(a.seniority, 0)).seniority
+    companies = tuple(dict.fromkeys(jd.company for jd in descriptions if jd.company))
     return Analysis(
         role=descriptions[0].title or UNKNOWN_ROLE,
         seniority=top_seniority,

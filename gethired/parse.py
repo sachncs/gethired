@@ -20,20 +20,25 @@ Raises:
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Union
 
 from gethired.models import Master
 from gethired.parser import (
     image as _image,
+)
+from gethired.parser import (
     pdf as _pdf,
+)
+from gethired.parser import (
     tex as _tex,
+)
+from gethired.parser import (
     text as _text,
 )
 
 __all__ = ["parse"]
 
 
-def parse(source: Union[str, Path]) -> Master:
+def parse(source: str | Path) -> Master:
     """Parse a master resume from any supported format.
 
     Dispatches by file extension when ``source`` is a path, and by content

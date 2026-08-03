@@ -23,11 +23,13 @@ from gethired.models import (
     Tailored,
 )
 from gethired.normalize import (
-    numbers,
-    ngrams,
-    verb,
-    tokenize,
     flatten as normalize_flatten,
+)
+from gethired.normalize import (
+    ngrams,
+    numbers,
+    tokenize,
+    verb,
 )
 from gethired.rubric import (
     ALLOWLIST,
@@ -228,9 +230,7 @@ def style(
     for experience in tailored.experiences:
         violations.extend(parallelism(experience.role, experience.bullets))
         if experience.bullets:
-            quantified = sum(
-                1 for bullet in experience.bullets if numbers(bullet.text)
-            )
+            quantified = sum(1 for bullet in experience.bullets if numbers(bullet.text))
             ratio = quantified / len(experience.bullets)
             if ratio < threshold_ratio:
                 violations.append(
@@ -390,9 +390,7 @@ def gate_pdf(pdf_path: Path | None) -> AtsResult:
     blocked = pdf_guard(pdf_path, AtsGate.PDF_COMPILES)
     if blocked is not None:
         return blocked
-    return AtsResult(
-        AtsGate.PDF_COMPILES, GateStatus.PASS, detail=f"PDF compiled at {pdf_path}"
-    )
+    return AtsResult(AtsGate.PDF_COMPILES, GateStatus.PASS, detail=f"PDF compiled at {pdf_path}")
 
 
 def gate_text(pdf_path: Path | None) -> AtsResult:
@@ -526,24 +524,18 @@ def gate_length(pdf_path: Path | None) -> AtsResult:
     )
 
 
-def gate_keywords(
-    tailored: Tailored, jds: tuple[Job, ...]
-) -> AtsResult:
+def gate_keywords(tailored: Tailored, jds: tuple[Job, ...]) -> AtsResult:
     must_have: set[str] = set()
     for jd in jds:
         must_have.update(k.lower() for k in jd.must_have_keywords)
 
     if not must_have:
-        return AtsResult(
-            AtsGate.KEYWORDS_COVERED, GateStatus.PASS, detail="No must-have keywords"
-        )
+        return AtsResult(AtsGate.KEYWORDS_COVERED, GateStatus.PASS, detail="No must-have keywords")
 
     tailored_text = flatten(tailored).lower()
     missing = sorted(word for word in must_have if word not in tailored_text)
     if not missing:
-        return AtsResult(
-            AtsGate.KEYWORDS_COVERED, GateStatus.PASS, detail="All keywords covered"
-        )
+        return AtsResult(AtsGate.KEYWORDS_COVERED, GateStatus.PASS, detail="All keywords covered")
     return AtsResult(
         AtsGate.KEYWORDS_COVERED,
         GateStatus.FAIL,

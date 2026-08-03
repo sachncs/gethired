@@ -35,14 +35,14 @@ from gethired.description import Analysis
 from gethired.exceptions import ConfigError
 from gethired.models import (
     Bullet,
-    Reason,
-    Experience,
     Citation,
+    Experience,
     Job,
-    StepEnv,
     Master,
     Project,
+    Reason,
     Skills,
+    StepEnv,
     Tailored,
     Voice,
     job_lookup,
@@ -261,9 +261,7 @@ class Writer:
 
     def __register_read_only_tools(self, agent: Agent[WriterDeps, WriterOutput]) -> None:
         @agent.tool
-        async def experience(
-            ctx: RunContext[WriterDeps], role_or_company: str
-        ) -> dict[str, Any]:
+        async def experience(ctx: RunContext[WriterDeps], role_or_company: str) -> dict[str, Any]:
             """Look up an experience in the master by role or company."""
             master = ctx.deps.master
             tracer = current_tracer.get()
@@ -546,9 +544,7 @@ def apply(
     dropped_reasons = tuple(
         Reason(
             item_id=path,
-            reason=(
-                f"Marked for drop by writer agent: {output.rationale[:DROP_CHARS]}"
-            ),
+            reason=(f"Marked for drop by writer agent: {output.rationale[:DROP_CHARS]}"),
         )
         for path in output.dropped
     )

@@ -222,9 +222,7 @@ def extract_skills(body: str) -> Skills:
         raw_category = clean(line.group(1))
         category = raw_category.rstrip(":").strip()
         raw_values = SKILL_VSPACE_RE.sub("", line.group(2))
-        values = tuple(
-            value for raw_value in raw_values.split(",") if (value := clean(raw_value))
-        )
+        values = tuple(value for raw_value in raw_values.split(",") if (value := clean(raw_value)))
         if category and values:
             categories[category] = values
     return Skills(categories=categories)
@@ -581,6 +579,7 @@ def __dispatch(source: str | Path) -> Master:
         if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
             return image(path)
     return plain(str(source))
+
 
 __all__ = [
     "tex",

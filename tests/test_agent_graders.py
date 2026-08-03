@@ -85,9 +85,7 @@ def test_code_tool_correctness_passes_when_expected_subset(tmp_path: Path) -> No
             _tool_span("jd", {}),
         ],
     )
-    result = code_tool_correctness(
-        "t", str(trace), expected_tools=("skills", "jd")
-    )
+    result = code_tool_correctness("t", str(trace), expected_tools=("skills", "jd"))
     assert result.passed is True
     assert result.score == 1.0
 
@@ -96,18 +94,14 @@ def test_code_tool_correctness_fails_when_missing(tmp_path: Path) -> None:
     """ToolCorrectness: missing expected tool is a fail."""
     trace = tmp_path / "trace.jsonl"
     _write_trace(trace, [_tool_span("skills", {})])
-    result = code_tool_correctness(
-        "t", str(trace), expected_tools=("skills", "education")
-    )
+    result = code_tool_correctness("t", str(trace), expected_tools=("skills", "education"))
     assert result.passed is False
     assert "education" in result.detail
 
 
 def test_code_tool_correctness_handles_missing_trace(tmp_path: Path) -> None:
     """ToolCorrectness: missing trace file fails."""
-    result = code_tool_correctness(
-        "t", str(tmp_path / "nope.jsonl"), expected_tools=("skills",)
-    )
+    result = code_tool_correctness("t", str(tmp_path / "nope.jsonl"), expected_tools=("skills",))
     assert result.passed is False
 
 

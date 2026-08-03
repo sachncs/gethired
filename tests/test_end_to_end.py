@@ -11,7 +11,7 @@ from pathlib import Path
 import pymupdf
 from pydantic_ai.models.test import TestModel
 
-from gethired.models import Outcome, Job, StepKind, job_validate
+from gethired.models import Job, Outcome, StepKind, job_validate
 from gethired.renderer import tex, text
 from gethired.tailor import VALIDATION, Tailor, merge_steps
 from gethired.validator import AtsGate, AtsReport, ats

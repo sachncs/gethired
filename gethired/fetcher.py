@@ -107,9 +107,7 @@ class Fetcher:
                 )
                 if attempt < self.max_attempts:
                     time.sleep(backoff_seconds)
-        raise FetchError(
-            f"Failed to fetch {url} after {self.max_attempts} attempts: {last_exc}"
-        )
+        raise FetchError(f"Failed to fetch {url} after {self.max_attempts} attempts: {last_exc}")
 
     def __cache_path(self, url_hash: str) -> Path:
         return self.cache_dir / f"{url_hash}.json"

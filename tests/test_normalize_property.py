@@ -19,9 +19,9 @@ from gethired.models import (
     Skills,
 )
 from gethired.normalize import (
-    numbers,
-    ngrams,
     flatten,
+    ngrams,
+    numbers,
     strip_latex,
     tokenize,
 )

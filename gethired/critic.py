@@ -11,10 +11,9 @@ from pathlib import Path
 from gethired.constants import QUANTIFY
 from gethired.models import (
     Job,
-    Job,
+    Master,
     StepEnv,
     StepKind,
-    Master,
     Tailored,
     job_validate,
 )
@@ -100,15 +99,11 @@ class Critic:
         )
 
         if grounding_result:
-            self.logger.warning(
-                "grounding violations detected", count=len(grounding_result)
-            )
+            self.logger.warning("grounding violations detected", count=len(grounding_result))
         if style_result:
             self.logger.warning("style violations detected", count=len(style_result))
         if plagiarism_result:
-            self.logger.warning(
-                "plagiarism violations detected", count=len(plagiarism_result)
-            )
+            self.logger.warning("plagiarism violations detected", count=len(plagiarism_result))
         if not ats_report.all_passed:
             self.logger.warning(
                 "ATS gates failed",

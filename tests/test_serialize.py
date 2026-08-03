@@ -13,25 +13,25 @@ from pathlib import Path
 from gethired.models import (
     Award,
     Bullet,
+    Citation,
     Contact,
-    Reason,
     Education,
     Experience,
-    Citation,
     Master,
     Project,
+    Reason,
     Skills,
 )
 from gethired.serialize import (
     MasterSnapshot,
+    as_dict,
     from_bullets,
     from_master_dict,
     from_run_result_dict,
     from_tailored_dict,
     load_master,
-    snapshot,
     render_json,
-    as_dict,
+    snapshot,
 )
 
 

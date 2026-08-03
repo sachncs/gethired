@@ -9,9 +9,9 @@ import pymupdf
 from gethired.models import (
     Bullet,
     Experience,
-    Outcome,
     Job,
     Master,
+    Outcome,
     Run,
     RunResult,
     Skills,

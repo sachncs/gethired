@@ -139,9 +139,7 @@ def audit_markdown(report: AuditReport) -> str:
     return "\n".join(lines)
 
 
-def __load(
-    tailored_path: Path, master_path: Path
-) -> tuple[Tailored, Master]:
+def __load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Master]:
     tailored_raw: Any = json.loads(tailored_path.read_text())
     master_raw: Any = json.loads(master_path.read_text())
     return from_tailored_dict(tailored_raw), from_master_dict(master_raw)

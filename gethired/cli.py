@@ -28,8 +28,8 @@ from gethired.constants import (
 )
 from gethired.exceptions import (
     AtsError,
-    GroundingError,
     FetchError,
+    GroundingError,
     PlagiarismError,
     StyleError,
 )
@@ -39,11 +39,12 @@ from gethired.models import (
 )
 from gethired.observability import configure
 from gethired.parser import parse_tex as parse_tex_func
-from gethired.renderer import tex as render_tex, text as render_text
+from gethired.renderer import tex as render_tex
+from gethired.renderer import text as render_text
 from gethired.serialize import (
     from_tailored_dict,
-    snapshot,
     render_json,
+    snapshot,
 )
 from gethired.tailor import Tailor
 from gethired.validator import ats

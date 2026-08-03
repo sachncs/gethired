@@ -21,8 +21,8 @@ from gethired.constants import (
     TOKENS_BULLET,
 )
 from gethired.cover_letter import (
-    markdown,
     compose,
+    markdown,
 )
 from gethired.critic import Critic
 from gethired.description import analyze as analyze
@@ -33,14 +33,13 @@ from gethired.exceptions import (
 )
 from gethired.fetcher import Fetcher
 from gethired.models import (
-    Outcome,
     Job,
-    Job,
-    StepKind,
     Master,
+    Outcome,
     Report,
     Run,
     RunResult,
+    StepKind,
     Tailored,
 )
 from gethired.observability import configure, logger, now
@@ -161,11 +160,7 @@ class Tailor:
             master = self.__load_master()
             jds = self.__load_jds()
             profile = build_profile(master)
-            analysis = (
-                consolidate(jds)
-                if len(jds) > 1
-                else (analyze(jds[0]) if jds else None)
-            )
+            analysis = consolidate(jds) if len(jds) > 1 else (analyze(jds[0]) if jds else None)
 
         # Refresh the run with hashes once master/jds are loaded.
         master_hash = master.content_hash() if master else ""
@@ -257,11 +252,7 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = (
-            consolidate(jds)
-            if len(jds) > 1
-            else (analyze(jds[0]) if jds else None)
-        )
+        analysis = consolidate(jds) if len(jds) > 1 else (analyze(jds[0]) if jds else None)
 
         bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
             len(p.bullets) for p in master.projects
@@ -290,11 +281,7 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = (
-            consolidate(jds)
-            if len(jds) > 1
-            else (analyze(jds[0]) if jds else None)
-        )
+        analysis = consolidate(jds) if len(jds) > 1 else (analyze(jds[0]) if jds else None)
         bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
             len(p.bullets) for p in master.projects
         )
@@ -314,9 +301,7 @@ class Tailor:
             "BULLETS_QUANTIFIED",
             "ACTION_VERBS_FIRST",
         )
-        voice_drift_risk = min(
-            1.0, bullets / max(profile.avg_bullet_length, 1) / DRIFT_SCALE
-        )
+        voice_drift_risk = min(1.0, bullets / max(profile.avg_bullet_length, 1) / DRIFT_SCALE)
         return Report(
             tokens_estimate=tokens_estimate,
             expected_gates=expected_gates,
@@ -355,9 +340,7 @@ class Tailor:
         (run_dir / "tailored.tex").write_text(tex_source)
         (run_dir / "tailored.txt").write_text(txt_source)
         (run_dir / "tailored.json").write_text(json_source)
-        (run_dir / "match_report.md").write_text(
-            report(run, run_result, tailored, ats_report)
-        )
+        (run_dir / "match_report.md").write_text(report(run, run_result, tailored, ats_report))
         return tailored
 
     def diff(self, other_run_id: str) -> str:
@@ -397,9 +380,7 @@ class Tailor:
                 return jds_input
             urls: tuple[str, ...] = tuple(j for j in self.jd_input if isinstance(j, str))
             if urls and len(urls) != len(self.jd_input):
-                raise TypeError(
-                    "job_description tuple must contain only Job or only str"
-                )
+                raise TypeError("job_description tuple must contain only Job or only str")
             retriever = Fetcher(self.cache_dir)
             return tuple(retriever.retrieve(url) for url in urls)
         retriever = Fetcher(self.cache_dir)
@@ -482,9 +463,7 @@ VALIDATION: frozenset[StepKind] = frozenset(
 )
 
 
-def merge_steps(
-    existing_jobs: tuple[Job, ...], critic_jobs: tuple[Job, ...]
-) -> tuple[Job, ...]:
+def merge_steps(existing_jobs: tuple[Job, ...], critic_jobs: tuple[Job, ...]) -> tuple[Job, ...]:
     """Replace previously emitted validation jobs with an authoritative critic pass.
 
     The critic is re-run after PDF compilation so PDF-dependent gates are

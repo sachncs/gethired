@@ -15,7 +15,7 @@ import pytest
 
 from gethired.exceptions import TailorError
 from gethired.models import Contact, Master, Skills
-from gethired.serialize import snapshot, render_json
+from gethired.serialize import render_json, snapshot
 from gethired.tailor import Tailor
 
 

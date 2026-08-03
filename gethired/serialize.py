@@ -26,21 +26,21 @@ from uuid import uuid4
 from gethired.models import (
     Award,
     Bullet,
+    Citation,
     Contact,
-    Reason,
     Education,
     Experience,
-    Outcome,
-    Citation,
     Job,
-    StepMeta,
-    StepStatus,
-    StepKind,
     Master,
+    Outcome,
     Project,
+    Reason,
     Run,
     RunResult,
     Skills,
+    StepKind,
+    StepMeta,
+    StepStatus,
     Tailored,
 )
 from gethired.observability import now
@@ -76,9 +76,7 @@ def from_master_dict(raw: dict[str, Any]) -> Master:
     ``schema_version`` is ignored.
     """
     contact_info = Contact(**raw["contact"])
-    skills_data = Skills(
-        categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()}
-    )
+    skills_data = Skills(categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()})
     experience_data = tuple(
         Experience(
             role=exp["role"],
@@ -117,9 +115,7 @@ def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
     ``run_result=None``.
     """
     contact_info = Contact(**raw["contact"])
-    skills_data = Skills(
-        categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()}
-    )
+    skills_data = Skills(categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()})
     experience_data = tuple(
         Experience(
             role=exp["role"],

@@ -12,8 +12,8 @@ from dataclasses import dataclass
 from gethired.description import Analysis
 from gethired.models import (
     CoverLetter,
-    Paragraph,
     Master,
+    Paragraph,
     Voice,
 )
 
