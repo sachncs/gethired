@@ -14,24 +14,13 @@ from pathlib import Path
 from typing import Any
 
 from gethired.critic import Critic
-from gethired.exceptions import ResumeTailoringError
-from gethired.models import (
-    Award,
-    Bullet,
-    ContactInformation,
-    Education,
-    Experience,
-    MasterResume,
-    Project,
-    Run,
-    RunResult,
-    SkillsByCategory,
-    TailoredResume,
-)
+from gethired.exceptions import TailorError
+from gethired.models import Master, Tailored
+from gethired.serialize import from_master_dict, from_tailored_dict
 from gethired.validator import (
-    grounding_check,
-    plagiarism_check,
-    style_check,
+    grounding,
+    plagiarism,
+    style,
 )
 
 
@@ -48,7 +37,7 @@ class AuditReport:
     ats_advisory_failed_gates: tuple[str, ...]
     ats_skipped_gates: tuple[str, ...]
 
-    def to_dict(self) -> dict[str, object]:
+    def as_dict(self) -> dict[str, object]:
         """Return a JSON-serialisable dict view of the report."""
         return {
             "run_id": self.run_id,
@@ -62,7 +51,7 @@ class AuditReport:
         }
 
 
-def audit_run(run_dir: Path) -> AuditReport:
+def audit(run_dir: Path) -> AuditReport:
     """Re-run all four validators against a previous run directory.
 
     Args:
@@ -72,7 +61,7 @@ def audit_run(run_dir: Path) -> AuditReport:
         ``AuditReport`` summarising all four validator outputs.
 
     Raises:
-        ResumeTailoringError: When ``run_dir`` does not contain the required inputs.
+        TailorError: When ``run_dir`` does not contain the required inputs.
     """
     tailored_path = Path(run_dir) / "tailored.json"
     master_path = Path(run_dir) / "master.json"
@@ -80,14 +69,14 @@ def audit_run(run_dir: Path) -> AuditReport:
     txt_path = Path(run_dir) / "tailored.txt"
     pdf_path = Path(run_dir) / "tailored.pdf"
     if not tailored_path.exists():
-        raise ResumeTailoringError(f"tailored.json missing in {run_dir}")
+        raise TailorError(f"tailored.json missing in {run_dir}")
     if not master_path.exists():
-        raise ResumeTailoringError(f"master.json missing in {run_dir}")
-    tailored, master = __load_tailored_and_master(tailored_path, master_path)
+        raise TailorError(f"master.json missing in {run_dir}")
+    tailored, master = __load(tailored_path, master_path)
 
-    grounding = grounding_check(tailored, master)
-    style = style_check(tailored)
-    plagiarism = plagiarism_check(tailored, ())
+    grounding_violations = grounding(tailored, master)
+    style_violations = style(tailored)
+    plagiarism_violations = plagiarism(tailored, ())
 
     critic = Critic()
     ats_report, _ = critic.evaluate(
@@ -101,9 +90,9 @@ def audit_run(run_dir: Path) -> AuditReport:
     run_id = tailored.run_result.run.id if tailored.run_result is not None else run_dir.name
     return AuditReport(
         run_id=run_id,
-        grounding_violations=tuple(f"{v.path}: {v.detail}" for v in grounding),
-        style_violations=tuple(f"{v.path}: {v.detail}" for v in style),
-        plagiarism_violations=tuple(f"{v.path}: {v.ngram}" for v in plagiarism),
+        grounding_violations=tuple(f"{v.path}: {v.detail}" for v in grounding_violations),
+        style_violations=tuple(f"{v.path}: {v.detail}" for v in style_violations),
+        plagiarism_violations=tuple(f"{v.ngram}" for v in plagiarism_violations),
         ats_passed=not ats_report.hard_failed_gates,
         ats_failed_gates=tuple(g.value for g in ats_report.hard_failed_gates),
         ats_advisory_failed_gates=tuple(g.value for g in ats_report.advisory_failed_gates),
@@ -111,12 +100,12 @@ def audit_run(run_dir: Path) -> AuditReport:
     )
 
 
-def render_audit_json(report: AuditReport) -> str:
+def audit_json(report: AuditReport) -> str:
     """Render the audit report as pretty-printed JSON."""
-    return json.dumps(report.to_dict(), indent=2)
+    return json.dumps(report.as_dict(), indent=2)
 
 
-def render_audit_markdown(report: AuditReport) -> str:
+def audit_markdown(report: AuditReport) -> str:
     """Render the audit report as a markdown document."""
     lines: list[str] = []
     lines.append(f"# Audit report for run {report.run_id}")
@@ -150,100 +139,17 @@ def render_audit_markdown(report: AuditReport) -> str:
     return "\n".join(lines)
 
 
-def __load_tailored_and_master(
+def __load(
     tailored_path: Path, master_path: Path
-) -> tuple[TailoredResume, MasterResume]:
+) -> tuple[Tailored, Master]:
     tailored_raw: Any = json.loads(tailored_path.read_text())
     master_raw: Any = json.loads(master_path.read_text())
-    return __coerce_tailored(tailored_raw), __coerce_master(master_raw)
-
-
-def __coerce_tailored(raw: Any) -> TailoredResume:
-    contact = ContactInformation(**raw["contact"])
-    skills = SkillsByCategory(
-        categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()}
-    )
-
-    def bullet(text: str) -> Bullet:
-        return Bullet(text=text)
-
-    def bullets(items: list[dict[str, str]]) -> tuple[Bullet, ...]:
-        return tuple(bullet(b["text"]) for b in items)
-
-    experiences = tuple(
-        Experience(
-            role=e["role"],
-            company=e["company"],
-            start_date=e["start_date"],
-            end_date=e["end_date"],
-            bullets=bullets(e["bullets"]),
-        )
-        for e in raw["experiences"]
-    )
-    projects = tuple(
-        Project(name=p["name"], url=p["url"], bullets=bullets(p["bullets"]))
-        for p in raw["projects"]
-    )
-    education = tuple(Education(**e) for e in raw["education"])
-    awards = tuple(Award(**a) for a in raw["awards"])
-    run = Run(**raw["run_result"]["run"])
-    run_data: dict[str, Any] = {**raw["run_result"], "run": run}
-    run_result = RunResult(**run_data)
-    return TailoredResume(
-        contact=contact,
-        summary=raw["summary"],
-        skills=skills,
-        experiences=experiences,
-        projects=projects,
-        education=education,
-        awards=awards,
-        dropped=(),
-        rationale=raw.get("rationale", ""),
-        grounding=(),
-        jobs=(),
-        run_result=run_result,
-    )
-
-
-def __coerce_master(raw: Any) -> MasterResume:
-    contact = ContactInformation(**raw["contact"])
-    skills = SkillsByCategory(
-        categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()}
-    )
-
-    def bullets(items: list[dict[str, str]]) -> tuple[Bullet, ...]:
-        return tuple(Bullet(text=b["text"]) for b in items)
-
-    experiences = tuple(
-        Experience(
-            role=e["role"],
-            company=e["company"],
-            start_date=e["start_date"],
-            end_date=e["end_date"],
-            bullets=bullets(e["bullets"]),
-        )
-        for e in raw["experiences"]
-    )
-    projects = tuple(
-        Project(name=p["name"], url=p["url"], bullets=bullets(p["bullets"]))
-        for p in raw["projects"]
-    )
-    education = tuple(Education(**e) for e in raw["education"])
-    awards = tuple(Award(**a) for a in raw["awards"])
-    return MasterResume(
-        contact=contact,
-        summary=raw["summary"],
-        skills=skills,
-        experiences=experiences,
-        projects=projects,
-        education=education,
-        awards=awards,
-    )
+    return from_tailored_dict(tailored_raw), from_master_dict(master_raw)
 
 
 __all__ = [
     "AuditReport",
-    "audit_run",
-    "render_audit_json",
-    "render_audit_markdown",
+    "audit",
+    "audit_json",
+    "audit_markdown",
 ]

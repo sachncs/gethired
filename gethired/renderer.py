@@ -1,13 +1,12 @@
-"""Renderer: TailoredResume → tex/txt/json/match_report.
+"""Renderer: Tailored → tex/txt/match_report.
 
-Uses Jinja2 templates that mirror the user's existing resume preamble.
+JSON serialisation lives in ``gethired.serialize`` so that every consumer
+of the on-disk snapshot agrees on the schema. This module owns the
+human-readable renderings (TeX, plain text, and the match report).
 """
 
 from __future__ import annotations
 
-import json
-from dataclasses import asdict as _asdict
-from dataclasses import is_dataclass
 from pathlib import Path
 from typing import Final
 
@@ -16,29 +15,30 @@ from jinja2 import Environment, FileSystemLoader, select_autoescape
 from gethired.models import (
     Run,
     RunResult,
-    TailoredResume,
+    Tailored,
 )
-from gethired.validator import AtsGateReport
+from gethired.serialize import json as render_json
+from gethired.validator import AtsReport
 
-TEMPLATE_DIR: Final[Path] = Path(__file__).parent / "templates"
+TEMPLATES: Final[Path] = Path(__file__).parent / "templates"
 
 
 def env() -> Environment:
     return Environment(
-        loader=FileSystemLoader(str(TEMPLATE_DIR)),
+        loader=FileSystemLoader(str(TEMPLATES)),
         autoescape=select_autoescape(disabled_extensions=("tex",), default=False),
         keep_trailing_newline=True,
     )
 
 
-def render_tex(tailored: TailoredResume) -> str:
+def tex(tailored: Tailored) -> str:
     """Render the tailored resume as TeX source."""
     jinja_env = env()
     template = jinja_env.get_template("resume.tex.j2")
     return template.render(resume=tailored)
 
 
-def render_text(tailored: TailoredResume) -> str:
+def text(tailored: Tailored) -> str:
     """Render the tailored resume as a plain-text ATS version."""
     lines: list[str] = []
     lines.append(tailored.contact.name)
@@ -91,29 +91,11 @@ def render_text(tailored: TailoredResume) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
-def render_json(tailored: TailoredResume) -> str:
-    """Serialise the full TailoredResume including traceability to JSON."""
-
-    def as_dict(obj: object) -> object:
-        if is_dataclass(obj) and not isinstance(obj, type):
-            return _asdict(obj)
-        if isinstance(obj, dict):
-            return {k: as_dict(v) for k, v in obj.items()}
-        if isinstance(obj, (list, tuple)):
-            return [as_dict(v) for v in obj]
-        if hasattr(obj, "value"):  # StrEnum
-            value: object = obj.value
-            return value
-        return obj
-
-    return json.dumps(as_dict(tailored), indent=2, default=str)
-
-
-def render_match_report(
+def report(
     run: Run,
     run_result: RunResult,
-    tailored: TailoredResume,
-    ats_report: AtsGateReport | None = None,
+    tailored: Tailored,
+    ats_report: AtsReport | None = None,
 ) -> str:
     """Render a markdown match report covering the full run."""
     lines: list[str] = []
@@ -141,14 +123,14 @@ def render_match_report(
     lines.append("|----|------|--------|---------|-----------|--------|")
     for job in run_result.jobs:
         desc = job.description()
-        lines.append(desc.to_markdown_row())
+        lines.append(desc.markdown())
     lines.append("")
-    websearches = run_result.websearch_calls
-    if websearches:
+    searches = run_result.websearch_calls
+    if searches:
         lines.append("## Web Search Audit")
         lines.append("| # | query | reason | result snippet |")
         lines.append("|---|-------|--------|----------------|")
-        for idx, ws in enumerate(websearches, start=1):
+        for idx, ws in enumerate(searches, start=1):
             query = ws.metadata.query or ""
             lines.append(f"| {idx} | {query} | {ws.rationale} | (result snippet) |")
         lines.append("")
@@ -179,8 +161,8 @@ def render_match_report(
 
 
 __all__ = [
-    "render_json",
-    "render_match_report",
-    "render_tex",
-    "render_text",
+    "json",
+    "report",
+    "tex",
+    "text",
 ]

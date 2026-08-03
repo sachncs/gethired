@@ -1,6 +1,6 @@
 """Cover-letter tailoring agent.
 
-Produces a structured ``CoverLetter`` against a ``DescriptionAnalysis`` while
+Produces a structured ``CoverLetter`` against an ``Analysis`` while
 preserving the candidate's voice profile. Pure deterministic; intended to be
 called by ``Tailor`` when ``produce_cover_letter=True``.
 """
@@ -9,30 +9,30 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from gethired.description import DescriptionAnalysis
+from gethired.description import Analysis
 from gethired.models import (
     CoverLetter,
-    CoverLetterParagraph,
-    MasterResume,
-    VoiceProfile,
+    Paragraph,
+    Master,
+    Voice,
 )
 
 
 @dataclass(frozen=True, slots=True)
-class CoverLetterResult:
+class Letter:
     """Result of a cover-letter tailoring pass."""
 
-    cover_letter: CoverLetter
+    letter: CoverLetter
     rationale: str
 
 
-def tailor_cover_letter(
-    master: MasterResume,
-    analysis: DescriptionAnalysis,
-    voice: VoiceProfile,
+def compose(
+    master: Master,
+    analysis: Analysis,
+    voice: Voice,
     sender_name: str | None = None,
     recipient: str | None = None,
-) -> CoverLetterResult:
+) -> Letter:
     """Produce a cover letter for ``master`` against ``analysis``.
 
     Args:
@@ -43,11 +43,11 @@ def tailor_cover_letter(
         recipient: Optional recipient line (e.g. "Hiring Manager").
 
     Returns:
-        ``CoverLetterResult`` containing the letter and a one-sentence rationale.
+        ``Letter`` containing the letter and a one-sentence rationale.
     """
-    name = sender_name or master.contact.name
+    name_value = sender_name or master.contact.name
     salutation = f"Dear {recipient or 'Hiring Team'},"
-    keyword_blob = ", ".join(analysis.must_have_skills[:3]) or "your domain"
+    keyword_blob = ", ".join(analysis.must_have[:3]) or "your domain"
     opening_verb = voice.opening_verbs[0] if voice.opening_verbs else "Built"
     top_role = master.experiences[0].role if master.experiences else "engineer"
     top_company = master.experiences[0].company if master.experiences else "a previous team"
@@ -69,9 +69,9 @@ def tailor_cover_letter(
     )
     signoff = f"Sincerely,\n{name}"
     paragraphs = (
-        CoverLetterParagraph(text=opening, opening=True),
-        CoverLetterParagraph(text=body),
-        CoverLetterParagraph(text=closing, closing=True),
+        Paragraph(text=opening, opening=True),
+        Paragraph(text=body),
+        Paragraph(text=closing, closing=True),
     )
     letter = CoverLetter(
         salutation=salutation,
@@ -82,12 +82,12 @@ def tailor_cover_letter(
     )
     rationale = (
         f"Cover letter tailored for {analysis.role}; "
-        f"mirrored {len(analysis.must_have_skills)} must-have keywords."
+        f"mirrored {len(analysis.must_have)} must-have keywords."
     )
-    return CoverLetterResult(cover_letter=letter, rationale=rationale)
+    return Letter(letter=letter, rationale=rationale)
 
 
-def render_cover_letter_markdown(letter: CoverLetter) -> str:
+def markdown(letter: CoverLetter) -> str:
     """Render the cover letter as a Markdown document.
 
     Default renderer per v0.4.0 plan (Markdown first; TeX optional later).
@@ -102,4 +102,4 @@ def render_cover_letter_markdown(letter: CoverLetter) -> str:
     return "\n".join(lines).rstrip() + "\n"
 
 
-__all__ = ["CoverLetterResult", "render_cover_letter_markdown", "tailor_cover_letter"]
+__all__ = ["Letter", "compose", "markdown"]
