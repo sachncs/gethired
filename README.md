@@ -82,10 +82,10 @@ Core deps only: pydantic-ai, pydantic, httpx, trafilatura, readability-lxml, pym
 
 ## Quick Start
 
-### Python API
+### Python API (orchestrator)
 
 ```python
-from gethired import Tailor, MasterResume, JobDescription
+from gethired import Tailor, Master, Job
 
 tailor = Tailor(
     resume="resume.tex",
@@ -93,11 +93,43 @@ tailor = Tailor(
     debug=True,
     model="MiniMax-M3",
 )
-result = tailor.run()      # TailoredResume
+result = tailor.run()      # Tailored
 print(result.summary)      # rewritten, JD-targeted
 ```
 
-Always requires an LLM. Set `MODEL` (e.g. `MiniMax-M3`) and `API_KEY` (or `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`) — otherwise `Tailor(...)` raises `ConfigurationError` immediately. Tests inject a `TestModel` via `Tailor(..., model_instance=TestModel())`.
+Always requires an LLM. Set `MODEL` (e.g. `MiniMax-M3`) and `API_KEY` (or `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`) — otherwise `Tailor(...)` raises `ConfigError` immediately. Tests inject a `TestModel` via `Tailor(..., model_instance=TestModel())`.
+
+### Library API (plug-and-play, no orchestrator required)
+
+You don't need `Tailor` if you only need one piece of the pipeline. Every agent is independently importable:
+
+```python
+# Parse a master resume from any supported format
+from gethired import parse
+master = parse("resume.tex")             # or parse_text, parse_pdf, parse_image
+
+# Fetch a job description URL (with content-hash cache + retry)
+from gethired import fetch
+job = fetch("https://example.com/jd")     # returns a Job (the JD)
+
+# Profile the candidate's voice from a master
+from gethired.profiler import build
+voice = build(master)
+
+# Run a single validator against a tailored resume
+from gethired.validator import grounding, style, plagiarism, ats
+violations = grounding(tailored, master)
+report = ats(tailored, tex_source, pdf_path, txt_source, (job,))
+
+# Render a Tailored resume to TeX or plain text
+from gethired.renderer import tex, text
+tex_source = tex(tailored)
+txt_source = text(tailored)
+```
+
+All imports are lazy — `import gethired` does not require `pymupdf`,
+`trafilatura`, or `pydantic_ai` to be installed. The heavy dependencies
+are only imported when you access a public symbol that needs them.
 
 ### Tracing (v0.5.0+)
 
@@ -127,8 +159,8 @@ from gethired import Tailor
 from gethired.tailor import Tailor
 
 tailor = Tailor(
-    resume=master_resume,            # MasterResume or path to .tex
-    job_description=job_description, # JobDescription or URL string
+    resume=master_resume,            # Master or path to .tex
+    job_description=job_description, # Job or URL string
     debug=True,                      # verbose loguru output
 )
 result = tailor.run()
@@ -171,7 +203,7 @@ Precedence: constructor arguments → `.env` → built-in defaults. Without `MOD
 
 ## Traceability
 
-Every pipeline step emits a `Job` value object (`Job.id = uuid4()`) with `type`, `started_at`, `completed_at`, `status`, `inputs`, `outputs`, `rationale`, `model`, `tool_name`, and typed `metadata`. `Job.description()` returns a serialisable `JobDescriptionData` for the audit trail.
+Every pipeline step emits a `Job` value object (`Job.id = uuid4()`) with `type`, `started_at`, `completed_at`, `status`, `inputs`, `outputs`, `rationale`, `model`, `tool_name`, and typed `metadata`. `Job.description()` returns a serialisable `JobData` for the audit trail.
 
 Every rewritten bullet carries a `GroundedCitation` (tailored path + master path + verbatim span + `job_id`). The grounding validator refuses the output if any cited span isn't actually in `master.json`. Run output:
 
@@ -179,7 +211,7 @@ Every rewritten bullet carries a `GroundedCitation` (tailored path + master path
 tailored/<run-id>/
 ├── tailored.tex       # ATS-compliant LaTeX source
 ├── tailored.txt       # plain-text ATS version
-├── tailored.json      # full TailoredResume with traceability
+├── tailored.json      # full Tailored with traceability
 ├── tailored.pdf       # compiled (when pdflatex is available)
 └── match_report.md    # Run Description · Job Trail · ATS Gates · Keyword Coverage
 ```
@@ -188,8 +220,8 @@ tailored/<run-id>/
 
 | Agent | File | Responsibility |
 |---|---|---|
-| Parser | `parser.py` | text/pdf/image/tex → `MasterResume` |
-| Fetcher | `fetcher.py` | URL → `JobDescription` (sync httpx, content-hash cache) |
+| Parser | `parser.py` | text/pdf/image/tex → `Master` |
+| Fetcher | `fetcher.py` | URL → `Job` (sync httpx, content-hash cache) |
 | Description | `description.py` | structured JD analysis (role, seniority, must-have skills) |
 | Writer | `writer.py` | main tailoring (Pydantic AI + 7 read-only tools) |
 | Critic | `critic.py` | validation pipeline (grounding/style/plagiarism/ATS) |
@@ -201,19 +233,19 @@ The `Tailor` class orchestrates them: `parse → fetch → describe → profile 
 
 ```
 gethired/
-├── parser         # text/pdf/image/tex → MasterResume
-├── fetcher        # URL → JobDescription
+├── parser         # text/pdf/image/tex → Master
+├── fetcher        # URL → Job
 ├── description    # JD analysis
 ├── writer         # main tailoring agent
 ├── critic         # validator agent
 ├── profiler       # voice fingerprint
 ├── rubric         # CHECKLIST + GROUNDING + ANTI_AI + PLAGIARISM
 ├── validator      # deterministic checks
-├── renderer       # TailoredResume → tex/txt/match_report
+├── renderer       # Tailored → tex/txt/match_report
 ├── tailor         # Tailor orchestrator
 ├── provider       # model resolution (Anthropic / OpenAI / MiniMax)
-├── serialize      # JSON ↔ MasterResume/TailoredResume coercion
-├── models         # frozen dataclasses (Run/Job/JobDescription)
+├── serialize      # JSON ↔ Master/Tailored coercion
+├── models         # frozen dataclasses (Run/Job/Job)
 ├── normalize      # canonical numeric / latex-strip / tokenize
 ├── observability  # loguru central logging
 ├── tracing        # OpenTelemetry-compatible JSONL span emitter

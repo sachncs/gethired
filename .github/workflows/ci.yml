@@ -1,41 +1,31 @@
-name: CI
+name: ci
 
 on:
   push:
     branches: [master]
   pull_request:
-    branches: [master]
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install ruff
-      - run: ruff check gethired tests
-
-  typecheck:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install -e ".[dev]"
-      - run: mypy --strict gethired
-
   test:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
         with:
-          python-version: "3.12"
-      - run: pip install -e ".[dev]"
-      - run: pytest --cov --cov-branch --cov-fail-under=85
-      - uses: codecov/codecov-action@v4
-        with:
-          files: ./coverage.xml
+          version: "latest"
+      - name: Set up Python
+        run: uv python install ${{ matrix.python-version }}
+      - name: Install dependencies
+        run: uv sync --all-extras
+      - name: Lint (ruff)
+        run: |
+          uv run ruff check gethired/ tests/
+          uv run ruff format --check gethired/ tests/
+      - name: Type check (mypy)
+        run: uv run mypy gethired/
+      - name: Test
+        run: uv run pytest tests/ --cov=gethired --cov-fail-under=85
