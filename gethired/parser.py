@@ -60,8 +60,14 @@ EMAIL_RE: Final[re.Pattern[str]] = re.compile(
 GITHUB_RE: Final[re.Pattern[str]] = re.compile(
     r"\\href\{(https?://github\.com/[^}]+)\}\{[^}]*\}"
 )
+GITHUB_BARE_RE: Final[re.Pattern[str]] = re.compile(
+    r"(?<![\w/])(?:https?://)?(?:www\.)?github\.com/[A-Za-z0-9._-]+"
+)
 LINKEDIN_RE: Final[re.Pattern[str]] = re.compile(
     r"\\href\{(https?://(?:www\.)?linkedin\.com/[^}]+)\}\{[^}]*\}"
+)
+LINKEDIN_BARE_RE: Final[re.Pattern[str]] = re.compile(
+    r"(?<![\w/])(?:https?://)?(?:www\.)?linkedin\.com/[A-Za-z0-9._/-]+"
 )
 
 SECTION_RE: Final[re.Pattern[str]] = re.compile(
@@ -176,10 +182,18 @@ def extract_contact(body: str) -> ContactInformation:
     name = clean_inline(name_match.group(1)) if name_match else ""
 
     github_match = GITHUB_RE.search(body)
-    github_url = github_match.group(1) if github_match else None
+    if github_match is None:
+        bare_github = GITHUB_BARE_RE.search(body)
+        github_url = bare_github.group(0) if bare_github else None
+    else:
+        github_url = github_match.group(1)
 
     linkedin_match = LINKEDIN_RE.search(body)
-    linkedin_url = linkedin_match.group(1) if linkedin_match else None
+    if linkedin_match is None:
+        bare_linkedin = LINKEDIN_BARE_RE.search(body)
+        linkedin_url = bare_linkedin.group(0) if bare_linkedin else None
+    else:
+        linkedin_url = linkedin_match.group(1)
 
     email_match = EMAIL_RE.search(body)
     email = ""
@@ -191,6 +205,21 @@ def extract_contact(body: str) -> ContactInformation:
 
     city_match = re.search(r"\\small\s+([A-Za-z][A-Za-z .'-]*?)\s*\$\\cdot\$", body)
     city = city_match.group(1).strip() if city_match else ""
+
+    missing = [
+        label
+        for label, value in (
+            ("name", name),
+            ("city", city),
+            ("phone", phone),
+            ("email", email),
+        )
+        if not value
+    ]
+    if missing:
+        raise MasterParsingError(
+            f"Resume is missing required contact fields: {', '.join(missing)}"
+        )
 
     return ContactInformation(
         name=name,
