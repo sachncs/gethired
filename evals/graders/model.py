@@ -79,7 +79,7 @@ def model_grade(
         rationale = str(parsed.get("rationale", ""))
     except (json.JSONDecodeError, ValueError, TypeError):
         score = 0.0
-        rationale = f"Could not parse LLM response: {raw[:200]}"
+        rationale = f"Could not dispatch LLM response: {raw[:200]}"
 
     return ModelGrade(
         name=name,

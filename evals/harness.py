@@ -20,25 +20,25 @@ import yaml
 from pydantic_ai.models.test import TestModel
 
 from evals.graders.registry import GraderRegistry
-from gethired.description import DescriptionAnalysis, analyze
+from gethired.description import Analysis, analyze
 
 # Backwards-compatible exception aliases (pre-0.4.0 import paths)
 from gethired.fetcher import CacheEntry
 from gethired.models import (
-    FinalOutcome,
-    JobDescription,
-    MasterResume,
+    Outcome,
+    Job,
+    Master,
     Run,
     RunResult,
-    TailoredResume,
+    Tailored,
 )
-from gethired.parser import parse_tex
+from gethired.parser import parse_tex as tex
 from gethired.profiler import build as build_profile
-from gethired.tailor import Tailor, read_master_json
+from gethired.tailor import Tailor, load_master
 from gethired.validator import (
-    grounding_check,
-    plagiarism_check,
-    style_check,
+    grounding,
+    plagiarism,
+    style,
 )
 from gethired.writer import Writer
 
@@ -245,12 +245,12 @@ class EvalHarness:
 
     def run_suite(self, tasks: tuple[TaskDefinition, ...]) -> EvalSuiteResult:
         """Run every task ``trials_per_task`` times and aggregate."""
-        started = utcnow_iso()
+        started = now()
         outcomes: list[TaskOutcome] = []
         for task in tasks:
             outcome = self._run_task(task)
             outcomes.append(outcome)
-        completed = utcnow_iso()
+        completed = now()
         result = EvalSuiteResult(
             suite_name=self.suite_name,
             started_at=started,
@@ -272,15 +272,15 @@ class EvalHarness:
         self,
         task: TaskDefinition,
         trial_index: int,
-        shared_master: MasterResume | None = None,
+        shared_master: Master | None = None,
     ) -> TrialRecord:
         """Run the task once, grade the output, record the trial."""
-        started = utcnow_iso()
+        started = now()
         runner = REGISTRY.get(task.type, passthrough_runner)
         if shared_master is not None:
             task = inject_master(task, shared_master)
         output, transcript = runner(task)
-        completed = utcnow_iso()
+        completed = now()
         started_dt = datetime.fromisoformat(started.replace("Z", "+00:00"))
         completed_dt = datetime.fromisoformat(completed.replace("Z", "+00:00"))
         duration_ms = (completed_dt - started_dt).total_seconds() * 1000.0
@@ -408,7 +408,7 @@ def aggregate_task(
     )
 
 
-def utcnow_iso() -> str:
+def now() -> str:
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
@@ -421,17 +421,17 @@ def resolve_args(
     spec_args: dict[str, Any],
     output: dict[str, Any],
     task: TaskDefinition,
-    shared_master: MasterResume | None = None,
+    shared_master: Master | None = None,
 ) -> dict[str, Any]:
     """Resolve special argument placeholders against the output.
 
     Supported placeholders:
         ``$output``       → the entire output dict
-        ``$master``       → the parsed MasterResume from the shared cache
-        ``$tailored``     → the TailoredResume if present
+        ``$master``       → the parsed Master from the shared cache
+        ``$tailored``     → the Tailored if present
         ``$text``         → the tailored text (summary + bullets joined)
-        ``$jd_text``      → the JobDescription full text
-        ``$analysis``     → the DescriptionAnalysis object
+        ``$jd_text``      → the Job full text
+        ``$analysis``     → the Analysis object
         ``$trace_path``   → the agent trace.jsonl emitted by the runner
         ``$<key>``        → output[key] for any other output key
 
@@ -459,18 +459,18 @@ def resolve_args(
     return resolved
 
 
-def load_shared_master() -> MasterResume | None:
-    """Load the canonical master.json (or parse the canonical resume.tex).
+def load_shared_master() -> Master | None:
+    """Load the canonical master.json (or dispatch the canonical resume.tex).
 
     The master is loaded once per eval run and shared across tasks so that
     every writer/critic task operates on the same source of truth.
     """
     canonical = Path("resume.tex")
     if canonical.exists():
-        return parse_tex(canonical)
+        return tex(canonical)
     cached = Path("data/master.json")
     if cached.exists():
-        return read_master_json(cached)
+        return load_master(cached)
     return None
 
 
@@ -479,11 +479,11 @@ def load_shared_master() -> MasterResume | None:
 # ---------------------------------------------------------------------------
 
 
-def inject_master(task: TaskDefinition, master: MasterResume) -> TaskDefinition:
+def inject_master(task: TaskDefinition, master: Master) -> TaskDefinition:
     """Return a copy of ``task`` with the shared master injected.
 
     Replaces the ``__load_master__`` sentinel so downstream runners
-    receive the cached ``MasterResume`` object.
+    receive the cached ``Master`` object.
     """
     new_input = dict(task.input)
     if new_input.get("__master__") == "__load_master__":
@@ -510,9 +510,9 @@ def passthrough_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, 
 
 
 def parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Runner for parser tasks: parse a TeX file and emit the model."""
+    """Runner for parser tasks: dispatch a TeX file and emit the model."""
     tex_path = Path(task.input["tex_path"])
-    resume = parse_tex(tex_path)
+    resume = tex(tex_path)
     return (
         {
             "master": resume,
@@ -524,7 +524,7 @@ def parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
 
 def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Runner for fetcher tasks: parse cached JDs without network."""
+    """Runner for fetcher tasks: dispatch cached JDs without network."""
     cache_path = Path(task.input["cache_path"])
     if not cache_path.exists():
         return ({"text": "", "jd": None}, {"error": "missing cache"})
@@ -541,7 +541,7 @@ def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
     return (
         {
             "text": entry.raw_html,
-            "jd": JobDescription(
+            "jd": Job(
                 url=entry.url,
                 title="",
                 company="",
@@ -578,7 +578,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             return ({"text": "", "master": None, "tailored": None}, {"skipped": True})
 
     master = task.input["__master__"]
-    jd = JobDescription(
+    jd = Job(
         url="eval://synthetic",
         title=task.input.get("jd_title", "Senior ML Engineer"),
         company=task.input.get("jd_company", "Eval Co"),
@@ -588,7 +588,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         nice_to_have_keywords=tuple(task.input.get("nice_to_have_keywords", ())),
         content_hash="eval",
     )
-    analysis = DescriptionAnalysis(
+    analysis = Analysis(
         role=jd.title,
         seniority="senior",
         must_have_skills=jd.must_have_keywords,
@@ -628,7 +628,7 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
     master = task.input["__master__"]
     tailored_dict = task.input["tailored_dict"]
-    tailored = TailoredResume(
+    tailored = Tailored(
         contact=master.contact,
         summary=tailored_dict["summary"],
         skills=master.skills,
@@ -647,11 +647,11 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             total_input_tokens=0,
             total_output_tokens=0,
             retry_attempts=0,
-            final_outcome=FinalOutcome.SUCCESS,
+            final_outcome=Outcome.SUCCESS,
             jobs=(),
         ),
     )
-    jd = JobDescription(
+    jd = Job(
         url="eval://synthetic",
         title="",
         company="",
@@ -662,9 +662,9 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         content_hash="eval",
     )
 
-    grounding = grounding_check(tailored, master)
-    style = style_check(tailored)
-    plagiarism = plagiarism_check(tailored, (jd,))
+    grounding = grounding(tailored, master)
+    style = style(tailored)
+    plagiarism = plagiarism(tailored, (jd,))
     return (
         {
             "master": master,
@@ -684,7 +684,7 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
 def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
     """Runner for description tasks: analyze a JD."""
-    jd = JobDescription(
+    jd = Job(
         url="eval://synthetic",
         title="",
         company="",
@@ -708,7 +708,7 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         test_model = TestModel()
 
     master = task.input["__master__"]
-    jd = JobDescription(
+    jd = Job(
         url="eval://synthetic",
         title=task.input.get("jd_title", ""),
         company=task.input.get("jd_company", ""),

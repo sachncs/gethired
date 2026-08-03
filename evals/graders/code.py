@@ -14,13 +14,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from gethired.models import MasterResume, TailoredResume
+from gethired.models import Master, Tailored
 from gethired.normalize import (
-    canonicalize_numeric,
-    extract_ngrams,
-    tokenize_for_overlap,
+    numbers,
+    ngrams,
+    tokenize,
 )
-from gethired.renderer import render_json, render_text
+from gethired.renderer import render_json, text
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,7 +43,7 @@ def code_equal(name: str, actual: object, expected: object) -> GraderResult:
 
 
 def code_field_present(
-    name: str, resume: MasterResume | TailoredResume, path: str
+    name: str, resume: Master | Tailored, path: str
 ) -> GraderResult:
     """Assert that a dotted path on the resume resolves to a truthy value."""
     value = resolve_path(resume, path)
@@ -53,7 +53,7 @@ def code_field_present(
 
 
 def code_field_length(
-    name: str, resume: MasterResume | TailoredResume, path: str, expected: int
+    name: str, resume: Master | Tailored, path: str, expected: int
 ) -> GraderResult:
     """Assert that a list path has the expected length."""
     value = resolve_path(resume, path)
@@ -120,12 +120,12 @@ def code_no_jd_plagiarism(
     """Assert that no n-gram from the JD appears verbatim in the tailored text.
 
     Excludes any n-gram in ``technical_allowlist`` (per the project's
-    ANTI_AI_RULES + TECHNICAL_NGRAMS_ALLOWLIST rubric).
+    ANTI_AI + ALLOWLIST rubric).
     """
-    tailored_tokens = tokenize_for_overlap(tailored_text)
-    jd_tokens = tokenize_for_overlap(jd_text)
-    tailored_ngrams = set(extract_ngrams(tailored_tokens, ngram_size))
-    jd_ngrams = set(extract_ngrams(jd_tokens, ngram_size))
+    tailored_tokens = tokenize(tailored_text)
+    jd_tokens = tokenize(jd_text)
+    tailored_ngrams = set(ngrams(tailored_tokens, ngram_size))
+    jd_ngrams = set(ngrams(jd_tokens, ngram_size))
     overlap = (tailored_ngrams & jd_ngrams) - set(technical_allowlist)
     passed = not overlap
     sample = sorted(overlap)[:3]
@@ -138,11 +138,11 @@ def code_no_jd_plagiarism(
 
 
 def code_numbers_in_master(
-    name: str, tailored_text: str, master: MasterResume
+    name: str, tailored_text: str, master: Master
 ) -> GraderResult:
     """Assert that any number in the tailored text is also in the master."""
-    tailored_numbers = canonicalize_numeric(tailored_text)
-    master_numbers = canonicalize_numeric(master.to_markdown())
+    tailored_numbers = numbers(tailored_text)
+    master_numbers = numbers(master.to_markdown())
     invented = sorted(tailored_numbers - master_numbers)
     passed = not invented
     detail = (
@@ -153,16 +153,16 @@ def code_numbers_in_master(
     return GraderResult(name=name, passed=passed, detail=detail)
 
 
-def code_json_round_trip(name: str, tailored: TailoredResume) -> GraderResult:
+def code_json_round_trip(name: str, tailored: Tailored) -> GraderResult:
     """Serialise via the renderer and confirm round-trip equality."""
     json_text = render_json(tailored)
     try:
         data = json.loads(json_text)
     except json.JSONDecodeError as exc:
         return GraderResult(
-            name=name, passed=False, detail=f"JSON parse failed: {exc}"
+            name=name, passed=False, detail=f"JSON dispatch failed: {exc}"
         )
-    text_source = render_text(tailored)
+    text_source = text(tailored)
     passed = bool(data.get("summary")) and bool(text_source)
     detail = (
         "JSON round-trip succeeded"
@@ -180,13 +180,13 @@ def code_json_round_trip(name: str, tailored: TailoredResume) -> GraderResult:
 # to assert that the agent picked the right tool for the right job.
 WRITER_TOOL_NAMES: frozenset[str] = frozenset(
     {
-        "lookup_experience",
-        "lookup_project",
-        "list_skills",
-        "list_projects",
-        "list_education",
-        "list_awards",
-        "read_jd_summary",
+        "experience",
+        "project",
+        "skills",
+        "projects",
+        "education",
+        "awards",
+        "jd",
     }
 )
 
@@ -243,14 +243,14 @@ def code_argument_correctness(
     name: str,
     trace_path: str,
     zero_arg_tools: frozenset[str] = frozenset(
-        {"list_skills", "list_projects", "list_education", "list_awards", "read_jd_summary"}
+        {"skills", "projects", "education", "awards", "jd"}
     ),
 ) -> GraderResult:
     """Component-level grader (deepeval ``ArgumentCorrectnessMetric``).
 
     Verifies that every ``tool`` span in the trace that requires
     arguments actually carries at least one attribute. Tools that
-    legitimately take no arguments (``list_skills`` etc.) are exempt.
+    legitimately take no arguments (``skills`` etc.) are exempt.
     """
     spans = _read_spans(trace_path, kind="tool")
     if not spans:
@@ -304,12 +304,12 @@ def code_plan_adherence(
 def code_plan_quality(
     name: str,
     trace_path: str,
-    expected_first_tool: str = "list_skills",
+    expected_first_tool: str = "skills",
 ) -> GraderResult:
     """Reasoning-layer grader (deepeval ``PlanQualityMetric``).
 
     Asserts the agent's first tool call is a survey tool
-    (``list_skills`` by default) rather than a deep lookup. Surveying
+    (``skills`` by default) rather than a deep lookup. Surveying
     before diving is the documented plan; flunking this grader
     indicates the agent jumped to detail without context.
     """
@@ -356,7 +356,7 @@ def code_step_efficiency(
 def code_task_completion(
     name: str,
     trace_path: str,
-    tailored: TailoredResume,
+    tailored: Tailored,
 ) -> GraderResult:
     """Overall-execution grader (deepeval ``TaskCompletionMetric``).
 
