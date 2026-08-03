@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import Final
 
-CHECKLIST_RUBRIC: Final[tuple[str, ...]] = (
+CHECKLIST: Final[tuple[str, ...]] = (
     # UIowa Resume Critique Checklist
     "first_impression_inviting",
     "professional_design",
@@ -89,7 +89,7 @@ CHECKLIST_RUBRIC: Final[tuple[str, ...]] = (
 )
 
 
-BANNED_WORDS: Final[frozenset[str]] = frozenset(
+BANNED: Final[frozenset[str]] = frozenset(
     {
         # AI-tell vocabulary
         "leverage",
@@ -156,7 +156,7 @@ BANNED_WORDS: Final[frozenset[str]] = frozenset(
 )
 
 
-BANNED_CONSTRUCTIONS: Final[frozenset[str]] = frozenset(
+CONSTRUCTIONS: Final[frozenset[str]] = frozenset(
     {
         # Over-formal phrasings
         "in order to",
@@ -177,7 +177,7 @@ BANNED_CONSTRUCTIONS: Final[frozenset[str]] = frozenset(
 )
 
 
-TECHNICAL_NGRAMS_ALLOWLIST: Final[frozenset[str]] = frozenset(
+ALLOWLIST: Final[frozenset[str]] = frozenset(
     {
         "natural language processing",
         "machine learning",
@@ -216,7 +216,7 @@ TECHNICAL_NGRAMS_ALLOWLIST: Final[frozenset[str]] = frozenset(
 )
 
 
-GROUNDING_RULES: Final[tuple[str, ...]] = (
+GROUNDING: Final[tuple[str, ...]] = (
     "only_use_facts_present_in_master",
     "never_invent_skills_projects_companies_roles_dates_education_awards_certifications_metrics",
     "concrete_claims_must_appear_verbatim_in_master",
@@ -228,7 +228,7 @@ GROUNDING_RULES: Final[tuple[str, ...]] = (
 )
 
 
-ANTI_AI_RULES: Final[tuple[str, ...]] = (
+ANTI_AI: Final[tuple[str, ...]] = (
     "no_banned_words_in_tailored_text",
     "no_three_plus_bullets_sharing_same_opening_verb",
     "no_three_plus_bullets_in_role_sharing_opening_verb_stem",
@@ -243,7 +243,7 @@ ANTI_AI_RULES: Final[tuple[str, ...]] = (
 )
 
 
-PLAGIARISM_RULES: Final[tuple[str, ...]] = (
+PLAGIARISM: Final[tuple[str, ...]] = (
     "do_not_copy_jd_phrases_verbatim",
     "mirror_concepts_not_phrasing",
     "use_master_wording_when_overlapping",
@@ -251,7 +251,7 @@ PLAGIARISM_RULES: Final[tuple[str, ...]] = (
 )
 
 
-ACTION_VERBS: Final[frozenset[str]] = frozenset(
+VERBS: Final[frozenset[str]] = frozenset(
     {
         "achieved", "added", "administered", "advised", "allocated", "analyzed",
         "applied", "assembled", "assessed", "authored", "audited", "built",
@@ -283,7 +283,7 @@ ACTION_VERBS: Final[frozenset[str]] = frozenset(
 )
 
 
-REQUIRED_SECTION_HEADINGS: Final[tuple[str, ...]] = (
+SECTIONS: Final[tuple[str, ...]] = (
     "Summary",
     "Experience",
     "Education",
@@ -292,22 +292,14 @@ REQUIRED_SECTION_HEADINGS: Final[tuple[str, ...]] = (
 )
 
 
-OPTIONAL_SECTION_HEADINGS: Final[tuple[str, ...]] = (
-    "Awards & Recognition",
-    "Certifications",
-    "Publications",
-)
-
-
 __all__ = [
-    "ACTION_VERBS",
-    "ANTI_AI_RULES",
-    "BANNED_CONSTRUCTIONS",
-    "BANNED_WORDS",
-    "CHECKLIST_RUBRIC",
-    "GROUNDING_RULES",
-    "OPTIONAL_SECTION_HEADINGS",
-    "PLAGIARISM_RULES",
-    "REQUIRED_SECTION_HEADINGS",
-    "TECHNICAL_NGRAMS_ALLOWLIST",
+    "ALLOWLIST",
+    "ANTI_AI",
+    "BANNED",
+    "CHECKLIST",
+    "CONSTRUCTIONS",
+    "GROUNDING",
+    "PLAGIARISM",
+    "SECTIONS",
+    "VERBS",
 ]
