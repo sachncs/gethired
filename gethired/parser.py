@@ -374,33 +374,30 @@ def extract_education(body: str) -> tuple[Education, ...]:
 
     section_text = match.group(1)
     headings = find_macro_invocations(section_text, "resumeSubheading", 3)
-    if len(headings) < 2:
-        return ()
 
-    institution = clean_inline(headings[0][1][0])
-    location = clean_inline(headings[0][1][1])
-    graduation = clean_inline(headings[0][1][2])
+    education: list[Education] = []
+    for index in range(0, len(headings) - 1, 2):
+        institution_args = headings[index][1]
+        degree_args = headings[index + 1][1]
 
-    degree_args = headings[1][1]
-    degree_full = clean_inline(degree_args[0])
-    major = clean_inline(degree_args[1])
-    gpa_full = clean_inline(degree_args[2])
+        gpa_full = clean_inline(degree_args[2])
+        gpa: str | None = None
+        gpa_match = re.match(r"CGPA:\s*(\S+)", gpa_full)
+        if gpa_match:
+            gpa = gpa_match.group(1)
 
-    gpa: str | None = None
-    gpa_match = re.match(r"CGPA:\s*(\S+)", gpa_full)
-    if gpa_match:
-        gpa = gpa_match.group(1)
+        education.append(
+            Education(
+                institution=clean_inline(institution_args[0]),
+                location=clean_inline(institution_args[1]),
+                graduation=clean_inline(institution_args[2]),
+                degree=clean_inline(degree_args[0]),
+                major=clean_inline(degree_args[1]),
+                gpa=gpa,
+            )
+        )
 
-    return (
-        Education(
-            institution=institution,
-            location=location,
-            degree=degree_full,
-            major=major,
-            graduation=graduation,
-            gpa=gpa,
-        ),
-    )
+    return tuple(education)
 
 
 def extract_awards(body: str) -> tuple[Award, ...]:
