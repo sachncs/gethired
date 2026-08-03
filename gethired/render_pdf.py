@@ -12,12 +12,12 @@ import subprocess
 from pathlib import Path
 
 from gethired.constants import (
-    LATEX_ENGINE_ENV_VAR,
-    PDF_COMPILE_TIMEOUT_SECONDS,
-    PDFLATEX_BINARY,
-    TECTONIC_BINARY,
+    COMPILE_TIMEOUT,
+    LATEX_VAR,
+    PDFLATEX,
+    TECTONIC,
 )
-from gethired.exceptions import PdfCompilationError
+from gethired.exceptions import CompileError
 
 
 def compile_pdf(tex_source: str, output_dir: Path) -> Path | None:
@@ -36,16 +36,16 @@ def compile_pdf(tex_source: str, output_dir: Path) -> Path | None:
         intentionally disabled via ``LATEX_ENGINE=none``.
 
     Raises:
-        PdfCompilationError: When the chosen engine is missing, exits
-            non-zero, or exceeds ``PDF_COMPILE_TIMEOUT_SECONDS``.
+        CompileError: When the chosen engine is missing, exits
+            non-zero, or exceeds ``COMPILE_TIMEOUT``.
     """
-    engine = os.environ.get(LATEX_ENGINE_ENV_VAR, TECTONIC_BINARY)
+    engine = os.environ.get(LATEX_VAR, TECTONIC)
     if engine == "none":
         return None
-    binary = TECTONIC_BINARY if engine == TECTONIC_BINARY else PDFLATEX_BINARY
+    binary = TECTONIC if engine == TECTONIC else PDFLATEX
     binary_path = shutil.which(binary)
     if binary_path is None:
-        raise PdfCompilationError(
+        raise CompileError(
             f"LaTeX engine '{binary}' not found on PATH. "
             f"Install tectonic (https://tectonic-typesetting.github.io/) "
             f"or set LATEX_ENGINE=none to skip compilation."
@@ -58,7 +58,7 @@ def compile_pdf(tex_source: str, output_dir: Path) -> Path | None:
         cwd=output_dir,
         check=True,
         capture_output=True,
-        timeout=PDF_COMPILE_TIMEOUT_SECONDS,
+        timeout=COMPILE_TIMEOUT,
     )
     return tex_path.with_suffix(".pdf")
 

@@ -79,9 +79,7 @@ def resolve_model(
 
     raw = model_string or os.environ.get("MODEL", "")
     if not raw:
-        raise ValueError(
-            "No model specified. Set MODEL env var or pass model_string."
-        )
+        raise ValueError("No model specified. Set MODEL env var or pass model_string.")
 
     provider_name, _, model_name = raw.partition(":")
     model_name = model_name or provider_name
@@ -145,4 +143,3 @@ def build_openai_model(model_name: str, api_key: str | None) -> ResolvedModel:
 
 
 __all__ = ["MINIMAX_BASE_URL", "ResolvedModel", "resolve_model"]
-

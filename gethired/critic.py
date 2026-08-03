@@ -8,23 +8,23 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from gethired.constants import BULLET_QUANTIFICATION_THRESHOLD
+from gethired.constants import QUANTIFY
 from gethired.models import (
     Job,
-    JobDescription,
-    JobEnvelope,
-    JobType,
-    MasterResume,
-    TailoredResume,
+    Job,
+    StepEnv,
+    StepKind,
+    Master,
+    Tailored,
     job_validate,
 )
-from gethired.observability import step_logger
+from gethired.observability import logger
 from gethired.validator import (
-    AtsGateReport,
-    ats_check,
-    grounding_check,
-    plagiarism_check,
-    style_check,
+    AtsReport,
+    ats,
+    grounding,
+    plagiarism,
+    style,
 )
 
 
@@ -32,65 +32,65 @@ class Critic:
     """Validation agent."""
 
     def __init__(self, debug: bool = False) -> None:
-        self._debug = debug
-        self._logger = step_logger("critic")
+        self.debug = debug
+        self.logger = logger("critic")
 
     def evaluate(
         self,
-        tailored: TailoredResume,
-        master: MasterResume,
-        jds: tuple[JobDescription, ...],
+        tailored: Tailored,
+        master: Master,
+        jds: tuple[Job, ...],
         tex_source: str,
         txt_source: str,
         pdf_path: Path | None,
-        quantification_threshold: float = BULLET_QUANTIFICATION_THRESHOLD,
-    ) -> tuple[AtsGateReport, tuple[Job, ...]]:
+        quantification_threshold: float = QUANTIFY,
+    ) -> tuple[AtsReport, tuple[Job, ...]]:
         """Run all four validators and emit Job records.
 
         Returns:
-            Tuple of ``(AtsGateReport, jobs)``.
+            Tuple of ``(AtsReport, jobs)``.
         """
         jobs: list[Job] = []
 
         jobs.append(
             job_validate(
-                JobType.VALIDATE_GROUNDING,
+                StepKind.VALIDATE_GROUNDING,
                 outputs=("grounding_violations",),
                 rationale="Validated that every claim traces to master",
-                envelope=JobEnvelope(model="deterministic"),
+                envelope=StepEnv(model="deterministic"),
             )
         )
-        grounding = grounding_check(tailored, master)
+        grounding_result = grounding(tailored, master)
 
         jobs.append(
             job_validate(
-                JobType.VALIDATE_STYLE,
+                StepKind.VALIDATE_STYLE,
                 outputs=("style_violations",),
                 rationale="Validated banned words, parallelism, quantification",
-                envelope=JobEnvelope(model="deterministic"),
+                envelope=StepEnv(model="deterministic"),
             )
         )
-        style = style_check(tailored, quantification_threshold)
+        style_result = style(tailored, quantification_threshold)
 
         jobs.append(
             job_validate(
-                JobType.VALIDATE_PLAGIARISM,
+                StepKind.VALIDATE_PLAGIARISM,
                 outputs=("plagiarism_violations",),
                 rationale="Validated no verbatim JD phrase overlap",
-                envelope=JobEnvelope(model="deterministic"),
+                envelope=StepEnv(model="deterministic"),
             )
         )
-        plagiarism = plagiarism_check(tailored, jds)
+        plagiarism_result = plagiarism(tailored, jds)
 
         jobs.append(
             job_validate(
-                JobType.VALIDATE_ATS,
+                StepKind.VALIDATE_ATS,
                 outputs=("ats_gates",),
                 rationale="Ran all 12 ATS gates (9 hard-blocking, 3 advisory)",
-                envelope=JobEnvelope(model="deterministic"),
+                envelope=StepEnv(model="deterministic"),
             )
         )
-        ats_report = ats_check(
+        ats_report = ats(
             tailored,
             tex_source=tex_source,
             pdf_path=pdf_path,
@@ -99,19 +99,23 @@ class Critic:
             quantification_threshold=quantification_threshold,
         )
 
-        if grounding:
-            self._logger.warning("grounding violations detected", count=len(grounding))
-        if style:
-            self._logger.warning("style violations detected", count=len(style))
-        if plagiarism:
-            self._logger.warning("plagiarism violations detected", count=len(plagiarism))
+        if grounding_result:
+            self.logger.warning(
+                "grounding violations detected", count=len(grounding_result)
+            )
+        if style_result:
+            self.logger.warning("style violations detected", count=len(style_result))
+        if plagiarism_result:
+            self.logger.warning(
+                "plagiarism violations detected", count=len(plagiarism_result)
+            )
         if not ats_report.all_passed:
-            self._logger.warning(
+            self.logger.warning(
                 "ATS gates failed",
                 failed=[gate.value for gate in ats_report.failed_gates],
             )
             if ats_report.hard_failed_gates:
-                self._logger.error(
+                self.logger.error(
                     "ATS hard gates failed",
                     failed=[gate.value for gate in ats_report.hard_failed_gates],
                 )

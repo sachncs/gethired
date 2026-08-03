@@ -20,10 +20,15 @@ from typing import Final
 import httpx
 import trafilatura
 
-from gethired.constants import CACHE_MAX_AGE_DAYS, JD_FETCH_MAX_ATTEMPTS
-from gethired.exceptions import JobDescriptionRetrievalError
-from gethired.models import JobDescription
-from gethired.observability import step_logger
+from gethired.constants import (
+    CACHE_DAYS,
+    KEYWORDS_FALLBACK,
+    KEYWORDS_MAX,
+    RETRIES,
+)
+from gethired.exceptions import FetchError
+from gethired.models import Job
+from gethired.observability import Logger, logger
 
 USER_AGENT: Final[str] = "Mozilla/5.0 (compatible; gethired/0.1; +https://github.com/gethired)"
 FETCH_TIMEOUT_SECONDS: Final[float] = 30.0
@@ -38,27 +43,27 @@ class CacheEntry:
     raw_html: str
 
 
-class JobDescriptionRetriever:
+class Fetcher:
     """Sync fetcher with on-disk cache and retry policy."""
 
-    def __init__(self, cache_dir: Path, max_attempts: int = JD_FETCH_MAX_ATTEMPTS) -> None:
-        self._cache_dir = cache_dir
-        self._cache_dir.mkdir(parents=True, exist_ok=True)
-        self._max_attempts = max_attempts
+    def __init__(self, cache_dir: Path, max_attempts: int = RETRIES) -> None:
+        self.cache_dir = cache_dir
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.max_attempts = max_attempts
 
-    def retrieve(self, url: str) -> JobDescription:
-        """Retrieve and parse a job description URL into a ``JobDescription``.
+    def retrieve(self, url: str) -> Job:
+        """Retrieve and dispatch a job description URL into a ``Job``.
 
         Args:
             url: The job description URL.
 
         Returns:
-            A populated ``JobDescription``.
+            A populated ``Job``.
 
         Raises:
-            JobDescriptionRetrievalError: If retrieval fails after all retries.
+            FetchError: If retrieval fails after all retries.
         """
-        logger = step_logger("fetch_jd")
+        logger = logger("fetch_jd")
         url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
         cached = self.__load_cache(url_hash)
         if cached is not None and self.__is_cache_fresh(cached):
@@ -78,16 +83,16 @@ class JobDescriptionRetriever:
         )
         return self.__parse(raw_html, url, content_hash)
 
-    def __fetch_with_retry(self, url: str, logger) -> str:
+    def __fetch_with_retry(self, url: str, logger: Logger) -> str:
         last_exc: Exception | None = None
-        for attempt in range(1, self._max_attempts + 1):
+        for attempt in range(1, self.max_attempts + 1):
             try:
                 with httpx.Client(
                     headers={"User-Agent": USER_AGENT},
                     timeout=FETCH_TIMEOUT_SECONDS,
                     follow_redirects=True,
                 ) as client:
-                    response = client.get(url)
+                    response_value = client.get(url)
                     response.raise_for_status()
                     return response.text
             except (httpx.HTTPError, httpx.StreamError) as exc:
@@ -100,21 +105,21 @@ class JobDescriptionRetriever:
                     error=str(exc),
                     backoff_seconds=backoff_seconds,
                 )
-                if attempt < self._max_attempts:
+                if attempt < self.max_attempts:
                     time.sleep(backoff_seconds)
-        raise JobDescriptionRetrievalError(
-            f"Failed to fetch {url} after {self._max_attempts} attempts: {last_exc}"
+        raise FetchError(
+            f"Failed to fetch {url} after {self.max_attempts} attempts: {last_exc}"
         )
 
     def __cache_path(self, url_hash: str) -> Path:
-        return self._cache_dir / f"{url_hash}.json"
+        return self.cache_dir / f"{url_hash}.json"
 
     def __load_cache(self, url_hash: str) -> CacheEntry | None:
         path = self.__cache_path(url_hash)
         if not path.exists():
             return None
         try:
-            data = json.loads(path.read_text())
+            data_dict = json.loads(path.read_text())
             return CacheEntry(
                 url=data["url"],
                 url_hash=data["url_hash"],
@@ -137,27 +142,27 @@ class JobDescriptionRetriever:
         if fetched_at.tzinfo is None:
             fetched_at = fetched_at.replace(tzinfo=UTC)
         age = datetime.now(UTC) - fetched_at
-        return age <= timedelta(days=CACHE_MAX_AGE_DAYS)
+        return age <= timedelta(days=CACHE_DAYS)
 
-    def __parse(self, raw_html: str, url: str, content_hash: str) -> JobDescription:
-        jsonld = extract_jsonld(raw_html)
+    def __parse(self, raw_html: str, url: str, content_hash: str) -> Job:
+        jsonld = jsonld(raw_html)
         if jsonld is not None:
-            return build_from_jsonld(jsonld, url, content_hash)
+            return from_jsonld(jsonld, url, content_hash)
 
-        text = extract_text_trafilatura(raw_html)
+        text = trafilatura(raw_html)
         if not text:
-            raise JobDescriptionRetrievalError(f"No text extracted from {url}")
-        return build_from_text(text, url, content_hash)
+            raise FetchError(f"No text extracted from {url}")
+        return from_text(text, url, content_hash)
 
 
-def extract_jsonld(html: str) -> dict | None:
+def jsonld(html: str) -> dict | None:
     pattern = re.compile(
         r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
         re.DOTALL | re.IGNORECASE,
     )
     for match in pattern.finditer(html):
         try:
-            data = json.loads(match.group(1))
+            data_dict = json.loads(match.group(1))
         except json.JSONDecodeError:
             continue
         if isinstance(data, dict) and data.get("@type") == "JobPosting":
@@ -169,12 +174,12 @@ def extract_jsonld(html: str) -> dict | None:
     return None
 
 
-def extract_text_trafilatura(html: str) -> str:
+def trafilatura(html: str) -> str:
     extracted = trafilatura.extract(html)
     return extracted or ""
 
 
-def build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescription:
+def from_jsonld(data: dict, url: str, content_hash: str) -> Job:
     title = str(data.get("title", ""))
     company = ""
     hiring_org = data.get("hiringOrganization") or data.get("organization")
@@ -182,9 +187,9 @@ def build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescription
         company = str(hiring_org.get("name", ""))
     description = str(data.get("description", ""))
     full_text = f"{title}\n\n{description}".strip()
-    keywords = extract_keywords(full_text)
-    must_have, nice_to_have = categorize_keywords(data, full_text)
-    return JobDescription(
+    keywords = keywords(full_text)
+    must_have, nice_to_have = tier(data, full_text)
+    return Job(
         url=url,
         title=title,
         company=company,
@@ -196,9 +201,9 @@ def build_from_jsonld(data: dict, url: str, content_hash: str) -> JobDescription
     )
 
 
-def build_from_text(text: str, url: str, content_hash: str) -> JobDescription:
-    keywords = extract_keywords(text)
-    return JobDescription(
+def from_text(text: str, url: str, content_hash: str) -> Job:
+    keywords = keywords(text)
+    return Job(
         url=url,
         title="",
         company="",
@@ -288,7 +293,7 @@ KEYWORD_STOPWORDS: Final[frozenset[str]] = frozenset(
 KEYWORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]{1,}")
 
 
-def extract_keywords(text: str) -> tuple[str, ...]:
+def keywords(text: str) -> tuple[str, ...]:
     counter: Counter[str] = Counter()
     for match in KEYWORD_RE.finditer(text):
         token = match.group(0).lower()
@@ -297,10 +302,10 @@ def extract_keywords(text: str) -> tuple[str, ...]:
         if len(token) < 3:
             continue
         counter[token] += 1
-    return tuple(word for word, _ in counter.most_common(40))
+    return tuple(word for word, _ in counter.most_common(KEYWORDS_MAX))
 
 
-def categorize_keywords(data: dict, text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
+def tier(data: dict, text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
     """Best-effort tier classification: required skills vs nice-to-have."""
     must_have: set[str] = set()
     nice_to_have: set[str] = set()
@@ -317,9 +322,9 @@ def categorize_keywords(data: dict, text: str) -> tuple[tuple[str, ...], tuple[s
         for token in KEYWORD_RE.finditer(requirements):
             must_have.add(token.group(0).lower())
     if not must_have:
-        for fallback_token in extract_keywords(text)[:15]:
+        for fallback_token in keywords(text)[:KEYWORDS_FALLBACK]:
             must_have.add(fallback_token)
     return tuple(must_have), tuple(nice_to_have)
 
 
-__all__ = ["CacheEntry", "JobDescriptionRetriever"]
+__all__ = ["CacheEntry", "Fetcher"]

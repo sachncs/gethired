@@ -1,7 +1,7 @@
 """Writer agent.
 
 The main tailoring agent. Takes the master resume, JD analysis, and voice
-profile; produces a TailoredResume. Emits Job records for traceability.
+profile; produces a Tailored. Emits Job records for traceability.
 
 Uses Pydantic AI with read-only tools (per user directive) and Anthropic
 provider (which works with both Anthropic native and the MiniMax platform).
@@ -15,50 +15,57 @@ import contextvars
 import os
 from collections.abc import Iterator
 from dataclasses import asdict
-from typing import TYPE_CHECKING, Any
+from typing import (  # Any: Pydantic AI model/result types are duck-typed across providers
+    TYPE_CHECKING,
+    Any,
+)
 
 if TYPE_CHECKING:
-    from gethired.streaming import ProgressCallback, ProgressEvent
+    from gethired.streaming import Callback, ProgressEvent
 
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 
-from gethired.constants import MODEL_ENV_VAR
-from gethired.description import DescriptionAnalysis
-from gethired.exceptions import ConfigurationError
+from gethired.constants import (
+    DROP_CHARS,
+    MODEL_VAR,
+    RATIONALE_CHARS,
+)
+from gethired.description import Analysis
+from gethired.exceptions import ConfigError
 from gethired.models import (
     Bullet,
-    DropReason,
+    Reason,
     Experience,
-    GroundedCitation,
+    Citation,
     Job,
-    JobEnvelope,
-    MasterResume,
+    StepEnv,
+    Master,
     Project,
-    SkillsByCategory,
-    TailoredResume,
-    VoiceProfile,
+    Skills,
+    Tailored,
+    Voice,
     job_lookup,
     job_tailor,
 )
-from gethired.observability import step_logger
+from gethired.observability import logger
 from gethired.provider import resolve_model
-from gethired.rubric import ANTI_AI_RULES, BANNED_WORDS, GROUNDING_RULES
-from gethired.tracing import Tracer, _ActiveSpan
+from gethired.rubric import ANTI_AI, BANNED, GROUNDING
+from gethired.tracing import ActiveSpan, Tracer
 
-_current_tracer: contextvars.ContextVar[Tracer | None] = contextvars.ContextVar(
+current_tracer: contextvars.ContextVar[Tracer | None] = contextvars.ContextVar(
     "gethired_current_tracer", default=None
 )
 
 
-def _noop_cm() -> contextlib.AbstractContextManager[_ActiveSpan | None]:
+def null_span_cm() -> contextlib.AbstractContextManager[ActiveSpan | None]:
     """Context manager that yields None — used when no tracer is active."""
 
     @contextlib.contextmanager
-    def _cm() -> Iterator[_ActiveSpan | None]:
+    def cm() -> Iterator[ActiveSpan | None]:
         yield None
 
-    return _cm()
+    return cm()
 
 
 class WriterDeps:
@@ -66,9 +73,9 @@ class WriterDeps:
 
     def __init__(
         self,
-        master: MasterResume,
-        analysis: DescriptionAnalysis,
-        voice: VoiceProfile,
+        master: Master,
+        analysis: Analysis,
+        voice: Voice,
         previous_violations: tuple[str, ...] = (),
     ) -> None:
         self.master = master
@@ -109,7 +116,7 @@ class Writer:
 
     Delegates to Pydantic AI's Agent with read-only tools and
     Anthropic-compatible API. Either ``model`` or ``model_instance`` must be
-    provided; otherwise ``ConfigurationError`` is raised at ``tailor()`` time.
+    provided; otherwise ``ConfigError`` is raised at ``tailor()`` time.
     """
 
     def __init__(
@@ -118,19 +125,19 @@ class Writer:
         debug: bool = False,
         model_instance: object | None = None,
     ) -> None:
-        self._model_string = model or os.environ.get(MODEL_ENV_VAR)
-        self._debug = debug
-        self._logger = step_logger("writer")
-        self._model_instance = model_instance
+        self.model_string = model or os.environ.get(MODEL_VAR)
+        self.debug = debug
+        self.logger = logger("writer")
+        self.model_instance = model_instance
 
     def tailor(
         self,
-        master: MasterResume,
-        analysis: DescriptionAnalysis,
-        voice: VoiceProfile,
+        master: Master,
+        analysis: Analysis,
+        voice: Voice,
         previous_violations: tuple[str, ...] = (),
-        on_progress: ProgressCallback | None = None,
-    ) -> tuple[TailoredResume, tuple[Job, ...]]:
+        on_progress: Callback | None = None,
+    ) -> tuple[Tailored, tuple[Job, ...]]:
         """Produce a tailored resume and the Job trail.
 
         Args:
@@ -142,10 +149,10 @@ class Writer:
                 emitted during the tailoring run.
 
         Returns:
-            Tuple of ``(TailoredResume, jobs)``.
+            Tuple of ``(Tailored, jobs)``.
         """
-        if self._model_string is None and self._model_instance is None:
-            raise ConfigurationError(
+        if self.model_string is None and self.model_instance is None:
+            raise ConfigError(
                 "MODEL is required. Set the MODEL env var (e.g. 'MiniMax-M3', "
                 "'anthropic:claude-sonnet-4-5', 'openai:gpt-5') and API_KEY "
                 "(or ANTHROPIC_API_KEY / OPENAI_API_KEY), or pass "
@@ -159,12 +166,12 @@ class Writer:
 
     def __llm_tailor(
         self,
-        master: MasterResume,
-        analysis: DescriptionAnalysis,
-        voice: VoiceProfile,
+        master: Master,
+        analysis: Analysis,
+        voice: Voice,
         previous_violations: tuple[str, ...],
-        on_progress: ProgressCallback | None = None,
-    ) -> tuple[TailoredResume, tuple[Job, ...]]:
+        on_progress: Callback | None = None,
+    ) -> tuple[Tailored, tuple[Job, ...]]:
         """Run the Pydantic AI Agent against the configured model.
 
         Args:
@@ -175,12 +182,12 @@ class Writer:
             on_progress: Optional callable invoked with each ProgressEvent.
 
         Returns:
-            Tuple of ``(TailoredResume, jobs)``.
+            Tuple of ``(Tailored, jobs)``.
         """
-        if self._model_instance is not None:
-            model: Any = self._model_instance
+        if self.model_instance is not None:
+            model: Any = self.model_instance
         else:
-            resolved = resolve_model(self._model_string)
+            resolved = resolve_model(self.model_string)
             model = resolved.model
         deps = WriterDeps(master, analysis, voice, previous_violations)
 
@@ -197,20 +204,20 @@ class Writer:
             deps_type=WriterDeps,
             output_type=WriterOutput,
             instructions=[
-                base_instructions(),
-                rubric_dynamic_instruction(previous_violations),
-                jd_dynamic_instruction(),
-                voice_dynamic_instruction(voice),
+                base(),
+                rubric(previous_violations),
+                jd(),
+                voice_prompt(voice),
             ],
         )
 
         self.__register_read_only_tools(agent)
 
-        result = asyncio.run(agent.run(user_prompt(master, analysis), deps=deps))
+        result = asyncio.run(agent.run(prompt(master, analysis), deps=deps))
         writer_output = result.output
-        tool_jobs = jobs_from_tool_calls(result)
+        tool_jobs = from_tools(result)
 
-        tailored = apply_writer_output(master, writer_output, analysis)
+        tailored = apply(master, writer_output, analysis)
         model_name = (
             getattr(model, "model_name", None) if not isinstance(model, str) else str(model)
         )
@@ -219,12 +226,12 @@ class Writer:
                 outputs=("tailored_resume",),
                 rationale=(
                     f"LLM produced {len(writer_output.tailored_bullets)} rewritten bullets; "
-                    f"rationale: {writer_output.rationale[:100]}"
+                    f"rationale: {writer_output.rationale[:RATIONALE_CHARS]}"
                 ),
-                envelope=JobEnvelope(model=str(model_name) if model_name else "model"),
+                envelope=StepEnv(model=str(model_name) if model_name else "model"),
             ),
         )
-        tailored = TailoredResume(
+        tailored = Tailored(
             contact=tailored.contact,
             summary=tailored.summary,
             skills=tailored.skills,
@@ -254,16 +261,16 @@ class Writer:
 
     def __register_read_only_tools(self, agent: Agent[WriterDeps, WriterOutput]) -> None:
         @agent.tool
-        async def lookup_experience(
+        async def experience(
             ctx: RunContext[WriterDeps], role_or_company: str
         ) -> dict[str, Any]:
             """Look up an experience in the master by role or company."""
             master = ctx.deps.master
-            tracer = _current_tracer.get()
+            tracer = current_tracer.get()
             span_cm = (
-                tracer.span("lookup_experience", "tool", role_or_company=role_or_company)
+                tracer.span("experience", "tool", role_or_company=role_or_company)
                 if tracer is not None
-                else _noop_cm()
+                else null_span_cm()
             )
             with span_cm as span:
                 lowered = role_or_company.lower()
@@ -278,7 +285,7 @@ class Writer:
                 return {}
 
         @agent.tool
-        async def lookup_project(ctx: RunContext[WriterDeps], name: str) -> dict[str, Any]:
+        async def project(ctx: RunContext[WriterDeps], name: str) -> dict[str, Any]:
             """Look up a project in the master by name."""
             master = ctx.deps.master
             lowered = name.lower()
@@ -288,7 +295,7 @@ class Writer:
             return {}
 
         @agent.tool
-        async def list_skills(ctx: RunContext[WriterDeps]) -> dict[str, list[str]]:
+        async def skills(ctx: RunContext[WriterDeps]) -> dict[str, list[str]]:
             """Return the master's skills by category."""
             return {
                 category: list(items)
@@ -296,30 +303,30 @@ class Writer:
             }
 
         @agent.tool
-        async def list_projects(ctx: RunContext[WriterDeps]) -> list[dict[str, Any]]:
+        async def projects(ctx: RunContext[WriterDeps]) -> list[dict[str, Any]]:
             """Return all projects from the master."""
             return [asdict(p) for p in ctx.deps.master.projects]
 
         @agent.tool
-        async def list_education(ctx: RunContext[WriterDeps]) -> list[dict[str, Any]]:
+        async def education(ctx: RunContext[WriterDeps]) -> list[dict[str, Any]]:
             """Return all education entries from the master."""
             return [asdict(e) for e in ctx.deps.master.education]
 
         @agent.tool
-        async def list_awards(ctx: RunContext[WriterDeps]) -> list[dict[str, Any]]:
+        async def awards(ctx: RunContext[WriterDeps]) -> list[dict[str, Any]]:
             """Return all awards from the master."""
             return [asdict(a) for a in ctx.deps.master.awards]
 
         @agent.tool
-        async def read_jd_summary(ctx: RunContext[WriterDeps]) -> dict[str, Any]:
+        async def jd(ctx: RunContext[WriterDeps]) -> dict[str, Any]:
             """Return the structured JD analysis the writer is optimising for."""
             analysis = ctx.deps.analysis
             return {
                 "role": analysis.role,
                 "seniority": analysis.seniority,
-                "must_have_skills": list(analysis.must_have_skills),
-                "nice_to_have_skills": list(analysis.nice_to_have_skills),
-                "keywords_to_mirror": list(analysis.keywords_to_mirror),
+                "must_have": list(analysis.must_have),
+                "nice_to_have": list(analysis.nice_to_have),
+                "keywords": list(analysis.keywords),
                 "responsibilities": list(analysis.responsibilities),
             }
 
@@ -330,7 +337,7 @@ class Writer:
 # ---------------------------------------------------------------------------
 
 
-def reorder_skills(skills: SkillsByCategory, mirror_keywords):
+def reorder(skills: Skills, mirror_keywords):
     mirror = [kw.lower() for kw in mirror_keywords]
     new_categories: dict[str, tuple[str, ...]] = {}
     for category, items in skills.categories.items():
@@ -340,35 +347,35 @@ def reorder_skills(skills: SkillsByCategory, mirror_keywords):
             ranked.append((score, -idx, item))
         ranked.sort(key=lambda t: (-t[0], t[1]))
         new_categories[category] = tuple(item[2] for item in ranked)
-    return SkillsByCategory(categories=new_categories)
+    return Skills(categories=new_categories)
 
 
-def base_instructions() -> str:
-    banned_words = ", ".join(sorted(BANNED_WORDS)[:10]) + ", ..."
-    return f"""You are gethired's writer agent. Your job: produce a TailoredResume
+def base() -> str:
+    banned_words = ", ".join(sorted(BANNED)[:10]) + ", ..."
+    return f"""You are gethired's writer agent. Your job: produce a Tailored
 that matches a job description while staying strictly grounded in the master
 resume.
 
 GROUNDING (HARD RULES):
-{chr(10).join(f"- {rule}" for rule in GROUNDING_RULES)}
+{chr(10).join(f"- {rule}" for rule in GROUNDING)}
 
 ANTI-AI LANGUAGE (HARD RULES):
-{chr(10).join(f"- {rule}" for rule in ANTI_AI_RULES)}
+{chr(10).join(f"- {rule}" for rule in ANTI_AI)}
 
 BANNED WORDS (sample): {banned_words}
 
 TOOLS:
-You have 7 read-only tools to inspect the master (lookup_experience,
-lookup_project, list_skills, list_projects, list_education, list_awards,
-read_jd_summary). Use them before claiming any fact. NEVER invent facts.
+You have 7 read-only tools to inspect the master (experience,
+project, skills, projects, education, awards,
+jd). Use them before claiming any fact. NEVER invent facts.
 
 OUTPUT:
-Return a TailoredResume with grounding citations (each tailored bullet must
+Return a Tailored with grounding citations (each tailored bullet must
 cite its source master path + verbatim span). Do NOT invent companies,
 projects, dates, numbers, or skills."""
 
 
-def rubric_dynamic_instruction(previous_violations: tuple[str, ...]) -> str:
+def rubric(previous_violations: tuple[str, ...]) -> str:
     if not previous_violations:
         return ""
     return "PRIOR VIOLATIONS TO AVOID (retry constraints):\n" + "\n".join(
@@ -376,15 +383,15 @@ def rubric_dynamic_instruction(previous_violations: tuple[str, ...]) -> str:
     )
 
 
-def jd_dynamic_instruction() -> str:
+def jd() -> str:
     return (
-        "Use the read_jd_summary tool to retrieve must-have skills, "
+        "Use the jd tool to retrieve must-have skills, "
         "nice-to-have skills, and responsibilities. Mirror must-have keywords "
         "in your bullet rewrites — never invent, but rephrase to include them."
     )
 
 
-def voice_dynamic_instruction(voice: VoiceProfile) -> str:
+def voice_prompt(voice: Voice) -> str:
     verbs = ", ".join(voice.opening_verbs[:5]) or "n/a"
     return (
         f"VOICE PROFILE (preserve):\n"
@@ -395,24 +402,24 @@ def voice_dynamic_instruction(voice: VoiceProfile) -> str:
     )
 
 
-def user_prompt(master: MasterResume, analysis: DescriptionAnalysis) -> str:
+def prompt(master: Master, analysis: Analysis) -> str:
     master_md = master.to_markdown()
     jd_summary = (
         f"Target role: {analysis.role}\n"
         f"Seniority: {analysis.seniority}\n"
-        f"Must-have skills: {', '.join(analysis.must_have_skills)}\n"
-        f"Nice-to-have: {', '.join(analysis.nice_to_have_skills)}"
+        f"Must-have skills: {', '.join(analysis.must_have)}\n"
+        f"Nice-to-have: {', '.join(analysis.nice_to_have)}"
     )
     return (
         f"Here is the master resume (single source of truth):\n\n"
         f"{master_md}\n\n"
         f"Here is the structured JD analysis:\n\n{jd_summary}\n\n"
-        f"Produce a TailoredResume. Use the read-only tools to verify any "
-        f"fact before including it. Every bullet must include a GroundedCitation."
+        f"Produce a Tailored. Use the read-only tools to verify any "
+        f"fact before including it. Every bullet must include a Citation."
     )
 
 
-def jobs_from_tool_calls(result: Any) -> tuple[Job, ...]:
+def from_tools(result: Any) -> tuple[Job, ...]:
     """Extract Job records from the agent's tool calls.
 
     Best-effort: walks ``result.all_messages`` looking for tool-call parts.
@@ -433,7 +440,7 @@ def jobs_from_tool_calls(result: Any) -> tuple[Job, ...]:
                         tool_name=tool_name,
                         outputs=(f"tool:{tool_name}",),
                         rationale=f"Called read-only tool {tool_name}",
-                        envelope=JobEnvelope(
+                        envelope=StepEnv(
                             model=str(
                                 getattr(
                                     getattr(message, "model", None),
@@ -447,12 +454,12 @@ def jobs_from_tool_calls(result: Any) -> tuple[Job, ...]:
     return tuple(jobs)
 
 
-def rewrite_bullets(
+def rewrite(
     bullets: tuple[Bullet, ...],
     container_path: str,
     tailored_bullets: dict[str, list[str]],
     dropped: frozenset[str],
-) -> tuple[list[Bullet], list[GroundedCitation]]:
+) -> tuple[list[Bullet], list[Citation]]:
     """Rewrite or drop bullets in a single experience/project container.
 
     ``container_path`` is the master path prefix without the bullet index, e.g.
@@ -460,7 +467,7 @@ def rewrite_bullets(
     grounding citations for any rewritten text.
     """
     rewritten: list[Bullet] = []
-    grounding: list[GroundedCitation] = []
+    grounding: list[Citation] = []
     for b_idx, bullet in enumerate(bullets):
         master_path = f"{container_path}[{b_idx}]"
         if master_path in dropped:
@@ -469,7 +476,7 @@ def rewrite_bullets(
             candidates = tailored_bullets[master_path]
             rewritten.append(Bullet(text=candidates[0] if candidates else bullet.text))
             grounding.append(
-                GroundedCitation(
+                Citation(
                     tailored_path=master_path,
                     master_path=master_path,
                     verbatim_span=bullet.text,
@@ -481,11 +488,11 @@ def rewrite_bullets(
     return rewritten, grounding
 
 
-def apply_writer_output(
-    master: MasterResume,
+def apply(
+    master: Master,
     output: WriterOutput,
-    analysis: DescriptionAnalysis,
-) -> TailoredResume:
+    analysis: Analysis,
+) -> Tailored:
     """Apply the writer agent's output onto the master resume.
 
     The agent produces a ``WriterOutput`` (Pydantic) with a flat
@@ -496,11 +503,11 @@ def apply_writer_output(
     """
     dropped = frozenset(output.dropped)
     new_experiences: list[Experience] = []
-    new_grounding: list[GroundedCitation] = []
+    new_grounding: list[Citation] = []
     for idx, exp in enumerate(master.experiences):
         if f"experiences[{idx}]" in dropped:
             continue
-        rewritten_bullets, bullet_grounding = rewrite_bullets(
+        rewritten_bullets, bullet_grounding = rewrite(
             exp.bullets,
             f"experiences[{idx}].bullets",
             output.tailored_bullets,
@@ -521,7 +528,7 @@ def apply_writer_output(
     for p_idx, project in enumerate(master.projects):
         if f"projects[{p_idx}]" in dropped:
             continue
-        rewritten_bullets, bullet_grounding = rewrite_bullets(
+        rewritten_bullets, bullet_grounding = rewrite(
             project.bullets,
             f"projects[{p_idx}].bullets",
             output.tailored_bullets,
@@ -537,17 +544,19 @@ def apply_writer_output(
         )
 
     dropped_reasons = tuple(
-        DropReason(
+        Reason(
             item_id=path,
-            reason=f"Marked for drop by writer agent: {output.rationale[:80]}",
+            reason=(
+                f"Marked for drop by writer agent: {output.rationale[:DROP_CHARS]}"
+            ),
         )
         for path in output.dropped
     )
 
-    return TailoredResume(
+    return Tailored(
         contact=master.contact,
         summary=output.summary,
-        skills=reorder_skills(master.skills, analysis.keywords_to_mirror),
+        skills=reorder(master.skills, analysis.keywords),
         experiences=tuple(new_experiences),
         projects=tuple(new_projects),
         education=master.education,
@@ -560,4 +569,4 @@ def apply_writer_output(
     )
 
 
-__all__ = ["Writer", "WriterDeps"]
+__all__ = ["Writer", "WriterDeps", "current_tracer"]

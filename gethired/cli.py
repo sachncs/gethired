@@ -10,74 +10,67 @@ import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
-from uuid import uuid4
 
 import typer
 
 from gethired.audit import (
-    audit_run,
-    render_audit_json,
-    render_audit_markdown,
+    audit,
+    audit_json,
+    audit_markdown,
 )
 from gethired.constants import (
-    CONSENT_FILE_PATH,
-    CONSENT_RE_PROMPT_DAYS,
-    CONSENT_TEXT,
-    DEFAULT_MASTER_JSON,
+    CONSENT,
+    CONSENT_DAYS,
+    CONSENT_PATH,
+    DATA_DIR,
+    MASTER,
+    OUTPUT_DIR,
 )
-from gethired.constants import DEFAULT_DATA_DIR as _DEFAULT_DATA_DIR_STR
-from gethired.constants import DEFAULT_TAILORED_DIR as _DEFAULT_TAILORED_DIR_STR
 from gethired.exceptions import (
-    AtsGateFailureError,
-    GroundingViolationError,
-    JobDescriptionRetrievalError,
-    PlagiarismViolationError,
-    StyleViolationError,
+    AtsError,
+    GroundingError,
+    FetchError,
+    PlagiarismError,
+    StyleError,
 )
-from gethired.fetcher import JobDescriptionRetriever
+from gethired.fetcher import Fetcher
 from gethired.models import (
-    Award,
-    ContactInformation,
-    Education,
-    Experience,
-    FinalOutcome,
-    JobDescription,
-    MasterResume,
-    Project,
-    Run,
-    RunResult,
-    SkillsByCategory,
-    TailoredResume,
+    Job,
 )
-from gethired.observability import configure_logging, utcnow_iso
-from gethired.parser import parse_tex
-from gethired.renderer import render_json, render_tex, render_text
-from gethired.tailor import Tailor, coerce_bullets, read_master_json
-from gethired.validator import ats_check
+from gethired.observability import configure
+from gethired.parser import parse_tex as tex
+from gethired.renderer import tex, text
+from gethired.serialize import (
+    from_tailored_dict,
+    snapshot,
+    render_json,
+)
+from gethired.tailor import Tailor
+from gethired.validator import ats
 
-DEFAULT_DATA_DIR_PATH = Path(_DEFAULT_DATA_DIR_STR)
-DEFAULT_TAILORED_DIR_PATH = Path(_DEFAULT_TAILORED_DIR_STR)
-DEFAULT_MASTER_JSON_PATH = Path(DEFAULT_MASTER_JSON)
+DEFAULT_DATA_DIR_PATH = Path(DATA_DIR)
+DEFAULT_TAILORED_DIR_PATH = Path(OUTPUT_DIR)
+DEFAULT_MASTER_JSON_PATH = Path(MASTER)
 
 app = typer.Typer(help="gethired — multi-agent CV tailoring", no_args_is_help=True)
 
 
 def ensure_consent(force_prompt: bool = False) -> None:
-    consent_file = Path(CONSENT_FILE_PATH).expanduser()
+    consent_file = Path(CONSENT_PATH).expanduser()
     if consent_file.exists() and not force_prompt:
         try:
-            data = json.loads(consent_file.read_text())
+            data_dict = json.loads(consent_file.read_text())
             timestamp = datetime.fromisoformat(data["timestamp"])
             if timestamp.tzinfo is None:
                 now = datetime.now(UTC).replace(tzinfo=None)
             else:
                 now = datetime.now(timestamp.tzinfo)
-            if (now - timestamp).days < CONSENT_RE_PROMPT_DAYS:
+            if (now - timestamp).days < CONSENT_DAYS:
                 return
         except (json.JSONDecodeError, KeyError, ValueError):
             pass
 
-    typer.echo(CONSENT_TEXT, err=True)
+    typer.echo(CONSENT, err=True)
     if not typer.confirm("Continue?", default=False):
         raise typer.Exit(code=1)
 
@@ -91,11 +84,11 @@ def ingest(
     out: Path = typer.Option(DEFAULT_MASTER_JSON_PATH, "--out", "-o"),
 ) -> None:
     """Parse master resume into data/master.json."""
-    configure_logging()
+    configure()
     ensure_consent()
-    master = parse_tex(tex_path)
+    master = tex(tex_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    snapshot = render_json(master_to_snapshot(master))
+    snapshot = render_json(snapshot(master))
     out.write_text(snapshot)
     typer.echo(f"Ingested {tex_path} → {out}")
 
@@ -106,14 +99,14 @@ def fetch(
     cache_dir: Path = typer.Option(DEFAULT_DATA_DIR_PATH / "jd_cache", "--cache"),
 ) -> None:
     """Fetch and cache job description URLs."""
-    configure_logging()
+    configure()
     ensure_consent()
-    retriever = JobDescriptionRetriever(cache_dir)
+    retriever = Fetcher(cache_dir)
     for url in urls:
         try:
             jd = retriever.retrieve(url)
             typer.echo(f"Fetched {url} → {jd.title or '(no title)'}")
-        except JobDescriptionRetrievalError as exc:
+        except FetchError as exc:
             typer.echo(f"Failed: {url}: {exc}", err=True)
             raise typer.Exit(code=1)
 
@@ -124,7 +117,7 @@ def show_cmd(
     url: str | None = typer.Option(None, "--url"),
 ) -> None:
     """Show master.json or a cached JD."""
-    configure_logging()
+    configure()
     if what == "master":
         if not DEFAULT_MASTER_JSON_PATH.exists():
             typer.echo(f"master.json not found at {DEFAULT_MASTER_JSON_PATH}", err=True)
@@ -152,7 +145,7 @@ def plan(
     model: str | None = typer.Option(None, "--model", "-m"),
 ) -> None:
     """Estimate cost without running the agent."""
-    configure_logging()
+    configure()
     ensure_consent()
     jd = fetch_first_jd(urls)
     tailor = Tailor(resume=resume, job_description=jd, model=model)
@@ -169,7 +162,7 @@ def run(
     out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir"),
 ) -> None:
     """Run the full tailoring pipeline."""
-    configure_logging(debug=debug)
+    configure(debug=debug)
     ensure_consent()
     jd = fetch_first_jd(urls)
     tailor = Tailor(
@@ -178,10 +171,10 @@ def run(
     try:
         tailored = tailor.run()
     except (
-        GroundingViolationError,
-        StyleViolationError,
-        PlagiarismViolationError,
-        AtsGateFailureError,
+        GroundingError,
+        StyleError,
+        PlagiarismError,
+        AtsError,
     ) as exc:
         typer.echo(f"Tailoring failed: {exc}", err=True)
         raise typer.Exit(code=1)
@@ -198,7 +191,7 @@ def cover(
     out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir"),
 ) -> None:
     """Run the pipeline with cover-letter production enabled."""
-    configure_logging(debug=debug)
+    configure(debug=debug)
     ensure_consent()
     jd = fetch_first_jd(urls)
     tailor = Tailor(
@@ -212,10 +205,10 @@ def cover(
     try:
         tailored = tailor.run()
     except (
-        GroundingViolationError,
-        StyleViolationError,
-        PlagiarismViolationError,
-        AtsGateFailureError,
+        GroundingError,
+        StyleError,
+        PlagiarismError,
+        AtsError,
     ) as exc:
         typer.echo(f"Tailoring failed: {exc}", err=True)
         raise typer.Exit(code=1)
@@ -230,7 +223,7 @@ def preflight(
     model: str | None = typer.Option(None, "--model", "-m"),
 ) -> None:
     """Dry-run preflight: estimate cost and gate outcomes without invoking the LLM."""
-    configure_logging()
+    configure()
     ensure_consent()
     jd = fetch_first_jd(urls)
     tailor = Tailor(resume=resume, job_description=jd, model=model, debug=False)
@@ -249,49 +242,13 @@ def validate(
     target: Path = typer.Argument(..., exists=True),
 ) -> None:
     """Run ATS gates against a tailored.tex or tailored.json."""
-    configure_logging()
+    configure()
     if target.suffix == ".json":
-        data = json.loads(target.read_text())
-        contact = ContactInformation(**data["contact"])
-        skills = SkillsByCategory(
-            categories={k: tuple(v) for k, v in data["skills"]["categories"].items()}
-        )
-        experiences = tuple(
-            Experience(
-                role=e["role"],
-                company=e["company"],
-                start_date=e["start_date"],
-                end_date=e["end_date"],
-                bullets=coerce_bullets(e["bullets"]),
-            )
-            for e in data["experiences"]
-        )
-        projects = tuple(
-            Project(name=p["name"], url=p["url"], bullets=coerce_bullets(p["bullets"]))
-            for p in data["projects"]
-        )
-        education = tuple(Education(**e) for e in data["education"])
-        awards = tuple(Award(**a) for a in data["awards"])
-        run_result = RunResult(**data["run_result"])
-        tailored = TailoredResume(
-            contact=contact,
-            summary=data["summary"],
-            skills=skills,
-            experiences=experiences,
-            projects=projects,
-            education=education,
-            awards=awards,
-            dropped=(),
-            rationale=data.get("rationale", ""),
-            grounding=(),
-            jobs=(),
-            run_result=run_result,
-        )
-        master = read_master_json(Path("data/master.json"))
-        _ = master  # re-rendered for completeness; rendered below
-        tex_source = render_tex(tailored)
-        txt_source = render_text(tailored)
-        report = ats_check(
+        data_dict = json.loads(target.read_text())
+        tailored = from_tailored_dict(data_dict)
+        tex_source = tex(tailored)
+        txt_source = text(tailored)
+        report = ats(
             tailored,
             tex_source=tex_source,
             pdf_path=None,
@@ -319,12 +276,12 @@ def trace(
     run_dir: Path = typer.Argument(..., exists=True),
 ) -> None:
     """Print the Job trail of a previous run."""
-    configure_logging()
+    configure()
     json_path = run_dir / "tailored.json"
     if not json_path.exists():
         typer.echo(f"tailored.json not found in {run_dir}", err=True)
         raise typer.Exit(code=1)
-    data = json.loads(json_path.read_text())
+    data_dict = json.loads(json_path.read_text())
     run_result = data.get("run_result", {})
     jobs = run_result.get("jobs", [])
     typer.echo(f"Run: {run_result.get('run', {}).get('id', '?')}")
@@ -343,10 +300,10 @@ def audit(
     Writes ``audit.json`` and ``audit.md`` into ``run_dir``. Exits non-zero
     if any validator reports a failure.
     """
-    configure_logging()
-    report = audit_run(run_dir)
-    (Path(run_dir) / "audit.json").write_text(render_audit_json(report))
-    (Path(run_dir) / "audit.md").write_text(render_audit_markdown(report))
+    configure()
+    report = audit(run_dir)
+    (Path(run_dir) / "audit.json").write_text(audit_json(report))
+    (Path(run_dir) / "audit.md").write_text(audit_markdown(report))
     typer.echo(f"Audit written to {run_dir}/audit.json and audit.md")
     typer.echo(f"ATS passed: {report.ats_passed}")
     typer.echo(
@@ -374,7 +331,7 @@ def diff(
     out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir"),
 ) -> None:
     """Diff two tailored runs."""
-    configure_logging()
+    configure()
     a = (out_dir / run_a / "match_report.md").read_text()
     b = (out_dir / run_b / "match_report.md").read_text()
     diff_text = "\n".join(
@@ -385,43 +342,9 @@ def diff(
     typer.echo(diff_text)
 
 
-def fetch_first_jd(urls: list[str]) -> JobDescription:
-    retriever = JobDescriptionRetriever(DEFAULT_DATA_DIR_PATH / "jd_cache")
+def fetch_first_jd(urls: list[str]) -> Job:
+    retriever = Fetcher(DEFAULT_DATA_DIR_PATH / "jd_cache")
     return retriever.retrieve(urls[0])
-
-
-def master_to_snapshot(master: MasterResume) -> TailoredResume:
-    """Wrap a master into a TailoredResume-like snapshot for JSON serialisation."""
-    return TailoredResume(
-        contact=master.contact,
-        summary=master.summary,
-        skills=master.skills,
-        experiences=master.experiences,
-        projects=master.projects,
-        education=master.education,
-        awards=master.awards,
-        dropped=(),
-        rationale="Master snapshot",
-        grounding=(),
-        jobs=(),
-        run_result=RunResult(
-            run=Run(
-                id=str(uuid4()),
-                started_at=utcnow_iso(),
-                master_hash=master.content_hash(),
-                jd_urls_hash="",
-                model="master",
-                draft_model=None,
-            ),
-            completed_at=utcnow_iso(),
-            duration_seconds=0.0,
-            total_input_tokens=0,
-            total_output_tokens=0,
-            retry_attempts=0,
-            final_outcome=FinalOutcome.SUCCESS,
-            jobs=(),
-        ),
-    )
 
 
 if __name__ == "__main__":

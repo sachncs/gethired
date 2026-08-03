@@ -1,6 +1,6 @@
 """Voice profile builder.
 
-Computes a deterministic voice fingerprint from a MasterResume. Used by the
+Computes a deterministic voice fingerprint from a Master. Used by the
 writer agent's instructions and by the validator to detect voice drift.
 """
 
@@ -11,7 +11,7 @@ from collections import Counter
 from statistics import mean, pstdev
 from typing import Final
 
-from gethired.models import Bullet, MasterResume, VoiceProfile
+from gethired.models import Bullet, Master, Voice
 
 OPENING_VERB_RE: Final[re.Pattern[str]] = re.compile(r"\b([A-Z][a-z]+)\b")
 
@@ -49,14 +49,14 @@ def sentence_counts(bullets: tuple[Bullet, ...]) -> tuple[int, int]:
     return (min(counts), max(counts))
 
 
-def build(master: MasterResume) -> VoiceProfile:
+def build(master: Master) -> Voice:
     """Compute a voice profile from the master resume's bullets.
 
     Args:
         master: The canonical master resume.
 
     Returns:
-        A ``VoiceProfile`` describing length, verbs, punctuation, sentence count.
+        A ``Voice`` describing length, verbs, punctuation, sentence count.
     """
     all_bullets: list[Bullet] = []
     for experience in master.experiences:
@@ -68,7 +68,7 @@ def build(master: MasterResume) -> VoiceProfile:
     avg = mean(lengths) if lengths else 0.0
     std = pstdev(lengths) if len(lengths) > 1 else 0.0
 
-    return VoiceProfile(
+    return Voice(
         avg_bullet_length=avg,
         bullet_length_stddev=std,
         opening_verbs=opening_verbs(tuple(all_bullets)),

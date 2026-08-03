@@ -12,51 +12,50 @@ from pathlib import Path
 
 import pymupdf
 
-from gethired.constants import BULLET_QUANTIFICATION_THRESHOLD, MAX_PAGES
+from gethired.constants import PAGES, QUANTIFY
 from gethired.models import (
     AtsGate,
     Bullet,
     GateStatus,
     GateTier,
-    JobDescription,
-    MasterResume,
-    TailoredResume,
+    Job,
+    Master,
+    Tailored,
 )
 from gethired.normalize import (
-    canonicalize_numeric,
-    extract_ngrams,
-    is_action_verb,
-    normalise_whitespace,
-    tokenize_for_overlap,
+    numbers,
+    ngrams,
+    verb,
+    tokenize,
 )
 from gethired.rubric import (
-    BANNED_CONSTRUCTIONS,
-    BANNED_WORDS,
-    REQUIRED_SECTION_HEADINGS,
-    TECHNICAL_NGRAMS_ALLOWLIST,
+    ALLOWLIST,
+    BANNED,
+    CONSTRUCTIONS,
+    SECTIONS,
 )
 
 
 @dataclass(frozen=True, slots=True)
-class GroundingViolation:
+class GroundingFault:
     path: str
     detail: str
 
 
 @dataclass(frozen=True, slots=True)
-class StyleViolation:
+class StyleFault:
     path: str
     detail: str
 
 
 @dataclass(frozen=True, slots=True)
-class PlagiarismViolation:
+class PlagiarismFault:
     path: str
     ngram: str
 
 
 @dataclass(frozen=True, slots=True)
-class AtsGateResult:
+class AtsResult:
     gate: AtsGate
     status: GateStatus
     detail: str
@@ -68,8 +67,8 @@ class AtsGateResult:
 
 
 @dataclass(frozen=True, slots=True)
-class AtsGateReport:
-    results: tuple[AtsGateResult, ...]
+class AtsReport:
+    results: tuple[AtsResult, ...]
 
     @property
     def all_passed(self) -> bool:
@@ -106,10 +105,10 @@ class AtsGateReport:
 # ---------------------------------------------------------------------------
 
 
-def grounding_check(
-    tailored: TailoredResume,
-    master: MasterResume,
-) -> tuple[GroundingViolation, ...]:
+def grounding(
+    tailored: Tailored,
+    master: Master,
+) -> tuple[GroundingFault, ...]:
     """Verify every concrete claim in the tailored resume traces back to master.
 
     Checks:
@@ -118,16 +117,16 @@ def grounding_check(
     - All cited verbatim spans appear in master
     - All company names / employers appear in master
     """
-    violations: list[GroundingViolation] = []
+    violations: list[GroundingFault] = []
 
     master_text = master.to_markdown().lower()
-    master_numbers = canonicalize_numeric(master.to_markdown())
+    master_numbers = numbers(master.to_markdown())
 
     for skill_category, skills in tailored.skills.categories.items():
         for skill in skills:
             if skill.lower() not in master_text:
                 violations.append(
-                    GroundingViolation(
+                    GroundingFault(
                         path=f"skills.categories[{skill_category}]",
                         detail=f"Skill {skill!r} not found in master",
                     )
@@ -136,16 +135,16 @@ def grounding_check(
     for citation in tailored.grounding:
         if citation.verbatim_span.lower() not in master_text:
             violations.append(
-                GroundingViolation(
+                GroundingFault(
                     path=citation.tailored_path,
                     detail=f"Cited span {citation.verbatim_span!r} not in master",
                 )
             )
 
-    tailored_numbers = canonicalize_numeric(tailored_to_text(tailored))
+    tailored_numbers = numbers(flatten(tailored))
     for number in tailored_numbers - master_numbers:
         violations.append(
-            GroundingViolation(
+            GroundingFault(
                 path="tailored",
                 detail=f"Numeric value {number} not found in master",
             )
@@ -155,7 +154,7 @@ def grounding_check(
     for exp in tailored.experiences:
         if exp.company.lower() not in master_companies and master_companies:
             violations.append(
-                GroundingViolation(
+                GroundingFault(
                     path=f"experiences[{exp.company}]",
                     detail=f"Company {exp.company!r} not in master",
                 )
@@ -164,7 +163,7 @@ def grounding_check(
     return tuple(violations)
 
 
-def tailored_to_text(tailored: TailoredResume) -> str:
+def flatten(tailored: Tailored) -> str:
     parts = [tailored.summary]
     for exp in tailored.experiences:
         parts.append(f"{exp.role} {exp.company} {exp.start_date} {exp.end_date}")
@@ -183,19 +182,19 @@ def tailored_to_text(tailored: TailoredResume) -> str:
 # ---------------------------------------------------------------------------
 
 
-def style_check(
-    tailored: TailoredResume,
-    threshold_ratio: float = BULLET_QUANTIFICATION_THRESHOLD,
-) -> tuple[StyleViolation, ...]:
+def style(
+    tailored: Tailored,
+    threshold_ratio: float = QUANTIFY,
+) -> tuple[StyleFault, ...]:
     """Check for banned words, parallelism, length variance, and quantification."""
-    violations: list[StyleViolation] = []
+    violations: list[StyleFault] = []
 
-    full_text = tailored_to_text(tailored).lower()
-    for word in BANNED_WORDS:
+    full_text = flatten(tailored).lower()
+    for word in BANNED:
         pattern = re.compile(rf"\b{re.escape(word)}\b", re.IGNORECASE)
         for match in pattern.finditer(full_text):
             violations.append(
-                StyleViolation(
+                StyleFault(
                     path="tailored",
                     detail=f"Banned word {word!r} at position {match.start()}",
                 )
@@ -208,7 +207,7 @@ def style_check(
             if token.lower() == word.lower():
                 continue
             violations.append(
-                StyleViolation(
+                StyleFault(
                     path="tailored",
                     detail=(
                         f"Banned word stem {word!r} matched {token!r} at position {match.start()}"
@@ -216,25 +215,25 @@ def style_check(
                 )
             )
 
-    for construction in BANNED_CONSTRUCTIONS:
+    for construction in CONSTRUCTIONS:
         if construction.lower() in full_text:
             violations.append(
-                StyleViolation(
+                StyleFault(
                     path="tailored",
                     detail=f"Banned construction {construction!r}",
                 )
             )
 
     for experience in tailored.experiences:
-        violations.extend(parallelism_violations(experience.role, experience.bullets))
+        violations.extend(parallelism(experience.role, experience.bullets))
         if experience.bullets:
             quantified = sum(
-                1 for bullet in experience.bullets if canonicalize_numeric(bullet.text)
+                1 for bullet in experience.bullets if numbers(bullet.text)
             )
             ratio = quantified / len(experience.bullets)
             if ratio < threshold_ratio:
                 violations.append(
-                    StyleViolation(
+                    StyleFault(
                         path=f"experiences[{experience.role}]",
                         detail=(
                             f"Only {ratio:.0%} of bullets quantified; "
@@ -243,9 +242,9 @@ def style_check(
                     )
                 )
 
-    if tailored.summary and not is_action_verb(tailored.summary.split(maxsplit=1)[0]):
+    if tailored.summary and not verb(tailored.summary.split(maxsplit=1)[0]):
         violations.append(
-            StyleViolation(
+            StyleFault(
                 path="summary",
                 detail=f"Summary does not start with an action verb: {tailored.summary[:60]!r}",
             )
@@ -254,7 +253,7 @@ def style_check(
     return tuple(violations)
 
 
-def parallelism_violations(role: str, bullets: tuple[Bullet, ...]) -> tuple[StyleViolation, ...]:
+def parallelism(role: str, bullets: tuple[Bullet, ...]) -> tuple[StyleFault, ...]:
     if len(bullets) < 3:
         return ()
     counter: Counter[str] = Counter()
@@ -265,7 +264,7 @@ def parallelism_violations(role: str, bullets: tuple[Bullet, ...]) -> tuple[Styl
     common = counter.most_common(1)
     if common and common[0][1] >= 3:
         return (
-            StyleViolation(
+            StyleFault(
                 path=f"experiences[{role}]",
                 detail=(
                     f"{common[0][1]} bullets open with the same verb "
@@ -281,28 +280,28 @@ def parallelism_violations(role: str, bullets: tuple[Bullet, ...]) -> tuple[Styl
 # ---------------------------------------------------------------------------
 
 
-def plagiarism_check(
-    tailored: TailoredResume,
-    jds: tuple[JobDescription, ...],
+def plagiarism(
+    tailored: Tailored,
+    jds: tuple[Job, ...],
     ngram_size: int = 5,
-) -> tuple[PlagiarismViolation, ...]:
+) -> tuple[PlagiarismFault, ...]:
     """Check for verbatim n-gram overlap between tailored resume and JDs.
 
-    Excludes n-grams in ``TECHNICAL_NGRAMS_ALLOWLIST``.
+    Excludes n-grams in ``ALLOWLIST``.
     """
-    tailored_tokens = tokenize_for_overlap(tailored_to_text(tailored))
-    tailored_ngrams = set(extract_ngrams(tailored_tokens, ngram_size))
-    tailored_ngrams -= TECHNICAL_NGRAMS_ALLOWLIST
+    tailored_tokens = tokenize(flatten(tailored))
+    tailored_ngrams = set(ngrams(tailored_tokens, ngram_size))
+    tailored_ngrams -= ALLOWLIST
 
-    violations: list[PlagiarismViolation] = []
+    violations: list[PlagiarismFault] = []
 
     for jd in jds:
-        jd_tokens = tokenize_for_overlap(jd.full_text)
-        jd_ngrams = set(extract_ngrams(jd_tokens, ngram_size))
-        jd_ngrams -= TECHNICAL_NGRAMS_ALLOWLIST
+        jd_tokens = tokenize(jd.full_text)
+        jd_ngrams = set(ngrams(jd_tokens, ngram_size))
+        jd_ngrams -= ALLOWLIST
         overlap = tailored_ngrams & jd_ngrams
         for ngram in overlap:
-            violations.append(PlagiarismViolation(path="tailored", ngram=ngram))
+            violations.append(PlagiarismFault(path="tailored", ngram=ngram))
 
     return tuple(violations)
 
@@ -312,14 +311,14 @@ def plagiarism_check(
 # ---------------------------------------------------------------------------
 
 
-def ats_check(
-    tailored: TailoredResume,
+def ats(
+    tailored: Tailored,
     tex_source: str,
     pdf_path: Path | None,
     txt_source: str,
-    jds: tuple[JobDescription, ...],
-    quantification_threshold: float = BULLET_QUANTIFICATION_THRESHOLD,
-) -> AtsGateReport:
+    jds: tuple[Job, ...],
+    quantification_threshold: float = QUANTIFY,
+) -> AtsReport:
     """Run all 12 ATS gates (9 hard-blocking, 3 advisory).
 
     Args:
@@ -331,98 +330,118 @@ def ats_check(
         quantification_threshold: Bullet quantification threshold.
 
     Returns:
-        An ``AtsGateReport`` with per-gate results.
+        An ``AtsReport`` with per-gate results.
     """
-    results: list[AtsGateResult] = []
+    results: list[AtsResult] = []
 
-    results.append(gate_pdf_compiles(pdf_path))
-    results.append(gate_pdf_text_extractable(pdf_path))
-    results.append(gate_pdf_text_matches_txt(pdf_path, txt_source))
-    results.append(gate_section_headings_standard(tex_source))
-    results.append(gate_no_tables_for_layout(tex_source))
-    results.append(gate_no_images(tex_source))
-    results.append(gate_no_colors(tex_source))
-    results.append(gate_font_size_10_12(tex_source))
-    results.append(gate_length_within_limit(pdf_path))
-    results.append(gate_keywords_covered(tailored, jds))
-    results.append(gate_bullets_quantified(tailored, quantification_threshold))
-    results.append(gate_action_verbs_first(tailored))
+    results.append(gate_pdf(pdf_path))
+    results.append(gate_text(pdf_path))
+    results.append(gate_match(pdf_path, txt_source))
+    results.append(gate_sections(tex_source))
+    results.append(gate_tables(tex_source))
+    results.append(gate_images(tex_source))
+    results.append(gate_colors(tex_source))
+    results.append(gate_font(tex_source))
+    results.append(gate_length(pdf_path))
+    results.append(gate_keywords(tailored, jds))
+    results.append(gate_quantify(tailored, quantification_threshold))
+    results.append(gate_verbs(tailored))
 
-    return AtsGateReport(results=tuple(results))
+    return AtsReport(results=tuple(results))
 
 
-def gate_pdf_compiles(pdf_path: Path | None) -> AtsGateResult:
+def pdf_guard(
+    pdf_path: Path | None,
+    gate: AtsGate,
+    skip_detail: str = "PDF not compiled (skipped)",
+    missing_detail: str | None = None,
+) -> AtsResult | None:
+    """Return the ``SKIP`` / ``FAIL`` result for a PDF-dependent gate.
+
+    PDF-dependent gates share a two-step guard: skip when no PDF was
+    produced (``LATEX_ENGINE=none`` or compilation was not attempted), and
+    fail when the path was provided but the file is missing. This helper
+    consolidates the guard so each gate can focus on its real check.
+
+    Args:
+        pdf_path: The compiled PDF path (or ``None``).
+        gate: The gate being evaluated.
+        skip_detail: The detail string when ``pdf_path is None``.
+        missing_detail: The detail string when the path is set but missing.
+            Defaults to ``f"PDF missing: {pdf_path}"``.
+
+    Returns:
+        The ``SKIP`` or ``FAIL`` result when the guard fires; otherwise
+        ``None`` (caller should run the actual gate logic).
+    """
     if pdf_path is None:
-        return AtsGateResult(
-            AtsGate.PDF_COMPILES, GateStatus.SKIP, detail="PDF not compiled (skipped)"
-        )
+        return AtsResult(gate, GateStatus.SKIP, detail=skip_detail)
     if not pdf_path.exists():
-        return AtsGateResult(
-            AtsGate.PDF_COMPILES, GateStatus.FAIL, detail=f"PDF missing: {pdf_path}"
+        return AtsResult(
+            gate,
+            GateStatus.FAIL,
+            detail=missing_detail or f"PDF missing: {pdf_path}",
         )
-    return AtsGateResult(
+    return None
+
+
+def gate_pdf(pdf_path: Path | None) -> AtsResult:
+    blocked = pdf_guard(pdf_path, AtsGate.PDF_COMPILES)
+    if blocked is not None:
+        return blocked
+    return AtsResult(
         AtsGate.PDF_COMPILES, GateStatus.PASS, detail=f"PDF compiled at {pdf_path}"
     )
 
 
-def gate_pdf_text_extractable(pdf_path: Path | None) -> AtsGateResult:
-    if pdf_path is None:
-        return AtsGateResult(
-            AtsGate.PDF_TEXT_EXTRACTABLE, GateStatus.SKIP, detail="PDF not compiled (skipped)"
-        )
-    if not pdf_path.exists():
-        return AtsGateResult(
-            AtsGate.PDF_TEXT_EXTRACTABLE, GateStatus.FAIL, detail=f"PDF missing: {pdf_path}"
-        )
+def gate_text(pdf_path: Path | None) -> AtsResult:
+    blocked = pdf_guard(pdf_path, AtsGate.PDF_TEXT_EXTRACTABLE)
+    if blocked is not None:
+        return blocked
     with pymupdf.open(pdf_path) as document:
         text = "\n".join(document[i].get_text() for i in range(len(document)))
     if not text.strip():
-        return AtsGateResult(
+        return AtsResult(
             AtsGate.PDF_TEXT_EXTRACTABLE,
             GateStatus.FAIL,
             detail="No text extractable from PDF",
         )
-    return AtsGateResult(AtsGate.PDF_TEXT_EXTRACTABLE, GateStatus.PASS, detail="OK")
+    return AtsResult(AtsGate.PDF_TEXT_EXTRACTABLE, GateStatus.PASS, detail="OK")
 
 
-def gate_pdf_text_matches_txt(pdf_path: Path | None, txt_source: str) -> AtsGateResult:
-    if pdf_path is None:
-        return AtsGateResult(
-            AtsGate.PDF_TEXT_MATCHES_TXT, GateStatus.SKIP, detail="PDF not compiled (skipped)"
-        )
-    if not pdf_path.exists():
-        return AtsGateResult(
-            AtsGate.PDF_TEXT_MATCHES_TXT, GateStatus.FAIL, detail=f"PDF missing: {pdf_path}"
-        )
+def gate_match(pdf_path: Path | None, txt_source: str) -> AtsResult:
+    blocked = pdf_guard(pdf_path, AtsGate.PDF_TEXT_MATCHES_TXT)
+    if blocked is not None:
+        return blocked
     with pymupdf.open(pdf_path) as document:
         pdf_text = "\n".join(document[i].get_text() for i in range(len(document)))
-    pdf_normalised = normalise_whitespace(pdf_text)
-    txt_normalised = normalise_whitespace(txt_source)
+    pdf_normalised = flatten(pdf_text)
+    txt_normalised = flatten(txt_source)
     if pdf_normalised == txt_normalised:
-        return AtsGateResult(AtsGate.PDF_TEXT_MATCHES_TXT, GateStatus.PASS, detail="OK")
-    return AtsGateResult(
+        return AtsResult(AtsGate.PDF_TEXT_MATCHES_TXT, GateStatus.PASS, detail="OK")
+    return AtsResult(
         AtsGate.PDF_TEXT_MATCHES_TXT,
         GateStatus.FAIL,
         detail="PDF text and tailored.txt differ after normalisation",
     )
 
 
-def gate_section_headings_standard(tex_source: str) -> AtsGateResult:
+def gate_sections(tex_source: str) -> AtsResult:
     found = set(re.findall(r"\\section\{([^}]+)\}", tex_source))
-    required = set(REQUIRED_SECTION_HEADINGS)
+    required = set(SECTIONS)
     missing = required - found
     if missing:
-        return AtsGateResult(
+        return AtsResult(
             AtsGate.SECTION_HEADINGS_STANDARD,
             GateStatus.FAIL,
             detail=f"Missing sections: {sorted(missing)}",
         )
-    return AtsGateResult(
+    return AtsResult(
         AtsGate.SECTION_HEADINGS_STANDARD, GateStatus.PASS, detail="All required sections present"
     )
 
 
-def gate_no_tables_for_layout(tex_source: str) -> AtsGateResult:
+def gate_tables(tex_source: str) -> AtsResult:
     layout_patterns = [
         r"\\begin\{tabularx\}\s*\{\s*\d?\.\d+\\textwidth",
         r"\\begin\{multicols\}",
@@ -430,21 +449,21 @@ def gate_no_tables_for_layout(tex_source: str) -> AtsGateResult:
     ]
     for pattern in layout_patterns:
         if re.search(pattern, tex_source):
-            return AtsGateResult(
+            return AtsResult(
                 AtsGate.NO_TABLES_FOR_LAYOUT,
                 GateStatus.FAIL,
                 detail=f"Layout table detected: {pattern}",
             )
-    return AtsGateResult(AtsGate.NO_TABLES_FOR_LAYOUT, GateStatus.PASS, detail="OK")
+    return AtsResult(AtsGate.NO_TABLES_FOR_LAYOUT, GateStatus.PASS, detail="OK")
 
 
-def gate_no_images(tex_source: str) -> AtsGateResult:
+def gate_images(tex_source: str) -> AtsResult:
     if re.search(r"\\includegraphics|\\graphic", tex_source):
-        return AtsGateResult(AtsGate.NO_IMAGES, GateStatus.FAIL, detail="Image macro detected")
-    return AtsGateResult(AtsGate.NO_IMAGES, GateStatus.PASS, detail="OK")
+        return AtsResult(AtsGate.NO_IMAGES, GateStatus.FAIL, detail="Image macro detected")
+    return AtsResult(AtsGate.NO_IMAGES, GateStatus.PASS, detail="OK")
 
 
-def gate_no_colors(tex_source: str) -> AtsGateResult:
+def gate_colors(tex_source: str) -> AtsResult:
     """Allow ``LinkColor`` definition and ``\\color{black}``; flag other color usage."""
     non_link_colors = []
     for pattern in (r"\\color\b", r"\\textcolor\b"):
@@ -456,124 +475,119 @@ def gate_no_colors(tex_source: str) -> AtsGateResult:
                 continue
             non_link_colors.append(match.group(0))
     if non_link_colors:
-        return AtsGateResult(
+        return AtsResult(
             AtsGate.NO_COLORS,
             GateStatus.FAIL,
             detail=f"Non-link color usage: {non_link_colors[:3]}",
         )
-    return AtsGateResult(AtsGate.NO_COLORS, GateStatus.PASS, detail="OK")
+    return AtsResult(AtsGate.NO_COLORS, GateStatus.PASS, detail="OK")
 
 
-def gate_font_size_10_12(tex_source: str) -> AtsGateResult:
+def gate_font(tex_source: str) -> AtsResult:
     match = re.search(r"\\documentclass\[(?:[^]]*,)?(\d+)pt(?:,[^]]*)?\]", tex_source)
     if match is None:
-        return AtsGateResult(
+        return AtsResult(
             AtsGate.FONT_SIZE_10_12,
             GateStatus.FAIL,
             detail="No font size directive found",
         )
     size = int(match.group(1))
     if 10 <= size <= 12:
-        return AtsGateResult(AtsGate.FONT_SIZE_10_12, GateStatus.PASS, detail=f"{size}pt OK")
-    return AtsGateResult(
+        return AtsResult(AtsGate.FONT_SIZE_10_12, GateStatus.PASS, detail=f"{size}pt OK")
+    return AtsResult(
         AtsGate.FONT_SIZE_10_12,
         GateStatus.FAIL,
         detail=f"Font size {size}pt out of range [10,12]",
     )
 
 
-def gate_length_within_limit(pdf_path: Path | None) -> AtsGateResult:
-    """Measure the compiled PDF's actual page count against ``MAX_PAGES``.
+def gate_length(pdf_path: Path | None) -> AtsResult:
+    """Measure the compiled PDF's actual page count against ``PAGES``.
 
     The page count is read from the compiled PDF rather than estimated from
     the TeX source, so the gate reflects what an ATS would actually receive.
     """
-    if pdf_path is None:
-        return AtsGateResult(
-            AtsGate.LENGTH_WITHIN_LIMIT, GateStatus.SKIP, detail="PDF not compiled (skipped)"
-        )
-    if not pdf_path.exists():
-        return AtsGateResult(
-            AtsGate.LENGTH_WITHIN_LIMIT, GateStatus.FAIL, detail=f"PDF missing: {pdf_path}"
-        )
+    blocked = pdf_guard(pdf_path, AtsGate.LENGTH_WITHIN_LIMIT)
+    if blocked is not None:
+        return blocked
     with pymupdf.open(pdf_path) as document:
         page_count = document.page_count
-    if page_count <= MAX_PAGES:
-        return AtsGateResult(
+    if page_count <= PAGES:
+        return AtsResult(
             AtsGate.LENGTH_WITHIN_LIMIT,
             GateStatus.PASS,
-            detail=f"{page_count} page(s), within limit of {MAX_PAGES}",
+            detail=f"{page_count} page(s), within limit of {PAGES}",
         )
-    return AtsGateResult(
+    return AtsResult(
         AtsGate.LENGTH_WITHIN_LIMIT,
         GateStatus.FAIL,
-        detail=f"{page_count} page(s) exceeds limit of {MAX_PAGES}",
+        detail=f"{page_count} page(s) exceeds limit of {PAGES}",
     )
 
 
-def gate_keywords_covered(
-    tailored: TailoredResume, jds: tuple[JobDescription, ...]
-) -> AtsGateResult:
+def gate_keywords(
+    tailored: Tailored, jds: tuple[Job, ...]
+) -> AtsResult:
     must_have: set[str] = set()
     for jd in jds:
         must_have.update(k.lower() for k in jd.must_have_keywords)
 
     if not must_have:
-        return AtsGateResult(
+        return AtsResult(
             AtsGate.KEYWORDS_COVERED, GateStatus.PASS, detail="No must-have keywords"
         )
 
-    tailored_text = tailored_to_text(tailored).lower()
+    tailored_text = flatten(tailored).lower()
     missing = sorted(word for word in must_have if word not in tailored_text)
     if not missing:
-        return AtsGateResult(
+        return AtsResult(
             AtsGate.KEYWORDS_COVERED, GateStatus.PASS, detail="All keywords covered"
         )
-    return AtsGateResult(
+    return AtsResult(
         AtsGate.KEYWORDS_COVERED,
         GateStatus.FAIL,
         detail=f"Missing must-have keywords: {missing[:10]}",
     )
 
 
-def gate_bullets_quantified(tailored: TailoredResume, threshold: float) -> AtsGateResult:
+def gate_quantify(tailored: Tailored, threshold: float) -> AtsResult:
     all_bullets: list[Bullet] = []
     for exp in tailored.experiences:
         all_bullets.extend(exp.bullets)
     for project in tailored.projects:
         all_bullets.extend(project.bullets)
     if not all_bullets:
-        return AtsGateResult(AtsGate.BULLETS_QUANTIFIED, GateStatus.PASS, detail="No bullets")
-    quantified = sum(1 for b in all_bullets if canonicalize_numeric(b.text))
+        return AtsResult(AtsGate.BULLETS_QUANTIFIED, GateStatus.PASS, detail="No bullets")
+    quantified = sum(1 for b in all_bullets if numbers(b.text))
     ratio = quantified / len(all_bullets)
     if ratio >= threshold:
-        return AtsGateResult(
+        return AtsResult(
             AtsGate.BULLETS_QUANTIFIED,
             GateStatus.PASS,
             detail=f"{ratio:.0%} quantified (>= {threshold:.0%})",
         )
-    return AtsGateResult(
+    return AtsResult(
         AtsGate.BULLETS_QUANTIFIED,
         GateStatus.FAIL,
         detail=f"{ratio:.0%} quantified (< {threshold:.0%})",
     )
 
 
-def gate_action_verbs_first(tailored: TailoredResume) -> AtsGateResult:
+def gate_verbs(tailored: Tailored) -> AtsResult:
     bad: list[str] = []
     for exp in tailored.experiences:
         for bullet in exp.bullets:
             first_word = bullet.text.split(maxsplit=1)[0].lower().rstrip(".,;:")
-            if first_word and not is_action_verb(first_word):
+            if first_word and not verb(first_word):
                 bad.append(f"{exp.role}: {bullet.text[:50]!r}")
     for project in tailored.projects:
         for bullet in project.bullets:
             first_word = bullet.text.split(maxsplit=1)[0].lower().rstrip(".,;:")
-            if first_word and not is_action_verb(first_word):
+            if first_word and not verb(first_word):
                 bad.append(f"{project.name}: {bullet.text[:50]!r}")
     if not bad:
-        return AtsGateResult(AtsGate.ACTION_VERBS_FIRST, GateStatus.PASS, detail="OK")
-    return AtsGateResult(
+        return AtsResult(AtsGate.ACTION_VERBS_FIRST, GateStatus.PASS, detail="OK")
+    return AtsResult(
         AtsGate.ACTION_VERBS_FIRST,
         GateStatus.FAIL,
         detail=f"{len(bad)} bullets don't start with action verbs",
@@ -581,15 +595,16 @@ def gate_action_verbs_first(tailored: TailoredResume) -> AtsGateResult:
 
 
 __all__ = [
-    "AtsGateReport",
-    "AtsGateResult",
+    "AtsReport",
+    "AtsResult",
     "GateStatus",
     "GateTier",
-    "GroundingViolation",
-    "PlagiarismViolation",
-    "StyleViolation",
-    "ats_check",
-    "grounding_check",
-    "plagiarism_check",
-    "style_check",
+    "GroundingFault",
+    "PlagiarismFault",
+    "StyleFault",
+    "ats",
+    "grounding",
+    "pdf_guard",
+    "plagiarism",
+    "style",
 ]
