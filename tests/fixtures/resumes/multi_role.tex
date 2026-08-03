@@ -1,0 +1,137 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{microtype}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{5pt}]
+
+\pdfgentounicode=1
+
+\newcommand{\resumeItem}[1]{%
+  \item\small{#1 \vspace{-1pt}}%
+}
+
+\newcommand{\resumeSubheading}[3]{%
+  \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1}, #2 & #3 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeProjectHeading}[2]{%
+    \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=4pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in, parsep=0pt, topsep=2pt, itemsep=3pt, label=$\bullet$]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
+
+\definecolor{LinkColor}{rgb}{0,0.2,0.6}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=LinkColor,
+    filecolor=LinkColor,
+    urlcolor=LinkColor,
+}
+
+\begin{document}
+
+\begin{center}
+{\Huge \scshape Rohan Mehta} \\ \vspace{5pt}
+\small Mumbai $\cdot$ 9876543210 $\cdot$ \href{mailto:rohan.mehta@example.com}{rohan.mehta@example.com} $\cdot$ \href{https://github.com/rohanmehta}{github.com/rohanmehta} $\cdot$ \href{https://linkedin.com/in/rohanmehta}{linkedin.com/in/rohanmehta}
+\end{center}
+
+\section{Summary}
+{\small Data platform engineer with 8+ years building scalable pipelines and analytics infrastructure.}
+
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=0pt]
+    \small{\item{
+     \textbf{Languages:} Python, Scala, SQL
+     \textbf{Data Tools:} Spark, Airflow, dbt
+     \textbf{Cloud:} AWS, Snowflake
+    }}
+\end{itemize}
+
+\section{Experience}
+\resumeSubHeadingListStart
+\resumeSubheading{Staff Data Engineer}{DataSphere}{April 2021 -- Present}
+\resumeItemListStart
+\resumeItem{Designed lakehouse architecture processing 10TB of data daily.}
+\resumeItem{Led a team of 5 engineers migrating 200 pipelines to dbt.}
+\resumeItem{Cut pipeline costs by 35\% through workload optimisation.}
+\resumeItemListEnd
+\resumeSubheading{Senior Data Engineer}{DataSphere}{May 2019 -- March 2021}
+\resumeItemListStart
+\resumeItem{Built real-time streaming pipelines handling 100K events per second.}
+\resumeItem{Reduced job failure rate from 8\% to 1\%.}
+\resumeItemListEnd
+\resumeSubheading{Data Engineer}{FinBridge}{June 2017 -- April 2019}
+\resumeItemListStart
+\resumeItem{Developed batch pipelines for 2M daily transactions.}
+\resumeItem{Implemented data-quality checks catching 500+ anomalies monthly.}
+\resumeItemListEnd
+\resumeSubheading{Data Analyst}{FinBridge}{July 2016 -- May 2017}
+\resumeItemListStart
+\resumeItem{Built reporting dashboards used by 50+ stakeholders.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Selected Projects}
+\resumeSubHeadingListStart
+\resumeProjectHeading{\href{https://github.com/rohanmehta/spark-etl-framework}{\textbf{Spark ETL Framework}}}{2023}
+\resumeItemListStart
+\resumeItem{Built an open-source ETL framework with 1.2K GitHub stars.}
+\resumeItemListEnd
+\resumeProjectHeading{\href{https://github.com/rohanmehta/schema-registry}{\textbf{Schema Registry}}}{2022}
+\resumeItemListStart
+\resumeItem{Designed a schema registry handling 10K schema versions.}
+\resumeItemListEnd
+\resumeProjectHeading{\href{https://github.com/rohanmehta/stream-health}{\textbf{Stream Health Monitor}}}{2021}
+\resumeItemListStart
+\resumeItem{Developed a monitoring system tracking 40+ pipeline metrics.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Education}
+\resumeSubHeadingListStart
+\resumeSubheading{Indian Institute of Technology}{Mumbai}{May 2016}
+\vspace{-15pt}
+\resumeSubheading{Bachelor of Technology}{Electrical Engineering}{CGPA: 8.8}
+\resumeSubHeadingListEnd
+
+\end{document}
