@@ -27,11 +27,11 @@ def test_tailor_cover_letter_returns_structured_letter(master_resume) -> None:
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
-    assert result.cover_letter.salutation.startswith("Dear ")
-    assert len(result.cover_letter.paragraphs) == 3
-    assert result.cover_letter.paragraphs[0].opening is True
-    assert result.cover_letter.paragraphs[-1].closing is True
-    assert "Senior ML Engineer" in result.cover_letter.paragraphs[0].text
+    assert result.letter.salutation.startswith("Dear ")
+    assert len(result.letter.paragraphs) == 3
+    assert result.letter.paragraphs[0].opening is True
+    assert result.letter.paragraphs[-1].closing is True
+    assert "Senior ML Engineer" in result.letter.paragraphs[0].text
 
 
 def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
@@ -39,7 +39,7 @@ def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
-    opening = result.cover_letter.paragraphs[0].text
+    opening = result.letter.paragraphs[0].text
     assert "python" in opening.lower() or "kubernetes" in opening.lower()
 
 
@@ -48,10 +48,10 @@ def test_render_cover_letter_markdown_includes_salutation(master_resume) -> None
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
-    md = markdown(result.cover_letter)
+    md = markdown(result.letter)
     assert "Dear " in md
     assert "Sincerely" in md
-    assert result.cover_letter.sender_name in md
+    assert result.letter.sender_name in md
 
 
 def test_tailor_cover_letter_honours_recipient(master_resume) -> None:
@@ -59,4 +59,4 @@ def test_tailor_cover_letter_honours_recipient(master_resume) -> None:
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice, recipient="Hiring Manager")
-    assert "Hiring Manager" in result.cover_letter.salutation
+    assert "Hiring Manager" in result.letter.salutation

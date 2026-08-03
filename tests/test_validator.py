@@ -193,16 +193,16 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
 def test_ats_check_produces_full_report(master_resume) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
-    report = ats(tailored, t, None, txt, ())
+    t2 = text(tailored)
+    report = ats(tailored, t, None, t2, ())
     assert len(report.results) == len(list(AtsGate))
 
 
 def test_ats_section_headings_pass_for_master(master_resume) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
-    report = ats(tailored, t, None, txt, ())
+    t2 = text(tailored)
+    report = ats(tailored, t, None, t2, ())
     section_gate = next(r for r in report.results if r.gate == AtsGate.SECTION_HEADINGS_STANDARD)
     assert section_gate.passed
 
@@ -210,8 +210,8 @@ def test_ats_section_headings_pass_for_master(master_resume) -> None:
 def test_pdf_gates_skip_when_no_pdf(master_resume) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
-    report = ats(tailored, t, None, txt, ())
+    t2 = text(tailored)
+    report = ats(tailored, t, None, t2, ())
     pdf_gates = {
         AtsGate.PDF_COMPILES,
         AtsGate.PDF_TEXT_EXTRACTABLE,
@@ -226,9 +226,9 @@ def test_pdf_gates_skip_when_no_pdf(master_resume) -> None:
 def test_pdf_gates_fail_when_pdf_path_missing(master_resume, tmp_path: Path) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
+    t2 = text(tailored)
     missing_pdf = tmp_path / "missing.pdf"
-    report = ats(tailored, t, missing_pdf, txt, ())
+    report = ats(tailored, t, missing_pdf, t2, ())
     for gate in (AtsGate.PDF_COMPILES, AtsGate.PDF_TEXT_EXTRACTABLE, AtsGate.LENGTH_WITHIN_LIMIT):
         result = next(r for r in report.results if r.gate == gate)
         assert result.status is GateStatus.FAIL
@@ -247,9 +247,9 @@ def test_gate_tiers_partition_all_gates() -> None:
 def test_hard_gate_failure_is_blocking(master_resume) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
+    t2 = text(tailored)
     tex_with_layout = tex + r"\begin{multicols}{2}"
-    report = ats(tailored, tex_with_layout, None, txt, ())
+    report = ats(tailored, tex_with_layout, None, t2, ())
     assert AtsGate.NO_TABLES_FOR_LAYOUT in report.hard_failed_gates
     assert AtsGate.NO_TABLES_FOR_LAYOUT in report.failed_gates
     assert AtsGate.NO_TABLES_FOR_LAYOUT.tier is GateTier.HARD
@@ -258,7 +258,7 @@ def test_hard_gate_failure_is_blocking(master_resume) -> None:
 def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
+    t2 = text(tailored)
     jd = Job(
         url="https://example.com/jd",
         title="Senior Engineer",
@@ -269,7 +269,7 @@ def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
         nice_to_have_keywords=(),
         content_hash="jd",
     )
-    report = ats(tailored, t, None, txt, (jd,))
+    report = ats(tailored, t, None, t2, (jd,))
     assert AtsGate.KEYWORDS_COVERED in report.advisory_failed_gates
     assert AtsGate.KEYWORDS_COVERED.tier is GateTier.ADVISORY
     assert report.hard_failed_gates == ()
@@ -278,10 +278,10 @@ def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
 def test_length_gate_passes_for_single_page_pdf(master_resume, tmp_path) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
+    t2 = text(tailored)
     pdf_path = tmp_path / "one_page.pdf"
     _write_pdf(pdf_path, pages=1)
-    report = ats(tailored, t, pdf_path, txt, ())
+    report = ats(tailored, t, pdf_path, t2, ())
     result = next(r for r in report.results if r.gate == AtsGate.LENGTH_WITHIN_LIMIT)
     assert result.status is GateStatus.PASS
     assert "1 page(s)" in result.detail
@@ -290,10 +290,10 @@ def test_length_gate_passes_for_single_page_pdf(master_resume, tmp_path) -> None
 def test_length_gate_fails_for_multi_page_pdf(master_resume, tmp_path) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
-    txt = text(tailored)
+    t2 = text(tailored)
     pdf_path = tmp_path / "two_pages.pdf"
     _write_pdf(pdf_path, pages=2)
-    report = ats(tailored, t, pdf_path, txt, ())
+    report = ats(tailored, t, pdf_path, t2, ())
     result = next(r for r in report.results if r.gate == AtsGate.LENGTH_WITHIN_LIMIT)
     assert result.status is GateStatus.FAIL
     assert AtsGate.LENGTH_WITHIN_LIMIT in report.hard_failed_gates

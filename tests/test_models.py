@@ -21,7 +21,7 @@ from gethired.models import (
     GateTier,
     Citation,
     Job,
-    Job,
+    Step,
     JobData,
     StepEnv,
     StepMeta,

@@ -71,9 +71,9 @@ def test_end_to_end_atg_gates_all_evaluated() -> None:
         model_instance=TestModel(),
     )
     result = tailor.run()
-    tex = tex(result)
-    txt = text(result)
-    report = ats(result, tex, None, txt, (SAMPLE_JD,))
+    t = tex(result)
+    t2 = text(result)
+    report = ats(result, t, None, t2, (SAMPLE_JD,))
     assert isinstance(report, AtsReport)
     assert len(report.results) == len(list(AtsGate))
     for gate_result in report.results:
@@ -107,7 +107,7 @@ def test_end_to_end_section_headings_present() -> None:
         model_instance=TestModel(),
     )
     result = tailor.run()
-    tex = tex(result)
+    t = tex(result)
     assert "\\section{Summary}" in tex
     assert "\\section{Experience}" in tex
     assert "\\section{Education}" in tex

@@ -38,8 +38,8 @@ from gethired.models import (
     Job,
 )
 from gethired.observability import configure
-from gethired.parser import parse_tex as tex
-from gethired.renderer import tex, text
+from gethired.parser import parse_tex as parse_tex_func
+from gethired.renderer import tex as render_tex, text as render_text
 from gethired.serialize import (
     from_tailored_dict,
     snapshot,
@@ -60,7 +60,7 @@ def ensure_consent(force_prompt: bool = False) -> None:
     if consent_file.exists() and not force_prompt:
         try:
             data_dict = json.loads(consent_file.read_text())
-            timestamp = datetime.fromisoformat(data["timestamp"])
+            timestamp = datetime.fromisoformat(data_dict["timestamp"])
             if timestamp.tzinfo is None:
                 now = datetime.now(UTC).replace(tzinfo=None)
             else:
@@ -86,10 +86,10 @@ def ingest(
     """Parse master resume into data/master.json."""
     configure()
     ensure_consent()
-    master = tex(tex_path)
+    master = parse_tex_func(tex_path)
     out.parent.mkdir(parents=True, exist_ok=True)
-    snapshot = render_json(snapshot(master))
-    out.write_text(snapshot)
+    payload = render_json(snapshot(master))
+    out.write_text(payload)
     typer.echo(f"Ingested {tex_path} → {out}")
 
 
@@ -246,8 +246,8 @@ def validate(
     if target.suffix == ".json":
         data_dict = json.loads(target.read_text())
         tailored = from_tailored_dict(data_dict)
-        tex_source = tex(tailored)
-        txt_source = text(tailored)
+        tex_source = render_tex(tailored)
+        txt_source = render_text(tailored)
         report = ats(
             tailored,
             tex_source=tex_source,
@@ -282,7 +282,7 @@ def trace(
         typer.echo(f"tailored.json not found in {run_dir}", err=True)
         raise typer.Exit(code=1)
     data_dict = json.loads(json_path.read_text())
-    run_result = data.get("run_result", {})
+    run_result = data_dict.get("run_result", {})
     jobs = run_result.get("jobs", [])
     typer.echo(f"Run: {run_result.get('run', {}).get('id', '?')}")
     typer.echo(f"Outcome: {run_result.get('final_outcome', '?')}")
