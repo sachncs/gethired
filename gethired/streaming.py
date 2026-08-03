@@ -11,7 +11,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 
-ProgressCallback = Callable[["ProgressEvent"], None]
+Callback = Callable[["ProgressEvent"], None]
 
 
 @dataclass(frozen=True, slots=True)
@@ -25,9 +25,7 @@ class ProgressEvent:
 
 
 @contextmanager
-def progress_reporter(
-    callback: ProgressCallback | None = None,
-) -> Iterator[ProgressCallback]:
+def reporter(callback: Callback | None = None) -> Iterator[Callback]:
     """Context manager that yields the emit callable.
 
     Args:
@@ -35,7 +33,7 @@ def progress_reporter(
             events are silently dropped.
 
     Yields:
-        A ``ProgressCallback`` accepting ``ProgressEvent`` instances.
+        A ``Callback`` accepting ``ProgressEvent`` instances.
     """
     if callback is None:
 
@@ -48,4 +46,4 @@ def progress_reporter(
     yield callback
 
 
-__all__ = ["ProgressCallback", "ProgressEvent", "progress_reporter"]
+__all__ = ["Callback", "ProgressEvent", "reporter"]

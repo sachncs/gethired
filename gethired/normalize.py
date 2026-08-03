@@ -50,18 +50,20 @@ NUMBER_WORDS: Final[dict[str, int]] = {
     "billion": 1000000000,
 }
 
-LATEX_COMMAND_RE: Final[re.Pattern[str]] = re.compile(
+LATEX_RE: Final[re.Pattern[str]] = re.compile(
     r"\\(?:textbf|textsc|emph|textit|href)\s*\{([^}]*)\}(?:\{([^}]*)\})?"
 )
 
-MATH_INLINE_RE: Final[re.Pattern[str]] = re.compile(r"\$([^$]*)\$")
+MATH_RE: Final[re.Pattern[str]] = re.compile(r"\$([^$]*)\$")
 
-ESCAPED_CHARS_RE: Final[re.Pattern[str]] = re.compile(r"\\([&%$#_{}~^])")
+ESCAPE_RE: Final[re.Pattern[str]] = re.compile(r"\\([&%$#_{}~^])")
 
 WORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]*")
 
+WHITESPACE_RE: Final[re.Pattern[str]] = re.compile(r"\s+")
 
-def canonicalize_numeric(text: str) -> set[int]:
+
+def numbers(text: str) -> set[int]:
     """Return the set of integers expressed numerically in ``text``.
 
     Handles forms like ``10000``, ``10,000+``, ``10K``, ``10k``, ``$5000``,
@@ -113,28 +115,25 @@ def canonicalize_numeric(text: str) -> set[int]:
     return found
 
 
-def strip_latex_commands(text: str) -> str:
+def strip_latex(text: str) -> str:
     """Remove common LaTeX command wrappers, returning plain text."""
-    working = LATEX_COMMAND_RE.sub(lambda m: m.group(2) or m.group(1) or "", text)
-    working = MATH_INLINE_RE.sub(lambda m: m.group(1), working)
-    working = ESCAPED_CHARS_RE.sub(lambda m: m.group(1), working)
+    working = LATEX_RE.sub(lambda m: m.group(2) or m.group(1) or "", text)
+    working = MATH_RE.sub(lambda m: m.group(1), working)
+    working = ESCAPE_RE.sub(lambda m: m.group(1), working)
     return working
 
 
-WHITESPACE_RE: Final[re.Pattern[str]] = re.compile(r"\s+")
-
-
-def normalise_whitespace(text: str) -> str:
-    """Collapse whitespace and strip; used by the ATS PDF-vs-TXT gate."""
+def flatten(text: str) -> str:
+    """Collapse whitespace, strip, and lowercase; used by the ATS PDF-vs-TXT gate."""
     return WHITESPACE_RE.sub(" ", text).strip().lower()
 
 
-def tokenize_for_overlap(text: str) -> tuple[str, ...]:
+def tokenize(text: str) -> tuple[str, ...]:
     """Tokenise text into normalised words for n-gram overlap detection."""
     return tuple(token.lower() for token in WORD_RE.findall(text))
 
 
-def is_action_verb(token: str) -> bool:
+def verb(token: str) -> bool:
     """Lightweight action-verb check used by the ATS ``ACTION_VERBS_FIRST`` gate.
 
     Args:
@@ -143,10 +142,10 @@ def is_action_verb(token: str) -> bool:
     Returns:
         ``True`` if ``token`` looks like an action verb.
     """
-    return ACTION_VERBS_LOOKUP.match(token) is not None
+    return VERB_LOOKUP.match(token) is not None
 
 
-ACTION_VERBS_LOOKUP: Final[re.Pattern[str]] = re.compile(
+VERB_LOOKUP: Final[re.Pattern[str]] = re.compile(
     r"^(?:"
     r"a(?:chieved|dded|dministered|dvised|llocated|nalyzed|pplied|ssembled|ssessed|uthored|udited)"
     r"|b(?:uilt|oosted|rought|udgeted)"
@@ -173,7 +172,7 @@ ACTION_VERBS_LOOKUP: Final[re.Pattern[str]] = re.compile(
 )
 
 
-def extract_ngrams(tokens: tuple[str, ...], n: int) -> tuple[str, ...]:
+def ngrams(tokens: tuple[str, ...], n: int) -> tuple[str, ...]:
     """Return all ``n``-grams from ``tokens`` as space-joined strings."""
     if n <= 0 or len(tokens) < n:
         return ()
@@ -181,10 +180,10 @@ def extract_ngrams(tokens: tuple[str, ...], n: int) -> tuple[str, ...]:
 
 
 __all__ = [
-    "canonicalize_numeric",
-    "extract_ngrams",
-    "is_action_verb",
-    "normalise_whitespace",
-    "strip_latex_commands",
-    "tokenize_for_overlap",
+    "flatten",
+    "ngrams",
+    "numbers",
+    "strip_latex",
+    "tokenize",
+    "verb",
 ]

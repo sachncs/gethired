@@ -10,7 +10,7 @@ from __future__ import annotations
 import re
 from typing import Final
 
-from gethired.exceptions import MasterParsingError
+from gethired.exceptions import ParseError
 
 __all__ = [
     "EMAIL_RE",
@@ -19,10 +19,10 @@ __all__ = [
     "HREF_RE",
     "LINKEDIN_BARE_RE",
     "LINKEDIN_RE",
-    "MATH_OPERATOR_RE",
+    "MATH_OP_RE",
     "PHONE_RE",
-    "clean_inline",
-    "validate_contact_fields",
+    "clean",
+    "require_contact",
 ]
 
 PHONE_RE: Final[re.Pattern[str]] = re.compile(r"(\+?\(?\d[\d\s().-]{7,}\d)")
@@ -40,10 +40,10 @@ LINKEDIN_BARE_RE: Final[re.Pattern[str]] = re.compile(
     r"(?<![\w/])(?:https?://)?(?:www\.)?linkedin\.com/[A-Za-z0-9._/-]+"
 )
 HREF_RE: Final[re.Pattern[str]] = re.compile(r"\\href\{([^}]+)\}\{((?:[^{}]|\{[^}]*\})*)\}")
-MATH_OPERATOR_RE: Final[re.Pattern[str]] = re.compile(r"\\(log|ln|exp|sin|cos|tan|lim|min|max)\b")
+MATH_OP_RE: Final[re.Pattern[str]] = re.compile(r"\\(log|ln|exp|sin|cos|tan|lim|min|max)\b")
 
 
-def clean_inline(text: str) -> str:
+def clean(text: str) -> str:
     """Strip residual LaTeX wrappers and normalise whitespace."""
     cleaned = HREF_RE.sub(lambda m: m.group(2), text)
     cleaned = re.sub(r"\\textbf\{([^}]*)\}", r"\1", cleaned)
@@ -57,7 +57,7 @@ def clean_inline(text: str) -> str:
     cleaned = re.sub(r"\\,", " ", cleaned)
     cleaned = re.sub(r"\\cdot", "·", cleaned)
     cleaned = re.sub(r"\\[`'^~=.]([A-Za-z])", r"\1", cleaned)
-    cleaned = MATH_OPERATOR_RE.sub(r"\1", cleaned)
+    cleaned = MATH_OP_RE.sub(r"\1", cleaned)
     cleaned = re.sub(r"\\[A-Za-z]+", "", cleaned)
     cleaned = re.sub(r"[{}]", "", cleaned)
     cleaned = re.sub(r"~", " ", cleaned)
@@ -66,11 +66,11 @@ def clean_inline(text: str) -> str:
     return cleaned.strip()
 
 
-def validate_contact_fields(name: str, city: str, phone: str, email: str) -> None:
+def require_contact(name: str, city: str, phone: str, email: str) -> None:
     """Fail fast when any required contact field is missing.
 
     Raises:
-        MasterParsingError: When name, city, phone, or email is empty.
+        ParseError: When name, city, phone, or email is empty.
     """
     missing = [
         label
@@ -83,4 +83,4 @@ def validate_contact_fields(name: str, city: str, phone: str, email: str) -> Non
         if not value
     ]
     if missing:
-        raise MasterParsingError(f"Resume is missing required contact fields: {', '.join(missing)}")
+        raise ParseError(f"Resume is missing required contact fields: {', '.join(missing)}")

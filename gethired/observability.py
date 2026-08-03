@@ -9,20 +9,33 @@ from __future__ import annotations
 import sys
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any  # Any: structured-log fields are arbitrary typed values
 
 from loguru import logger as default_logger
 
 if TYPE_CHECKING:
-    from loguru import Logger
+    # loguru does not export ``Logger`` as a runtime attribute; the type is
+    # only available to static type checkers. Callers import ``Logger`` from
+    # this module and annotate parameters with it.
+    from loguru import Logger as Logger
+else:
+    Logger = type(default_logger)  # alias usable as a runtime annotation
+
+__all__ = [
+    "Logger",
+    "configure",
+    "emit",
+    "logger",
+    "now",
+]
 
 
-def utcnow_iso() -> str:
+def now() -> str:
     """Return current UTC time as ISO-8601 string with millisecond precision."""
     return datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
-def configure_logging(
+def configure(
     debug: bool = False,
     log_file: Path | None = None,
     run_id: str | None = None,
@@ -71,10 +84,10 @@ def configure_logging(
     return default_logger
 
 
-def step_logger(step_name: str, run_id: str | None = None, **fields: Any) -> Logger:
+def logger(step_name: str, run_id: str | None = None, **fields: Any) -> Logger:
     """Return a logger bound to the step name and optional run id.
 
-    Assumes ``configure_logging()`` has been called at process entry.
+    Assumes ``configure()`` has been called at process entry.
 
     Args:
         step_name: Stable identifier for the step (e.g. ``"fetch_jd"``).
@@ -92,7 +105,7 @@ def step_logger(step_name: str, run_id: str | None = None, **fields: Any) -> Log
     return bound
 
 
-def emit_event(event_name: str, run_id: str | None = None, **fields: Any) -> None:
+def emit(event_name: str, run_id: str | None = None, **fields: Any) -> None:
     """Emit a structured event via the global logger.
 
     Args:
@@ -100,13 +113,5 @@ def emit_event(event_name: str, run_id: str | None = None, **fields: Any) -> Non
         run_id: Optional run identifier for correlation.
         **fields: Arbitrary structured fields to attach.
     """
-    bound = step_logger(event_name, run_id=run_id)
+    bound = logger(event_name, run_id=run_id)
     bound.info(event_name, **fields)
-
-
-__all__ = [
-    "configure_logging",
-    "emit_event",
-    "step_logger",
-    "utcnow_iso",
-]
