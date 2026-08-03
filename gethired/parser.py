@@ -79,6 +79,9 @@ SKILL_LINE_RE: Final[re.Pattern[str]] = re.compile(
     re.DOTALL,
 )
 SKILL_VSPACE_RE: Final[re.Pattern[str]] = re.compile(r"\\vspace\{[^}]*\}")
+MATH_OPERATOR_RE: Final[re.Pattern[str]] = re.compile(
+    r"\\(log|ln|exp|sin|cos|tan|lim|min|max)\b"
+)
 
 BRACED_GROUP_RE: Final[re.Pattern[str]] = re.compile(r"\{((?:[^{}]|\{[^{}]*\})*)\}")
 
@@ -165,13 +168,15 @@ def clean_inline(text: str) -> str:
     cleaned = re.sub(r"\\textbf\{([^}]*)\}", r"\1", cleaned)
     cleaned = re.sub(r"\\textsc\{([^}]*)\}", r"\1", cleaned)
     cleaned = re.sub(r"\\emph\{([^}]*)\}", r"\1", cleaned)
-    cleaned = re.sub(r"\$([^$]*)\$", r"\1", cleaned)
+    cleaned = re.sub(r"\\?[$]([^$]*?)\\?[$]", r"\1", cleaned)
     cleaned = re.sub(r"\\&", "&", cleaned)
     cleaned = re.sub(r"\\([\"%$#_{}~^])", r"\1", cleaned)
     cleaned = re.sub(r'\\"', '"', cleaned)
     cleaned = re.sub(r"\\vspace\{[^}]*\}", "", cleaned)
     cleaned = re.sub(r"\\,", " ", cleaned)
     cleaned = re.sub(r"\\cdot", "·", cleaned)
+    cleaned = re.sub(r"\\[`'^~=.]([A-Za-z])", r"\1", cleaned)
+    cleaned = MATH_OPERATOR_RE.sub(r"\1", cleaned)
     cleaned = re.sub(r"\\[A-Za-z]+", "", cleaned)
     cleaned = re.sub(r"[{}]", "", cleaned)
     cleaned = re.sub(r"~", " ", cleaned)
@@ -206,8 +211,11 @@ def extract_contact(body: str) -> ContactInformation:
     phone_match = PHONE_RE.search(body)
     phone = phone_match.group(1).strip() if phone_match else ""
 
-    city_match = re.search(r"\\small\s+([A-Za-z][A-Za-z .'-]*?)\s*\$\\cdot\$", body)
-    city = city_match.group(1).strip() if city_match else ""
+    city_match = re.search(
+        r"\\small\s+([A-Za-z](?:[A-Za-z .'-]|\\[`'^~=.][A-Za-z])*?)\s*\$\\cdot\$",
+        body,
+    )
+    city = clean_inline(city_match.group(1)) if city_match else ""
 
     missing = [
         label
