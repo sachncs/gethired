@@ -1,0 +1,45 @@
+RESUME
+
+Jane Smith
+Austin, TX | (512) 555-0142 | jane.smith@example.com
+github.com/janesmith | linkedin.com/in/janesmith
+
+SUMMARY
+Full-stack engineer with 8 years building web platforms at scale.
+
+TECHNICAL SKILLS
+Languages: Python, TypeScript, SQL
+Frameworks: Django, React, FastAPI
+DevOps: Docker, Kubernetes, AWS
+
+EXPERIENCE
+
+Senior Software Engineer — Acme Corp
+May 2021 – Present
+• Led a team of six building the payments platform.
+• Cut p95 latency by 40% via caching.
+
+Software Engineer — Beta Labs
+Jun 2018 – Apr 2021
+• Built the reporting service serving 2M monthly users.
+• Mentored three junior engineers.
+
+PROJECTS
+
+gethired — resume linter
+https://github.com/janesmith/gethired
+• Lints LaTeX resumes against ATS rules.
+
+EDUCATION
+
+BSc in Computer Science, University of Texas
+Sep 2014 – May 2018
+GPA: 3.8/4.0
+
+AWARDS & RECOGNITION
+
+Employee of the Year — Acme Corp, 2023
+• Recognized for the payments migration.
+
+Best Hackathon Project — Local Hack Night 2019
+• Won for the accessibility tooling.

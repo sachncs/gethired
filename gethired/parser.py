@@ -34,7 +34,19 @@ from gethired.models import (
     Project,
     SkillsByCategory,
 )
+from gethired.plain_text import parse_plain_text
 from gethired.provider import resolve_model
+from gethired.text_util import (
+    EMAIL_RE,
+    GITHUB_BARE_RE,
+    GITHUB_RE,
+    HREF_RE,
+    LINKEDIN_BARE_RE,
+    LINKEDIN_RE,
+    PHONE_RE,
+    clean_inline,
+    validate_contact_fields,
+)
 
 __all__ = [
     "parse",
@@ -53,22 +65,6 @@ BEGIN_DOCUMENT_RE: Final[re.Pattern[str]] = re.compile(
 HUGE_NAME_RE: Final[re.Pattern[str]] = re.compile(
     r"\{\\Huge\s+\\scshape\s+([^}]+?)\s*\}", re.DOTALL
 )
-PHONE_RE: Final[re.Pattern[str]] = re.compile(r"(\+?\d[\d\s().-]{7,}\d)")
-EMAIL_RE: Final[re.Pattern[str]] = re.compile(
-    r"\\href\{mailto:([^}]+)\}\{[^}]*\}|(?<![\w@.])([\w.+-]+@[\w-]+\.[\w.-]+)"
-)
-GITHUB_RE: Final[re.Pattern[str]] = re.compile(
-    r"\\href\{(https?://github\.com/[^}]+)\}\{[^}]*\}"
-)
-GITHUB_BARE_RE: Final[re.Pattern[str]] = re.compile(
-    r"(?<![\w/])(?:https?://)?(?:www\.)?github\.com/[A-Za-z0-9._-]+"
-)
-LINKEDIN_RE: Final[re.Pattern[str]] = re.compile(
-    r"\\href\{(https?://(?:www\.)?linkedin\.com/[^}]+)\}\{[^}]*\}"
-)
-LINKEDIN_BARE_RE: Final[re.Pattern[str]] = re.compile(
-    r"(?<![\w/])(?:https?://)?(?:www\.)?linkedin\.com/[A-Za-z0-9._/-]+"
-)
 
 SECTION_RE: Final[re.Pattern[str]] = re.compile(
     r"\\section\{([^}]+)\}(.*?)(?=\\section\{|\\end\{document\}|$)", re.DOTALL
@@ -79,9 +75,6 @@ SKILL_LINE_RE: Final[re.Pattern[str]] = re.compile(
     re.DOTALL,
 )
 SKILL_VSPACE_RE: Final[re.Pattern[str]] = re.compile(r"\\vspace\{[^}]*\}")
-MATH_OPERATOR_RE: Final[re.Pattern[str]] = re.compile(
-    r"\\(log|ln|exp|sin|cos|tan|lim|min|max)\b"
-)
 
 BRACED_GROUP_RE: Final[re.Pattern[str]] = re.compile(r"\{((?:[^{}]|\{[^{}]*\})*)\}")
 
@@ -98,12 +91,7 @@ RESUME_PROJECT_HEADING_RE: Final[re.Pattern[str]] = re.compile(
     r"\s*\{((?:[^{}]|\{[^{}]*\})*)\}",
     re.DOTALL,
 )
-BULLET_RE: Final[re.Pattern[str]] = re.compile(
-    r"\\resumeItem\{((?:[^{}]|\{[^}]*\})*)\}", re.DOTALL
-)
-HREF_RE: Final[re.Pattern[str]] = re.compile(
-    r"\\href\{([^}]+)\}\{((?:[^{}]|\{[^}]*\})*)\}"
-)
+BULLET_RE: Final[re.Pattern[str]] = re.compile(r"\\resumeItem\{((?:[^{}]|\{[^}]*\})*)\}", re.DOTALL)
 
 
 def strip_comments(body: str) -> str:
@@ -113,9 +101,7 @@ def strip_comments(body: str) -> str:
 def extract_body(source: str) -> str:
     match = BEGIN_DOCUMENT_RE.search(source)
     if match is None:
-        raise MasterParsingError(
-            "Could not locate \\begin{document} ... \\end{document} body"
-        )
+        raise MasterParsingError("Could not locate \\begin{document} ... \\end{document} body")
     return match.group(1)
 
 
@@ -162,29 +148,6 @@ def find_macro_invocations(
     return results
 
 
-def clean_inline(text: str) -> str:
-    """Strip residual LaTeX wrappers and normalise whitespace."""
-    cleaned = HREF_RE.sub(lambda m: m.group(2), text)
-    cleaned = re.sub(r"\\textbf\{([^}]*)\}", r"\1", cleaned)
-    cleaned = re.sub(r"\\textsc\{([^}]*)\}", r"\1", cleaned)
-    cleaned = re.sub(r"\\emph\{([^}]*)\}", r"\1", cleaned)
-    cleaned = re.sub(r"\\?[$]([^$]*?)\\?[$]", r"\1", cleaned)
-    cleaned = re.sub(r"\\&", "&", cleaned)
-    cleaned = re.sub(r"\\([\"%$#_{}~^])", r"\1", cleaned)
-    cleaned = re.sub(r'\\"', '"', cleaned)
-    cleaned = re.sub(r"\\vspace\{[^}]*\}", "", cleaned)
-    cleaned = re.sub(r"\\,", " ", cleaned)
-    cleaned = re.sub(r"\\cdot", "·", cleaned)
-    cleaned = re.sub(r"\\[`'^~=.]([A-Za-z])", r"\1", cleaned)
-    cleaned = MATH_OPERATOR_RE.sub(r"\1", cleaned)
-    cleaned = re.sub(r"\\[A-Za-z]+", "", cleaned)
-    cleaned = re.sub(r"[{}]", "", cleaned)
-    cleaned = re.sub(r"~", " ", cleaned)
-    cleaned = re.sub(r"\\\\", " ", cleaned)
-    cleaned = re.sub(r"\s+", " ", cleaned)
-    return cleaned.strip()
-
-
 def extract_contact(body: str) -> ContactInformation:
     name_match = HUGE_NAME_RE.search(body)
     name = clean_inline(name_match.group(1)) if name_match else ""
@@ -217,20 +180,7 @@ def extract_contact(body: str) -> ContactInformation:
     )
     city = clean_inline(city_match.group(1)) if city_match else ""
 
-    missing = [
-        label
-        for label, value in (
-            ("name", name),
-            ("city", city),
-            ("phone", phone),
-            ("email", email),
-        )
-        if not value
-    ]
-    if missing:
-        raise MasterParsingError(
-            f"Resume is missing required contact fields: {', '.join(missing)}"
-        )
+    validate_contact_fields(name, city, phone, email)
 
     return ContactInformation(
         name=name,
@@ -273,9 +223,7 @@ def extract_skills(body: str) -> SkillsByCategory:
         category = raw_category.rstrip(":").strip()
         raw_values = SKILL_VSPACE_RE.sub("", line.group(2))
         values = tuple(
-            value
-            for raw_value in raw_values.split(",")
-            if (value := clean_inline(raw_value))
+            value for raw_value in raw_values.split(",") if (value := clean_inline(raw_value))
         )
         if category and values:
             categories[category] = values
@@ -496,23 +444,31 @@ def parse_tex(source: str | Path) -> MasterResume:
 
 
 def parse_text(text: str) -> MasterResume:
-    """Parse a plain-text resume.
+    """Parse a plain-text resume into a ``MasterResume``.
 
-    Falls through to ``parse_tex`` when the text contains TeX markers.
+    Routes to ``parse_tex`` when the text contains TeX markers. Otherwise
+    the text is parsed as a plain-text resume: the contact block is
+    mandatory (same fail-fast error as ``extract_contact``) and every other
+    section is extracted best-effort.
+
+    Args:
+        text: Plain-text resume content.
+
+    Returns:
+        The parsed ``MasterResume``.
+
+    Raises:
+        MasterParsingError: When a required contact field is missing.
     """
     if "\\documentclass" in text or "\\begin{document}" in text:
         return parse_tex(text)
-    raise MasterParsingError(
-        "Plain-text resume parsing not yet implemented; provide .tex source."
-    )
+    return parse_plain_text(text)
 
 
 def parse_pdf(path: Path) -> MasterResume:
     """Extract text from a PDF and route through the TeX-style parser."""
     with pymupdf.open(path) as document:
-        raw_text = "\n".join(
-            document[i].get_text() for i in range(len(document))
-        )
+        raw_text = "\n".join(document[i].get_text() for i in range(len(document)))
 
     if not raw_text.strip():
         raise MasterParsingError(f"No text extracted from {path}")
@@ -541,8 +497,7 @@ def parse_image(path: Path) -> MasterResume:
     image_model = os.environ.get("IMAGE_MODEL") or os.environ.get("MODEL", "")
     if not image_model:
         raise MasterParsingError(
-            "Image parsing requires IMAGE_MODEL or MODEL env var pointing "
-            "to a multimodal model."
+            "Image parsing requires IMAGE_MODEL or MODEL env var pointing to a multimodal model."
         )
     resolved = resolve_model(image_model)
 
@@ -566,9 +521,7 @@ def parse_image(path: Path) -> MasterResume:
         )
         raw_text = extracted.output
     except Exception as exc:
-        raise MasterParsingError(
-            f"Vision model extraction failed for {path}: {exc}"
-        ) from exc
+        raise MasterParsingError(f"Vision model extraction failed for {path}: {exc}") from exc
 
     if not raw_text or not raw_text.strip():
         raise MasterParsingError(f"No text extracted from image {path}")
