@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from gethired.cover_letter import compose, markdown
 from gethired.description import Analysis
+from gethired.profiler import build as build_profile
 
 
 def _sample_analysis() -> Analysis:
@@ -30,7 +31,6 @@ def _sample_analysis() -> Analysis:
 def test_cover_letter_mirrors_master_contact(master_resume) -> None:
     """The cover letter's signoff uses the master's name."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     # The signoff ends with the master's name (verified by markdown output)
@@ -43,7 +43,6 @@ def test_cover_letter_mirrors_master_contact(master_resume) -> None:
 def test_cover_letter_opening_includes_role(master_resume) -> None:
     """The opening paragraph mentions the analysis role."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     opening = result.letter.paragraphs[0].text
@@ -55,7 +54,6 @@ def test_cover_letter_opening_includes_role(master_resume) -> None:
 def test_cover_letter_opening_includes_candidate_title(master_resume) -> None:
     """The opening mentions the candidate's most recent role (from the master)."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     opening = result.letter.paragraphs[0].text
@@ -69,7 +67,6 @@ def test_cover_letter_opening_includes_candidate_title(master_resume) -> None:
 def test_cover_letter_body_includes_responsibilities(master_resume) -> None:
     """The body paragraph mentions at least one responsibility from the analysis."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     body = result.letter.paragraphs[1].text
@@ -83,7 +80,6 @@ def test_cover_letter_body_includes_responsibilities(master_resume) -> None:
 def test_cover_letter_body_mentions_seniority(master_resume) -> None:
     """The body paragraph references the seniority level from the analysis."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     body = result.letter.paragraphs[1].text
@@ -95,7 +91,6 @@ def test_cover_letter_body_mentions_seniority(master_resume) -> None:
 def test_cover_letter_default_salutation_is_hiring_team(master_resume) -> None:
     """Without a recipient override, the salutation is 'Dear Hiring Team,'."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     assert result.letter.salutation == "Dear Hiring Team,"
@@ -104,7 +99,6 @@ def test_cover_letter_default_salutation_is_hiring_team(master_resume) -> None:
 def test_cover_letter_sender_name_override(master_resume) -> None:
     """An explicit sender_name is used in the signoff instead of the master's name."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(
         master_resume, analysis, voice, sender_name="Anonymous Applicant"
@@ -118,7 +112,6 @@ def test_cover_letter_sender_name_override(master_resume) -> None:
 def test_cover_letter_markdown_contains_all_sections(master_resume) -> None:
     """The markdown output contains salutation, all paragraphs, and signoff."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     md = markdown(result.letter)
@@ -136,7 +129,6 @@ def test_cover_letter_markdown_contains_all_sections(master_resume) -> None:
 def test_cover_letter_first_role_used_in_opening(master_resume) -> None:
     """The opening names the master's first experience role (most recent)."""
     analysis = _sample_analysis()
-    from gethired.profiler import build as build_profile
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
     opening = result.letter.paragraphs[0].text

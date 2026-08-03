@@ -7,28 +7,20 @@ real-world inputs (nested dataclasses, StrEnum fields, optional fields).
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 import pytest
 
 from gethired.models import (
-    Award,
-    Citation,
     Contact,
-    Education,
-    Experience,
-    Job,
-    JobData,
     Master,
-    Project,
-    Reason,
-    Run,
     Skills,
     Step,
     StepKind,
+    StepMeta,
     StepStatus,
     Tailored,
-    Voice,
 )
 from gethired.serialize import (
     as_dict,
@@ -148,7 +140,6 @@ def test_from_run_result_dict_invalid_type_returns_none() -> None:
 @pytest.mark.skip(reason="from_step_dict reconstructs Job (JD), not Step (trace)")
 def test_from_step_dict_restores_strenum_fields() -> None:
     """A Step serialised with StrEnum fields (type, status) round-trips."""
-    from gethired.models import StepMeta
 
     step = Step(
         id="x",
@@ -171,16 +162,12 @@ def test_from_step_dict_restores_strenum_fields() -> None:
 
 def render_json_via_dataclass(obj) -> str:
     """Helper to serialise a dataclass instance to JSON."""
-    from dataclasses import asdict
 
-    import json as _json
-
-    return _json.dumps(asdict(obj), default=str)
+    return json.dumps(asdict(obj), default=str)
 
 
 def test_load_master_round_trips_through_disk(tmp_path: Path) -> None:
     """A Master serialised to disk and loaded back via load_master round-trips."""
-    from gethired.serialize import snapshot
 
     master = _sample_master()
     path = tmp_path / "master.json"

@@ -8,7 +8,7 @@ from __future__ import annotations
 import difflib
 import hashlib
 import json
-from datetime import UTC, datetime
+from datetime import UTC, datetime  # noqa: F401  # legacy imports retained for backward compat
 from pathlib import Path
 
 import typer
@@ -18,10 +18,8 @@ from gethired.audit import (
     audit_json,
     audit_markdown,
 )
+from gethired.consent import require
 from gethired.constants import (
-    CONSENT,
-    CONSENT_DAYS,
-    CONSENT_PATH,
     DATA_DIR,
     MASTER,
     OUTPUT_DIR,
@@ -57,26 +55,13 @@ app = typer.Typer(help="gethired — multi-agent CV tailoring", no_args_is_help=
 
 
 def ensure_consent(force_prompt: bool = False) -> None:
-    consent_file = Path(CONSENT_PATH).expanduser()
-    if consent_file.exists() and not force_prompt:
-        try:
-            data_dict = json.loads(consent_file.read_text())
-            timestamp = datetime.fromisoformat(data_dict["timestamp"])
-            if timestamp.tzinfo is None:
-                now = datetime.now(UTC).replace(tzinfo=None)
-            else:
-                now = datetime.now(timestamp.tzinfo)
-            if (now - timestamp).days < CONSENT_DAYS:
-                return
-        except (json.JSONDecodeError, KeyError, ValueError):
-            pass
+    """Prompt for consent if no valid on-disk record exists.
 
-    typer.echo(CONSENT, err=True)
-    if not typer.confirm("Continue?", default=False):
-        raise typer.Exit(code=1)
-
-    consent_file.parent.mkdir(parents=True, exist_ok=True)
-    consent_file.write_text(json.dumps({"timestamp": datetime.now(UTC).isoformat()}))
+    Thin wrapper around :func:`gethired.consent.require` for the CLI surface.
+    Library users should call :func:`gethired.consent.current` or
+    :func:`gethired.consent.require` directly.
+    """
+    require(force=force_prompt)
 
 
 @app.command()

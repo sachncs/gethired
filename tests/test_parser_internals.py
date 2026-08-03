@@ -7,6 +7,9 @@ These exercise the helper functions used by the public parsers
 
 from __future__ import annotations
 
+import pytest
+
+from gethired.exceptions import ParseError
 from gethired.parser import (
     extract_body,
     extract_bullets,
@@ -36,9 +39,7 @@ def test_strip_comments_removes_percent_lines() -> None:
 
 def test_extract_body_requires_document_environment() -> None:
     """extract_body raises if the document has no \\begin{document}…\\end{document}."""
-    import pytest
 
-    from gethired.exceptions import ParseError
 
     with pytest.raises(ParseError):
         extract_body("\\documentclass{article}\n")
@@ -117,7 +118,7 @@ def test_extract_skills_groups_by_category() -> None:
     assert "AWS" in skills.categories["Cloud"]
 
 
-def test_extract_bullets_returns_bullets_from_resumeItem_section() -> None:
+def test_extract_bullets_returns_from_resumeitem_section() -> None:
     """extract_bullets parses \\resumeItem{...} entries into a tuple of Bullet."""
     section_text = (
         "before\n"
