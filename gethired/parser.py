@@ -75,7 +75,8 @@ SECTION_RE: Final[re.Pattern[str]] = re.compile(
 )
 
 SKILL_LINE_RE: Final[re.Pattern[str]] = re.compile(
-    r"\\textbf\{\s*([^}]+?):\s*\}([^\\]*)", re.DOTALL
+    r"\\textbf\{\s*([^}]+?):\s*\}((?:(?!\\textbf\{|\\end\{).)*)",
+    re.DOTALL,
 )
 SKILL_VSPACE_RE: Final[re.Pattern[str]] = re.compile(r"\\vspace\{[^}]*\}")
 
@@ -262,12 +263,11 @@ def extract_skills(body: str) -> SkillsByCategory:
     for line in SKILL_LINE_RE.finditer(section_text):
         raw_category = clean_inline(line.group(1))
         category = raw_category.rstrip(":").strip()
-        raw_values = line.group(2)
-        cleaned_values = SKILL_VSPACE_RE.sub("", raw_values)
+        raw_values = SKILL_VSPACE_RE.sub("", line.group(2))
         values = tuple(
-            value.strip()
-            for value in cleaned_values.split(",")
-            if value.strip() and "}" not in value
+            value
+            for raw_value in raw_values.split(",")
+            if (value := clean_inline(raw_value))
         )
         if category and values:
             categories[category] = values

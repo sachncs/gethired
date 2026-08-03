@@ -53,7 +53,7 @@ def test_missing_sections_parse_with_empty_optional_fields() -> None:
 
 def test_empty_skill_categories_are_dropped() -> None:
     resume = parse_tex(fixture("empty_skills"))
-    assert resume.skills.categories == {"Languages": ("Python", "R")}
+    assert resume.skills.categories == {"Languages": ("Python", "C#", "R")}
 
 
 def test_nested_braces_and_font_commands_are_cleaned() -> None:
