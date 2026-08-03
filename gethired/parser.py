@@ -171,6 +171,8 @@ def clean_inline(text: str) -> str:
     cleaned = re.sub(r"\\vspace\{[^}]*\}", "", cleaned)
     cleaned = re.sub(r"\\,", " ", cleaned)
     cleaned = re.sub(r"\\cdot", "·", cleaned)
+    cleaned = re.sub(r"\\[A-Za-z]+", "", cleaned)
+    cleaned = re.sub(r"[{}]", "", cleaned)
     cleaned = re.sub(r"~", " ", cleaned)
     cleaned = re.sub(r"\\\\", " ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned)
