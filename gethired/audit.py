@@ -1,8 +1,9 @@
 """Audit: re-run all four validators against a previous run directory.
 
 Loads ``tailored.json`` + ``master.json`` from ``run_dir``, runs grounding,
-style, plagiarism, and the 11 ATS gates, and emits ``audit.json`` + ``audit.md``
-alongside the run artefacts. Idempotent and offline (no LLM call).
+style, plagiarism, and the 12 ATS gates (9 hard, 3 advisory), and emits
+``audit.json`` + ``audit.md`` alongside the run artefacts. Idempotent and
+offline (no LLM call).
 """
 
 from __future__ import annotations
@@ -44,6 +45,8 @@ class AuditReport:
     plagiarism_violations: tuple[str, ...]
     ats_passed: bool
     ats_failed_gates: tuple[str, ...]
+    ats_advisory_failed_gates: tuple[str, ...]
+    ats_skipped_gates: tuple[str, ...]
 
     def to_dict(self) -> dict[str, object]:
         """Return a JSON-serialisable dict view of the report."""
@@ -54,6 +57,8 @@ class AuditReport:
             "plagiarism_violations": list(self.plagiarism_violations),
             "ats_passed": self.ats_passed,
             "ats_failed_gates": list(self.ats_failed_gates),
+            "ats_advisory_failed_gates": list(self.ats_advisory_failed_gates),
+            "ats_skipped_gates": list(self.ats_skipped_gates),
         }
 
 
@@ -93,18 +98,16 @@ def audit_run(run_dir: Path) -> AuditReport:
         txt_source=txt_path.read_text() if txt_path.exists() else "",
         pdf_path=pdf_path if pdf_path.exists() else None,
     )
-    run_id = (
-        tailored.run_result.run.id
-        if tailored.run_result is not None
-        else run_dir.name
-    )
+    run_id = tailored.run_result.run.id if tailored.run_result is not None else run_dir.name
     return AuditReport(
         run_id=run_id,
         grounding_violations=tuple(f"{v.path}: {v.detail}" for v in grounding),
         style_violations=tuple(f"{v.path}: {v.detail}" for v in style),
         plagiarism_violations=tuple(f"{v.path}: {v.ngram}" for v in plagiarism),
-        ats_passed=ats_report.all_passed,
-        ats_failed_gates=tuple(g.value for g in ats_report.failed_gates),
+        ats_passed=not ats_report.hard_failed_gates,
+        ats_failed_gates=tuple(g.value for g in ats_report.hard_failed_gates),
+        ats_advisory_failed_gates=tuple(g.value for g in ats_report.advisory_failed_gates),
+        ats_skipped_gates=tuple(g.value for g in ats_report.skipped_gates),
     )
 
 
@@ -120,7 +123,11 @@ def render_audit_markdown(report: AuditReport) -> str:
     lines.append("")
     lines.append(f"- **ATS gates passed**: {'yes' if report.ats_passed else 'no'}")
     if report.ats_failed_gates:
-        lines.append(f"- **Failed gates**: {', '.join(report.ats_failed_gates)}")
+        lines.append(f"- **Hard-failed gates**: {', '.join(report.ats_failed_gates)}")
+    if report.ats_advisory_failed_gates:
+        lines.append(f"- **Advisory-failed gates**: {', '.join(report.ats_advisory_failed_gates)}")
+    if report.ats_skipped_gates:
+        lines.append(f"- **Skipped gates**: {', '.join(report.ats_skipped_gates)}")
     lines.append(f"- **Grounding violations**: {len(report.grounding_violations)}")
     lines.append(f"- **Style violations**: {len(report.style_violations)}")
     lines.append(f"- **Plagiarism violations**: {len(report.plagiarism_violations)}")

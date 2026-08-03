@@ -8,6 +8,8 @@ from dataclasses import fields
 import pytest
 
 from gethired.models import (
+    ADVISORY_GATES,
+    HARD_GATES,
     AtsGate,
     Award,
     Bullet,
@@ -16,6 +18,7 @@ from gethired.models import (
     Education,
     Experience,
     FinalOutcome,
+    GateTier,
     GroundedCitation,
     Job,
     JobDescription,
@@ -108,12 +111,20 @@ def test_all_models_are_frozen() -> None:
         SourceReference: SourceReference(master_path="x", verbatim_span="x", master_hash="x"),
         WebSearch: WebSearch(step_number=1, query="x", result_snippet="x", reason="x"),
         Run: Run(
-            id="x", started_at="x", master_hash="x",
-            jd_urls_hash="x", model="x", draft_model=None,
+            id="x",
+            started_at="x",
+            master_hash="x",
+            jd_urls_hash="x",
+            model="x",
+            draft_model=None,
         ),
         RunDescription: RunDescription(
-            id="x", started_at="x", master_hash="x", jd_urls_hash="x",
-            model="x", draft_model=None,
+            id="x",
+            started_at="x",
+            master_hash="x",
+            jd_urls_hash="x",
+            model="x",
+            draft_model=None,
         ),
         RunResult: RunResult(
             run=Run("x", "x", "x", "x", "x", None),
@@ -139,8 +150,13 @@ def test_all_models_are_frozen() -> None:
             jobs=(),
         ),
         JobDescription: JobDescription(
-            url="x", title="x", company="x", full_text="x",
-            keywords=(), must_have_keywords=(), nice_to_have_keywords=(),
+            url="x",
+            title="x",
+            company="x",
+            full_text="x",
+            keywords=(),
+            must_have_keywords=(),
+            nice_to_have_keywords=(),
             content_hash="x",
         ),
     }
@@ -228,9 +244,21 @@ def test_final_outcome_enum_values() -> None:
     assert FinalOutcome.ATS_HARD_FAIL.value == "ats_hard_fail"
 
 
-def test_ats_gate_has_eleven_values() -> None:
-    """There are 11 ATS gates per the plan (one StrEnum with 12 values: 11 + 1)."""
+def test_ats_gate_has_twelve_values() -> None:
+    """There are 12 ATS gates: 9 hard-blocking and 3 advisory."""
     assert len(AtsGate) == 12
+
+
+def test_ats_gate_tiers_partition_members() -> None:
+    """Hard and advisory tiers are mutually exclusive and cover every gate."""
+    hard = frozenset(gate for gate in AtsGate if gate.tier is GateTier.HARD)
+    advisory = frozenset(gate for gate in AtsGate if gate.tier is GateTier.ADVISORY)
+    assert len(hard) == 9
+    assert len(advisory) == 3
+    assert hard | advisory == frozenset(AtsGate)
+    assert hard & advisory == frozenset()
+    assert hard == HARD_GATES
+    assert advisory == ADVISORY_GATES
 
 
 def test_keyword_tier_enum_values() -> None:

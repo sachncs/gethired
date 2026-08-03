@@ -87,8 +87,27 @@ class FinalOutcome(StrEnum):
     ATS_HARD_FAIL = "ats_hard_fail"
 
 
+class GateStatus(StrEnum):
+    """Tri-state outcome of a single ATS gate evaluation.
+
+    ``SKIP`` is reserved for gates whose prerequisite artefacts are absent,
+    e.g. the PDF-dependent gates when ``LATEX_ENGINE=none``.
+    """
+
+    PASS = "pass"
+    FAIL = "fail"
+    SKIP = "skip"
+
+
+class GateTier(StrEnum):
+    """Blocking strength of an ATS gate."""
+
+    HARD = "hard"
+    ADVISORY = "advisory"
+
+
 class AtsGate(StrEnum):
-    """One of the eleven ATS compliance gates."""
+    """ATS compliance gates: 9 hard-blocking and 3 advisory."""
 
     PDF_COMPILES = "pdf_compiles"
     PDF_TEXT_EXTRACTABLE = "pdf_text_extractable"
@@ -102,6 +121,38 @@ class AtsGate(StrEnum):
     KEYWORDS_COVERED = "keywords_covered"
     BULLETS_QUANTIFIED = "bullets_quantified"
     ACTION_VERBS_FIRST = "action_verbs_first"
+
+    @property
+    def tier(self) -> GateTier:
+        """Blocking strength of this gate."""
+        if self in ADVISORY_GATES:
+            return GateTier.ADVISORY
+        return GateTier.HARD
+
+
+HARD_GATES: frozenset[AtsGate] = frozenset(
+    {
+        AtsGate.PDF_COMPILES,
+        AtsGate.PDF_TEXT_EXTRACTABLE,
+        AtsGate.PDF_TEXT_MATCHES_TXT,
+        AtsGate.SECTION_HEADINGS_STANDARD,
+        AtsGate.NO_TABLES_FOR_LAYOUT,
+        AtsGate.NO_IMAGES,
+        AtsGate.NO_COLORS,
+        AtsGate.FONT_SIZE_10_12,
+        AtsGate.LENGTH_WITHIN_LIMIT,
+    }
+)
+"""Gates that block the run when they fail."""
+
+ADVISORY_GATES: frozenset[AtsGate] = frozenset(
+    {
+        AtsGate.KEYWORDS_COVERED,
+        AtsGate.BULLETS_QUANTIFIED,
+        AtsGate.ACTION_VERBS_FIRST,
+    }
+)
+"""Gates that warn when they fail but do not block the run."""
 
 
 class KeywordTier(StrEnum):
@@ -223,8 +274,7 @@ class MasterResume:
             lines.append("## Awards")
             for award in self.awards:
                 lines.append(
-                    f"- **{award.title}** "
-                    f"({award.organization}, {award.date}): {award.description}"
+                    f"- **{award.title}** ({award.organization}, {award.date}): {award.description}"
                 )
         return "\n".join(lines)
 
@@ -667,6 +717,7 @@ def job_lookup(
 
 
 __all__ = [
+    "ADVISORY_GATES",
     "AtsGate",
     "Award",
     "Bullet",
@@ -680,6 +731,9 @@ __all__ = [
     "Experience",
     "FinalOutcome",
     "GroundedCitation",
+    "HARD_GATES",
+    "GateStatus",
+    "GateTier",
     "Job",
     "JobDescription",
     "JobDescriptionData",

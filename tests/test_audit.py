@@ -117,6 +117,9 @@ def test_render_audit_json_includes_all_sections(tmp_path: Path) -> None:
     assert "style_violations" in payload
     assert "plagiarism_violations" in payload
     assert "ats_passed" in payload
+    assert "ats_failed_gates" in payload
+    assert "ats_advisory_failed_gates" in payload
+    assert "ats_skipped_gates" in payload
 
 
 def test_render_audit_markdown_includes_run_id(tmp_path: Path) -> None:

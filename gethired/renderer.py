@@ -157,11 +157,13 @@ def render_match_report(
         lines.append("")
     if ats_report is not None:
         lines.append("## ATS Gate Results")
-        lines.append("| gate | passed | detail |")
-        lines.append("|------|--------|--------|")
+        lines.append("| gate | tier | status | detail |")
+        lines.append("|------|------|--------|--------|")
         for result in ats_report.results:
-            mark = "PASS" if result.passed else "FAIL"
-            lines.append(f"| `{result.gate.value}` | {mark} | {result.detail} |")
+            lines.append(
+                f"| `{result.gate.value}` | {result.gate.tier.value} | "
+                f"{result.status.value.upper()} | {result.detail} |"
+            )
         lines.append("")
     lines.append("## Reasoning Trace")
     lines.append("| # | rationale |")

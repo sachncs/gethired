@@ -86,7 +86,7 @@ class Critic:
             job_validate(
                 JobType.VALIDATE_ATS,
                 outputs=("ats_gates",),
-                rationale="Ran all 11 ATS gates (compile, extract, headings, layout, etc.)",
+                rationale="Ran all 12 ATS gates (9 hard-blocking, 3 advisory)",
                 envelope=JobEnvelope(model="deterministic"),
             )
         )
@@ -110,6 +110,11 @@ class Critic:
                 "ATS gates failed",
                 failed=[gate.value for gate in ats_report.failed_gates],
             )
+            if ats_report.hard_failed_gates:
+                self._logger.error(
+                    "ATS hard gates failed",
+                    failed=[gate.value for gate in ats_report.hard_failed_gates],
+                )
         return ats_report, tuple(jobs)
 
 

@@ -56,7 +56,7 @@ from gethired.renderer import (
     render_text,
 )
 from gethired.tracing import Tracer, tracer_for_run
-from gethired.validator import ats_check
+from gethired.validator import AtsGateReport, ats_check
 from gethired.writer import Writer, _current_tracer
 
 DEFAULT_DATA_DIR: Final[Path] = Path("data")
@@ -147,9 +147,7 @@ class Tailor:
             tracer.close()
             _current_tracer.reset(token)
 
-    def __run_pipeline(
-        self, tracer: Tracer, run: Run
-    ) -> TailoredResume:
+    def __run_pipeline(self, tracer: Tracer, run: Run) -> TailoredResume:
         """Inner pipeline implementation; called with an active tracer."""
         with tracer.span("tailor.run", "agent", run_id=run.id):
             master = self.__load_master()
@@ -178,9 +176,7 @@ class Tailor:
             model_instance=self._model_instance,
             debug=self._debug,
         )
-        analysis_for_writer = (
-            analysis if analysis is not None else analyze_description(jds[0])
-        )
+        analysis_for_writer = analysis if analysis is not None else analyze_description(jds[0])
         tailored, writer_jobs = writer.tailor(
             master=master,
             analysis=analysis_for_writer,
@@ -233,9 +229,7 @@ class Tailor:
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
 
         if self._produce_cover_letter and analysis is not None:
-            cover_result = tailor_cover_letter(
-                master=master, analysis=analysis, voice=profile
-            )
+            cover_result = tailor_cover_letter(master=master, analysis=analysis, voice=profile)
             cover_md = render_cover_letter_markdown(cover_result.cover_letter)
             run_dir = self._tailored_dir / tailored_with_jobs.run.id
             (run_dir / "cover_letter.md").write_text(cover_md)
@@ -300,9 +294,11 @@ class Tailor:
         if analysis is not None:
             for keyword in analysis.must_have_skills:
                 coverage[keyword] = float(keyword.lower() in master_text)
-        missing = tuple(
-            kw for kw, score in coverage.items() if score < 1.0
-        ) if analysis is not None else ()
+        missing = (
+            tuple(kw for kw, score in coverage.items() if score < 1.0)
+            if analysis is not None
+            else ()
+        )
         expected_gates = (
             "ATS_HARD_PASS",
             "BULLETS_QUANTIFIED",
@@ -443,9 +439,7 @@ class Tailor:
         (run_dir / "tailored.json").write_text(render_json(tailored))
         if tailored.run_result is not None:
             (run_dir / "match_report.md").write_text(
-                render_match_report(
-                    tailored.run, tailored.run_result, tailored, ats_report
-                )
+                render_match_report(tailored.run, tailored.run_result, tailored, ats_report)
             )
         return run_dir
 
@@ -455,9 +449,7 @@ class Tailor:
             raise ResumeTailoringError("No runs found")
         return (runs[-1] / "match_report.md").read_text()
 
-    def __compile_pdf_best_effort(
-        self, tailored: TailoredResume, tex_source: str
-    ) -> Path | None:
+    def __compile_pdf_best_effort(self, tailored: TailoredResume, tex_source: str) -> Path | None:
         """Compile the tailored TeX into a PDF.
 
         Returns ``None`` when ``LATEX_ENGINE=none`` (intentional skip) or when
@@ -493,10 +485,13 @@ def hash_jd_urls(jds: tuple[JobDescription, ...]) -> str:
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
-def outcome_from_ats(report) -> FinalOutcome:
-    if report.all_passed:
-        return FinalOutcome.SUCCESS
-    if report.failed_gates:
+def outcome_from_ats(report: AtsGateReport) -> FinalOutcome:
+    """Map an ATS report to a final run outcome.
+
+    Only hard-tier gate failures block the run; advisory failures and
+    skipped PDF gates (no PDF compiled) do not.
+    """
+    if report.hard_failed_gates:
         return FinalOutcome.ATS_HARD_FAIL
     return FinalOutcome.SUCCESS
 

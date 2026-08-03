@@ -82,9 +82,7 @@ def ensure_consent(force_prompt: bool = False) -> None:
         raise typer.Exit(code=1)
 
     consent_file.parent.mkdir(parents=True, exist_ok=True)
-    consent_file.write_text(
-        json.dumps({"timestamp": datetime.now(UTC).isoformat()})
-    )
+    consent_file.write_text(json.dumps({"timestamp": datetime.now(UTC).isoformat()}))
 
 
 @app.command()
@@ -235,9 +233,7 @@ def preflight(
     configure_logging()
     ensure_consent()
     jd = fetch_first_jd(urls)
-    tailor = Tailor(
-        resume=resume, job_description=jd, model=model, debug=False
-    )
+    tailor = Tailor(resume=resume, job_description=jd, model=model, debug=False)
     report = tailor.preflight()
     typer.echo("Preflight report")
     typer.echo(f"  Tokens estimate: {report.tokens_estimate}")
@@ -305,11 +301,17 @@ def validate(
     else:
         typer.echo("Provide a tailored.json (tex-only validation not yet supported)", err=True)
         raise typer.Exit(code=1)
-    if report.all_passed:
-        typer.echo("All ATS gates passed")
-    else:
-        typer.echo(f"Failed gates: {[g.value for g in report.failed_gates]}")
+    if report.hard_failed_gates:
+        typer.echo(f"Hard-failed gates: {[g.value for g in report.hard_failed_gates]}")
         raise typer.Exit(code=1)
+    if report.advisory_failed_gates:
+        typer.echo(
+            f"Advisory-failed gates (non-blocking): "
+            f"{[g.value for g in report.advisory_failed_gates]}"
+        )
+    if report.skipped_gates:
+        typer.echo(f"Skipped gates: {[g.value for g in report.skipped_gates]}")
+    typer.echo("All hard ATS gates passed")
 
 
 @app.command()
@@ -329,9 +331,7 @@ def trace(
     typer.echo(f"Outcome: {run_result.get('final_outcome', '?')}")
     typer.echo(f"Jobs: {len(jobs)}")
     for idx, job in enumerate(jobs, start=1):
-        typer.echo(
-            f"  {idx}. [{job.get('type')}] {job.get('rationale')[:80]}"
-        )
+        typer.echo(f"  {idx}. [{job.get('type')}] {job.get('rationale')[:80]}")
 
 
 @app.command()
@@ -349,6 +349,10 @@ def audit(
     (Path(run_dir) / "audit.md").write_text(render_audit_markdown(report))
     typer.echo(f"Audit written to {run_dir}/audit.json and audit.md")
     typer.echo(f"ATS passed: {report.ats_passed}")
+    typer.echo(
+        f"ATS advisory failed: {len(report.ats_advisory_failed_gates)} "
+        f"| skipped: {len(report.ats_skipped_gates)}"
+    )
     typer.echo(
         f"Violations: grounding={len(report.grounding_violations)} "
         f"style={len(report.style_violations)} "

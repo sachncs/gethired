@@ -1,7 +1,7 @@
 """End-to-end smoke test using a synthetic JD.
 
 This test runs the full pipeline against the bundled sample resume and a
-synthetic JobDescription, and asserts that all 11 ATS gates are evaluated.
+synthetic JobDescription, and asserts that all 12 ATS gates are evaluated.
 """
 
 from __future__ import annotations
@@ -75,6 +75,8 @@ def test_end_to_end_atg_gates_all_evaluated() -> None:
     report = ats_check(result, tex, None, txt, (SAMPLE_JD,))
     assert isinstance(report, AtsGateReport)
     assert len(report.results) == len(list(AtsGate))
+    for gate_result in report.results:
+        assert gate_result.status.value in {"pass", "fail", "skip"}
 
 
 def test_end_to_end_job_trail_emitted() -> None:
