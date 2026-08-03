@@ -101,21 +101,58 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- End-to-end smoke test (`tests/smoke_e2e.py`) that exercises the full pipeline against the configured LLM (MiniMax-M3 verified) and emits `tailored/<run-id>/` with a rewritten, grounded summary.
-- Typed `JobMetadata` dataclass replacing the previous primitive `dict[str, str]`.
-- Per-step loguru trace events via `step_logger(step_name, run_id, **fields)`.
-- Auto-detection of MiniMax models: `MODEL=MiniMax-M3` (or any `MiniMax-*`) auto-routes to `https://api.minimax.io/anthropic`.
-- Simplified env vars: `API_KEY` (preferred) / `ANTHROPIC_API_KEY` (fallback), `BASE_URL` / `ANTHROPIC_BASE_URL`.
+- Plug-and-play library API: `parse`, `fetch`, and the standalone
+  `grounding`/`style`/`plagiarism`/`ats` validators. `import gethired`
+  is now lazy — heavy dependencies (pymupdf, trafilatura, pydantic_ai)
+  are only imported when a public symbol that needs them is accessed.
+- `gethired.parse` convenience entry point that dispatches by file
+  extension (`parse_tex`, `parse_text`, `parse_pdf`, `parse_image`).
+- `gethired.fetch` convenience entry point that wraps the Fetcher with
+  a default cache directory.
+- `gethired.serialize` module: single source of truth for JSON ↔
+  domain-model coercion (replaces 3x duplication across tailor, audit,
+  cli).
+- `gethired.version` module exporting `__version__` (now `0.6.0`).
+- `tests/test_grounding_round_trip.py`: 4 new tests verifying the
+  citation round-trip property (real span passes, fabricated span
+  fails, partial span passes, end-to-end pipeline produces valid
+  grounding).
+- `.github/workflows/ci.yml`: ruff lint, ruff format check, mypy, and
+  pytest with 85% coverage gate.
+- `.github/workflows/release.yml`: build and publish wheel to PyPI
+  on version tag push.
+- `LICENSE` (MIT) and `py.typed` marker (PEP 561).
+- `CONTRIBUTING.md` and `SECURITY.md`.
 
 ### Changed
 
-- `WriterOutput` switched from nested Pydantic models (`BulletDraft`) to flat `dict[str, list[str]]` to satisfy MiniMax-M3's tool-use JSON schema validation.
-- `TailoredResume.run_result` is now `Optional[RunResult]` so the LLM can construct the model without supplying an internal field.
-- CLI quick-start now uses `API_KEY` instead of `ANTHROPIC_API_KEY` in the example.
+- **Single-word public naming across the entire codebase.** Every
+  domain model, constant, validator gate, and public function now
+  uses a single-word name. Module name disambiguates where needed
+  (e.g. `parse_tex` becomes `gethired.parser.tex`). All renames are
+  traceable in the per-module commits.
+- **No semi-private identifiers.** All `_x` single-underscore module
+  aliases and `self._x` instance attributes were removed or renamed to
+  public. True-private (`__x`, name-mangled) names remain in two
+  helpers per AGENTS.md.
+- `gethired/__init__.py` exposes a 6-name public surface: `Tailor`,
+  `Master`, `Tailored`, `Job`, `parse`, `fetch`. All other symbols
+  are loaded lazily via `__getattr__`.
+- `gethired.parser.dispatch` and `gethired.render.tex` are now the
+  public single-word names; the original multi-word names
+  (`parse_tex`, `render_tex`) remain as backward-compat aliases.
+- The `WebSearch` dataclass was deleted (was unreferenced dead code).
+- Tests now verify the data process end-to-end: contact round-trips,
+  no fabricated skills, citation spans match the master, on-disk
+  artefacts persist, and the full Step trail includes all expected
+  validation kinds.
 
 ### Removed
 
-- Logfire integration and `LOGFIRE_TOKEN_ENV_VAR` (replaced with pure loguru central logging).
+- `gethired/search.py` (was an unwired stub for a Pydantic AI
+  WebSearch sub-agent).
+- All `# noqa:` and `# type: ignore` suppressions across the
+  codebase remain at zero.
 
 ## [0.3.0] - 2026-08-02
 
