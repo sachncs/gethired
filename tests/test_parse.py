@@ -29,10 +29,20 @@ def test_parse_tex_string_returns_master(resume_tex_text: str) -> None:
     assert master.contact.name == "Placeholder Name"
 
 
-@pytest.mark.skip(reason="dispatcher behaviour for unknown extensions is unspecified")
-def test_parse_unknown_extension_falls_back_to_tex(tmp_path: Path) -> None:
-    """The dispatcher for unknown extensions is currently unspecified."""
-    pass
+def test_parse_unknown_extension_falls_back_to_tex(
+    tmp_path: Path, resume_tex_text: str
+) -> None:
+    """parse() routes unknown extensions through the TeX parser if content matches.
+
+    The dispatcher falls back to the TeX parser for any file with a TeX
+    preamble, regardless of extension. For a non-TeX file with an unknown
+    extension, the plain-text parser is used.
+    """
+    weird_path = tmp_path / "resume.weird"
+    weird_path.write_text(resume_tex_text)
+    master = parse(weird_path)
+    assert isinstance(master, Master)
+    assert master.contact.name == "Placeholder Name"
 
 
 def test_parse_returns_master_with_populated_fields(resume_tex_path: Path) -> None:

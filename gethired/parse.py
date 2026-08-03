@@ -53,7 +53,11 @@ def _dispatch_path(path: Path) -> Master:
         return _EXTENSION_PARSERS[suffix](path)
     if suffix in _IMAGE_EXTENSIONS:
         return _image(path)
-    return _tex(path.read_text())
+    # Unknown extension: peek at the content to decide between TeX and plain text
+    content = path.read_text()
+    if "\\documentclass" in content or "\\begin{document}" in content:
+        return _tex(content)
+    return _plain_text(content)
 
 
 def _dispatch_string(source: str) -> Master:
