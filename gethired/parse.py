@@ -1,0 +1,52 @@
+"""Convenience entry point: parse a master resume from any supported format.
+
+Detects the input format by extension and routes to the right parser:
+
+* ``.tex`` → :func:`gethired.parser.tex`
+* ``.pdf`` → :func:`gethired.parser.pdf`
+* ``.png``/``.jpg``/``.jpeg``/``.tiff``/``.bmp`` → :func:`gethired.parser.image`
+* anything else → :func:`gethired.parser.tex` (treats as TeX text or file)
+
+Args:
+    source: Path to the resume file, or raw TeX text.
+
+Returns:
+    The parsed ``Master`` resume.
+
+Raises:
+    ParseError: When the source cannot be parsed into a resume.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+from typing import Union
+
+from gethired.models import Master
+from gethired.parser import (
+    image as _image,
+    pdf as _pdf,
+    tex as _tex,
+    text as _text,
+)
+
+__all__ = ["parse"]
+
+
+def parse(source: Union[str, Path]) -> Master:
+    """Parse a master resume from any supported format.
+
+    Dispatches by file extension when ``source`` is a path, and by content
+    sniffing when ``source`` is a string (TeX vs plain text).
+    """
+    path = Path(source)
+    if path.exists():
+        suffix = path.suffix.lower()
+        if suffix == ".tex":
+            return _tex(path)
+        if suffix == ".pdf":
+            return _pdf(path)
+        if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
+            return _image(path)
+        return _tex(path.read_text())
+    return _text(_plain_text(str(source)))
