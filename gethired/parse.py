@@ -42,14 +42,30 @@ def parse(source: str | Path) -> Master:
     Dispatches by file extension when ``source`` is a path, and by content
     sniffing when ``source`` is a string (TeX vs plain text).
     """
-    path = Path(source)
-    if path.exists():
-        suffix = path.suffix.lower()
+    # If source is already a Path, dispatch directly by extension
+    if isinstance(source, Path):
+        suffix = source.suffix.lower()
         if suffix == ".tex":
-            return _tex(path)
+            return _tex(source)
         if suffix == ".pdf":
-            return _pdf(path)
+            return _pdf(source)
         if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
-            return _image(path)
-        return _tex(path.read_text())
-    return _plain_text(str(source))
+            return _image(source)
+        return _tex(source.read_text())
+    # source is a string
+    is_tex = "\\documentclass" in source or "\\begin{document}" in source
+    if is_tex:
+        return _tex(source)
+    is_likely_path = "\n" not in source and len(source) < 4096
+    if is_likely_path:
+        path = Path(source)
+        if path.exists():
+            suffix = path.suffix.lower()
+            if suffix == ".tex":
+                return _tex(path)
+            if suffix == ".pdf":
+                return _pdf(path)
+            if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
+                return _image(path)
+            return _tex(path.read_text())
+    return _plain_text(source)
