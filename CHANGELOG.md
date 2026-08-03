@@ -9,9 +9,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **New module `gethired/serialize.py`** — single source of truth for JSON ↔ domain-model coercion (`coerce_master_from_dict`, `coerce_tailored_from_dict`, `load_master_from_json`, `master_to_snapshot`, `render_json`, `tailored_to_snapshot_dict`, `MasterSnapshot`). Previously triplicated across `tailor.read_master_json`, `audit.__coerce_tailored`/`__coerce_master`, and inline code in `cli.validate`. `tailor.py` and `cli.py` now re-export `coerce_bullets` / `read_master_json` / `to_tailored` from `serialize.py` for backward compatibility.
+- **PDF-artefact guard helper** — `validator.pdf_artefact_status()` consolidates the `if pdf_path is None / not exists` guard previously repeated in `gate_pdf_compiles`, `gate_pdf_text_extractable`, `gate_pdf_text_matches_txt`, and `gate_length_within_limit`. Each gate now calls the helper and proceeds with its real check on the happy path.
+- **Property-based tests** (`tests/test_normalize_property.py`) — `hypothesis`-driven coverage for `normalise_whitespace` (idempotence, no double-spaces), `canonicalize_numeric` (always returns a set of ints), `tokenize_for_overlap` (lowercase roundtrip), `extract_ngrams` (length preservation), and `MasterResume.content_hash` (determinism, sensitivity to input). `hypothesis>=6.100` added to dev dependencies.
+- **CLI end-to-end tests** (`tests/test_cli.py`) — `typer.testing.CliRunner` coverage for `--help`, `ingest`, `show master`, `show jd` (error path), `validate` (tex vs json, error path), `trace` (error path), `audit` (error path), `diff` (error path), `fetch` (with monkeypatched retriever).
+- **Module-level `Logger` type alias** in `observability.py` for annotating logger parameters. `fetcher.__fetch_with_retry` now takes `logger: Logger` instead of an untyped `logger` parameter.
+- **New `Final` constants** for previously-inlined magic values: `TOKEN_ESTIMATE_BASE` (2500), `TOKENS_PER_BULLET` (150), `VOICE_DRIFT_NORMALIZER` (100), `JOB_RATIONALE_PREVIEW_CHARS` (100), `DROP_REASON_RATIONALE_CHARS` (80), `KEYWORD_EXTRACTION_LIMIT` (40), `MUST_HAVE_FALLBACK_KEYWORDS` (15). `description.py` now exposes `RESPONSIBILITY_MARKERS`, `SENIORITY_KEYWORDS`, `SENIORITY_RANK`, `UNKNOWN_ROLE_LABEL`, `UNSPECIFIED_SENIORITY_LABEL` as module-level `Final` constants (the in-function `seniority_rank` literal is gone).
 - **Tri-state ATS gates** — `AtsGateResult` now carries a `status` (`pass`/`fail`/`skip`); `GateStatus` and `GateTier` enums added. PDF-dependent gates `skip` when `LATEX_ENGINE=none` and no PDF artefact exists, so runs without a LaTeX engine are not falsely blocked.
 - **Gate tiers** — `AtsGate.tier` splits the 12 gates into `HARD_GATES` (9) and `ADVISORY_GATES` (3). `AtsGateReport.hard_failed_gates` / `advisory_failed_gates` / `skipped_gates`; `all_passed` tolerates `skip` and `outcome_from_ats` blocks only on hard failures. `tailor audit` reports the hard/advisory/skipped breakdown.
 - **Compile-based page counting** — `gate_length_within_limit` measures the compiled PDF's actual `page_count` via PyMuPDF against `MAX_PAGES`.
+
+### Changed
+
+- **AGENTS.md §843-856 visibility compliance** — every `self._x` single-underscore instance attribute has been renamed to its public form (`self.x`). Affected classes: `Tailor` (12 attributes), `Critic` (2), `Fetcher` (2), `Writer` (4), `Tracer` (3), `JsonlSink` (3), `ActiveSpan` (3). The class is the encapsulation boundary; attributes are part of the object's public state. Internal helpers (`_x` module-level) in `plain_text.py` and `serialize.py` renamed to public forms too (the `_heading_index` → `find_heading_index` rename avoids a collision with the `heading_index` local variable in `extract_experiences` etc.). `tracing.py`'s private classes `_ActiveSpan` and `_JsonlSink` are now public `ActiveSpan` and `JsonlSink`; `_TRACE_PATH_ENV` is now `TRACE_PATH_ENV`; module-level `_new_span_id` → `new_span_id`, `_now_iso` → `now_iso`, `_noop_cm` → `null_span_cm`. The ContextVar `_current_tracer` in `writer.py` is now `current_tracer` and is part of `writer.__all__`. The module-level double-underscore helpers in `audit.py` and `provider.py` (`__load_tailored_and_master`, `__is_minimax`) remain "true private" per AGENTS.md.
+- **CLI `__all__` and `trace.jsonl` schemas unchanged** — on-disk snapshots remain byte-compatible because the `serialize.py` JSON shape matches the previous `renderer.render_json` output exactly.
+
+### Removed
+
+- **Dead code: `models.StepType` enum** — the 8-member `StepType(StrEnum)` was defined and exported in `models.py:42-53` and `__init__.py` but never read by any caller. Removed along with the `test_step_type_enum_values` test.
+- **Unwired `gethired/search.py` and its three constants** (`MAX_WEBSEARCH_PER_RUN`, `WEBSEARCH_PROVIDER_ENV_VAR`, `WEBSEARCH_DEFAULT_PROVIDER`) — the `Search` class was never invoked; Pydantic AI's `WebSearch` capability is not registered in the writer. YAGNI: removed both the module and the orphan constants. The architecture table in `README.md` now notes the search sub-agent as "(planned)".
+- **Local JSON-coercion duplication** — `tailor.read_master_json`, `tailor.to_tailored`, `cli.master_to_snapshot`, the inline `finalize` coercion, `audit.__coerce_tailored`/`__coerce_master`, and `renderer.render_json` all delegate to `serialize.py`.
+- **Inline magic numbers** in `tailor.py:263,295` (`2_500 + bullets * 150`), `tailor.py:311` (`/ 100`), `writer.py:222` (`rationale[:100]`), `writer.py:543` (`rationale[:80]`), `fetcher.py:300` (`most_common(40)`), `fetcher.py:320` (`extract_keywords(text)[:15]`), `description.py:98-106` (`seniority_rank` dict), `description.py:130-138` (`RESPONSIBILITY_MARKERS`), `description.py:146-153` (`SENIORITY_KEYWORDS`) — all replaced by named constants (see Added).
+
+
 
 ### Changed
 
