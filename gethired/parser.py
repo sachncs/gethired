@@ -103,7 +103,9 @@ def strip_comments(body: str) -> str:
 def extract_body(source: str) -> str:
     match = BEGIN_DOCUMENT_RE.search(source)
     if match is None:
-        return source
+        raise MasterParsingError(
+            "Could not locate \\begin{document} ... \\end{document} body"
+        )
     return match.group(1)
 
 
@@ -435,7 +437,7 @@ def parse_tex(source: str | Path) -> MasterResume:
     except FileNotFoundError as exc:
         raise MasterParsingError(f"TeX source not found: {source}") from exc
     body = extract_body(strip_comments(text))
-    if not body:
+    if not body.strip():
         raise MasterParsingError("Could not locate \\begin{document} ... \\end{document} body")
 
     contact = extract_contact(body)
