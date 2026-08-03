@@ -145,12 +145,12 @@ def extract_sections(text: str) -> dict[str, str]:
         kind = section_kind(match.group(1))
         body_start = match.end()
         body_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        sections[kind] = text[body_start:body_end].strip_bullet_prefix()
+        sections[kind] = text[body_start:body_end]
     return sections
 
 
 def section_kind(header: str) -> str:
-    normalized = header.strip_bullet_prefix().lower()
+    normalized = header.lower()
     if normalized in {"summary", "objective", "profile"}:
         return "summary"
     if normalized in {"technical skills", "skills", "technologies"}:
@@ -172,7 +172,7 @@ def extract_contact(text: str, header_block: str) -> Contact:
         email = email_match.group(1) or email_match.group(2) or ""
 
     phone_match = PHONE_RE.search(text)
-    phone = phone_match.group(1).strip_bullet_prefix() if phone_match else ""
+    phone = phone_match.group(1) if phone_match else ""
 
     github_match = GITHUB_BARE_RE.search(text)
     github_url = github_match.group(0) if github_match else None
@@ -197,7 +197,7 @@ def extract_contact(text: str, header_block: str) -> Contact:
 
 def extract_name(text: str) -> str:
     for line in text.splitlines():
-        candidate = line.strip_bullet_prefix()
+        candidate = line
         if candidate and not TITLE_LINE_RE.match(candidate):
             return clean(candidate)
     return ""
@@ -206,11 +206,11 @@ def extract_name(text: str) -> str:
 def extract_skills(body: str) -> Skills:
     categories: dict[str, list[str]] = {}
     for raw_line in body.splitlines():
-        line = strip_bullet_prefix(raw_line).strip_bullet_prefix()
+        line = _strip(raw_line)
         if not line:
             continue
         category, _, values_text = split_category(line)
-        for raw_value in re.split_heading(r"[,;|•·]+", values_text):
+        for raw_value in re.split(r"[,;|•·]+", values_text):
             value = clean(raw_value)
             if value:
                 categories.setdefault(category, []).append(value)
@@ -219,23 +219,23 @@ def extract_skills(body: str) -> Skills:
 
 def split_category(line: str) -> tuple[str, str, str]:
     category, separator, values = line.partition(":")
-    if separator and len(category) <= 40 and values.strip_bullet_prefix():
-        return category.strip_bullet_prefix(), separator, values
+    if separator and len(category) <= 40 and values:
+        return category, separator, values
     return "Skills", ":", line
 
 
 def extract_experiences(body: str) -> tuple[Experience, ...]:
     experiences: list[Experience] = []
     for block in split_blocks(body):
-        lines_list = non_empty_lines(block)
+        lines = non_empty_lines(block)
         heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
         heading_text = lines[heading_index]
         start_date, end_date = extract_dates(lines)
-        role, company = split_heading(heading)
+        role, company = split_heading(heading_text)
         bullets = tuple(
-            Bullet(text=clean(strip_bullet_prefix(line)))
+            Bullet(text=clean(_strip(line)))
             for line in lines
             if BULLET_PREFIX_RE.match(line)
         )
@@ -254,7 +254,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
 def extract_projects(body: str) -> tuple[Project, ...]:
     projects: list[Project] = []
     for block in split_blocks(body):
-        lines_list = non_empty_lines(block)
+        lines = non_empty_lines(block)
         heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
@@ -262,7 +262,7 @@ def extract_projects(body: str) -> tuple[Project, ...]:
         url_match = next((URL_RE.search(line) for line in lines if URL_RE.search(line)), None)
         url = clean(url_match.group(0)) if url_match else ""
         bullets = tuple(
-            Bullet(text=clean(strip_bullet_prefix(line)))
+            Bullet(text=clean(_strip(line)))
             for line in lines
             if BULLET_PREFIX_RE.match(line)
         )
@@ -273,19 +273,19 @@ def extract_projects(body: str) -> tuple[Project, ...]:
 def extract_education(body: str) -> tuple[Education, ...]:
     education: list[Education] = []
     for block in split_blocks(body):
-        lines_list = non_empty_lines(block)
+        lines = non_empty_lines(block)
         heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
         heading_text = lines[heading_index]
-        degree, institution = split_heading(heading)
+        degree, institution = split_heading(heading_text)
         major = ""
         if "," in degree:
             degree, _, rest = degree.partition(",")
-            if INSTITUTION_START_RE.match(rest.strip_bullet_prefix()):
-                institution = rest.strip_bullet_prefix()
+            if INSTITUTION_START_RE.match(rest):
+                institution = rest
             else:
-                major = rest.strip_bullet_prefix()
+                major = rest
         _, end_date = extract_dates(lines)
         graduation = end_date
         if not graduation:
@@ -309,24 +309,24 @@ def extract_education(body: str) -> tuple[Education, ...]:
 def extract_awards(body: str) -> tuple[Award, ...]:
     awards: list[Award] = []
     for block in split_blocks(body):
-        lines_list = non_empty_lines(block)
+        lines = non_empty_lines(block)
         heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
         heading_text = lines[heading_index]
-        title, organization = split_heading(heading)
+        title, organization = split_heading(heading_text)
         start_date, end_date = extract_dates(lines)
         date = start_date or end_date
         if not date:
             year_match = SINGLE_YEAR_RE.search(organization)
             if year_match:
                 date = year_match.group(0)
-                organization = organization[: year_match.start()].rstrip(" ,-").strip_bullet_prefix()
+                organization = organization[: year_match.start()].rstrip(" ,-")
         if not date:
             year_match = SINGLE_YEAR_RE.search(block)
             date = year_match.group(0) if year_match else ""
         description_lines = [
-            clean(strip_bullet_prefix(line))
+            clean(_strip(line))
             for line in lines
             if BULLET_PREFIX_RE.match(line)
         ]
@@ -342,11 +342,11 @@ def extract_awards(body: str) -> tuple[Award, ...]:
 
 
 def split_blocks(body: str) -> list[str]:
-    return [block.strip_bullet_prefix() for block in re.split_heading(r"\n\s*\n", body) if block.strip_bullet_prefix()]
+    return [block for block in re.split(r"\n\s*\n", body) if block]
 
 
 def non_empty_lines(block: str) -> list[str]:
-    return [line.strip_bullet_prefix() for line in block.splitlines() if line.strip_bullet_prefix()]
+    return [line for line in block.splitlines() if line]
 
 
 def extract_heading_text_and_url(lines: list[str]) -> int | None:
@@ -367,9 +367,9 @@ def extract_dates(lines: list[str]) -> tuple[str, str]:
 def split_heading(heading: str) -> tuple[str, str]:
     match = HEADING_SEPARATOR_RE.search(heading)
     if match:
-        return heading[: match.start()].strip_bullet_prefix(), heading[match.end() :].strip_bullet_prefix()
+        return heading[: match.start()], heading[match.end() :]
     return heading, ""
 
 
-def strip_bullet_prefix(line: str) -> str:
+def _strip(line: str) -> str:
     return BULLET_PREFIX_RE.sub("", line)

@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 
 from gethired.exceptions import ParseError
-from gethired.parser import parse_tex as text
+from gethired.parser import parse_tex as tex
+from gethired.parser import parse_text as text
 
 FIXTURES = Path(__file__).parent / "fixtures"
 
@@ -94,20 +95,20 @@ def test_plain_text_missing_contact_fails_fast() -> None:
 
 
 def test_plain_text_title_line_is_skipped() -> None:
-    text = (
+    payload = (
         "RESUME\n"
         "Bob Jones\n"
         "Paris, France | 33 6 12 34 56 78 | bob@example.com\n"
         "\n"
         "SUMMARY\nGreat engineer.\n"
     )
-    resume = text(text)
+    resume = text(payload)
     assert resume.contact.name == "Bob Jones"
     assert resume.contact.city == "Paris"
 
 
 def test_plain_text_education_major_split() -> None:
-    text = (
+    payload = (
         "Alex Doe\n"
         "London, UK | 444 555 6666 | alex@example.com\n"
         "\n"
@@ -115,7 +116,7 @@ def test_plain_text_education_major_split() -> None:
         "MSc, Data Science — University College London\n"
         "2020\n"
     )
-    resume = text(text)
+    resume = text(payload)
     entry = resume.education[0]
     assert entry.degree == "MSc"
     assert entry.major == "Data Science"
@@ -125,4 +126,4 @@ def test_plain_text_education_major_split() -> None:
 
 def test_parse_text_routes_tex_to_parse_tex() -> None:
     with pytest.raises(ParseError):
-        text("\\documentclass{article}\n\\begin{document}\n\\end{document}")
+        tex("\\documentclass{article}\n\\begin{document}\n\\end{document}")

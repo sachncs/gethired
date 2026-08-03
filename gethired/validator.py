@@ -27,6 +27,7 @@ from gethired.normalize import (
     ngrams,
     verb,
     tokenize,
+    flatten as normalize_flatten,
 )
 from gethired.rubric import (
     ALLOWLIST,
@@ -415,8 +416,8 @@ def gate_match(pdf_path: Path | None, txt_source: str) -> AtsResult:
         return blocked
     with pymupdf.open(pdf_path) as document:
         pdf_text = "\n".join(document[i].get_text() for i in range(len(document)))
-    pdf_normalised = flatten(pdf_text)
-    txt_normalised = flatten(txt_source)
+    pdf_normalised = normalize_flatten(pdf_text)
+    txt_normalised = normalize_flatten(txt_source)
     if pdf_normalised == txt_normalised:
         return AtsResult(AtsGate.PDF_TEXT_MATCHES_TXT, GateStatus.PASS, detail="OK")
     return AtsResult(

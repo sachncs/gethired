@@ -45,7 +45,7 @@ def compose(
     Returns:
         ``Letter`` containing the letter and a one-sentence rationale.
     """
-    name_value = sender_name or master.contact.name
+    name = sender_name or master.contact.name
     salutation = f"Dear {recipient or 'Hiring Team'},"
     keyword_blob = ", ".join(analysis.must_have[:3]) or "your domain"
     opening_verb = voice.opening_verbs[0] if voice.opening_verbs else "Built"

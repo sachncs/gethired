@@ -462,7 +462,7 @@ def text(text: str) -> Master:
     """
     if "\\documentclass" in text or "\\begin{document}" in text:
         return _tex(text)
-    return parse_plain(text)
+    return plain(text)
 
 
 def pdf(path: Path) -> Master:
@@ -528,11 +528,22 @@ def image(path: Path) -> Master:
     return tex(raw_text)
 
 
-def parse(source: str | Path) -> Master:
-    """Route to the appropriate parser based on file extension."""
-    path = Path(source)
-    if not path.exists():
-        return tex(source)
+def dispatch(source: str | Path) -> Master:
+    """Route to the appropriate parser based on file extension.
+
+    Detects whether ``source`` is a file path (by attempting ``Path.exists()``
+    cheaply) or raw text. For raw text without a TeX preamble, the plain-text
+    parser is used.
+    """
+    if isinstance(source, Path):
+        path = source
+    else:
+        path = Path(source)
+        # Skip path checks for long strings (likely resume text, not a path)
+        if len(source) > 4096 or "\n" in source:
+            return tex(source)
+        if not path.exists():
+            return tex(source)
 
     suffix = path.suffix.lower()
     if suffix == ".tex":
@@ -542,6 +553,10 @@ def parse(source: str | Path) -> Master:
     if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
         return image(path)
     return tex(path.read_text())
+
+
+# Backward-compat alias.
+parse = dispatch
 
 
 # Backward-compat aliases for the original public parser function names.
