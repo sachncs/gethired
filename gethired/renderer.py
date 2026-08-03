@@ -5,11 +5,9 @@ Uses Jinja2 templates that mirror the user's existing resume preamble.
 
 from __future__ import annotations
 
-import difflib
 import json
 from dataclasses import asdict as _asdict
 from dataclasses import is_dataclass
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Final
 
@@ -20,7 +18,6 @@ from gethired.models import (
     RunResult,
     TailoredResume,
 )
-from gethired.normalizer_helpers import strip_latex_commands
 from gethired.validator import AtsGateReport
 
 TEMPLATE_DIR: Final[Path] = Path(__file__).parent / "templates"
@@ -181,27 +178,9 @@ def render_match_report(
     return "\n".join(lines)
 
 
-def render_diff(prior_report: str, current_report: str) -> str:
-    """Render a unified diff between two markdown reports."""
-    diff = difflib.unified_diff(
-        prior_report.splitlines(),
-        current_report.splitlines(),
-        fromfile="prior",
-        tofile="current",
-        lineterm="",
-    )
-    return "\n".join(diff)
-
-
 __all__ = [
-    "render_diff",
     "render_json",
     "render_match_report",
     "render_tex",
     "render_text",
 ]
-
-
-TAILORED = TailoredResume
-STRIP = strip_latex_commands
-NOW = datetime.now(UTC).isoformat
