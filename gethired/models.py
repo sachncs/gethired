@@ -1,11 +1,11 @@
 """Data models for the gethired system.
 
 All models are frozen dataclasses with ``__slots__`` per AGENTS.md.
-Traceability is built on the ``Job`` value object: every pipeline step
-produces a ``Job`` whose ``.description()`` returns a serializable
-``JobDescription``.
+Traceability is built on the ``Step`` value object: every pipeline step
+produces a ``Step`` whose ``.description()`` returns a serializable
+``JobData``.
 
-The factory function ``job(...)`` creates a ``Job`` with auto-generated
+The factory function ``job(...)`` creates a ``Step`` with auto-generated
 ``Run.id = uuid4()`` and UTC timestamps.
 """
 
@@ -18,8 +18,8 @@ from enum import StrEnum
 from typing import Any
 from uuid import uuid4
 
-from gethired.exceptions import ResumeTailoringError
-from gethired.observability import utcnow_iso
+from gethired.exceptions import TailorError
+from gethired.observability import now as utcnow_iso
 
 
 def new_uuid() -> str:
@@ -39,23 +39,10 @@ def sha256(text: str) -> str:
 # ---------------------------------------------------------------------------
 
 
-class StepType(StrEnum):
-    """Type of step performed during a run."""
-
-    LOOKUP = "lookup"
-    COMPARE = "compare"
-    REORDER = "reorder"
-    REWRITE = "rewrite"
-    DROP = "drop"
-    ADD = "add"
-    VALIDATE = "validate"
-    PERSIST = "persist"
-
-
-class JobType(StrEnum):
+class StepKind(StrEnum):
     """Pipeline-level job type."""
 
-    PARSE = "parse"
+    PARSE = "dispatch"
     FETCH = "fetch"
     PROFILE = "profile"
     TAILOR = "tailor"
@@ -69,15 +56,15 @@ class JobType(StrEnum):
     PERSIST = "persist"
 
 
-class JobStatus(StrEnum):
-    """Outcome status of a Job."""
+class StepStatus(StrEnum):
+    """Outcome status of a Step."""
 
     SUCCESS = "success"
     FAILED = "failed"
     SKIPPED = "skipped"
 
 
-class FinalOutcome(StrEnum):
+class Outcome(StrEnum):
     """Outcome of a complete tailoring run."""
 
     SUCCESS = "success"
@@ -168,7 +155,7 @@ class KeywordTier(StrEnum):
 
 
 @dataclass(frozen=True, slots=True)
-class ContactInformation:
+class Contact:
     name: str
     city: str
     phone: str
@@ -217,17 +204,17 @@ class Award:
 
 
 @dataclass(frozen=True, slots=True)
-class SkillsByCategory:
+class Skills:
     categories: dict[str, tuple[str, ...]]
 
 
 @dataclass(frozen=True, slots=True)
-class MasterResume:
+class Master:
     """Canonical resume model. Single source of truth for tailoring."""
 
-    contact: ContactInformation
+    contact: Contact
     summary: str
-    skills: SkillsByCategory
+    skills: Skills
     experiences: tuple[Experience, ...]
     projects: tuple[Project, ...]
     education: tuple[Education, ...]
@@ -284,7 +271,7 @@ class MasterResume:
 
 
 @dataclass(frozen=True, slots=True)
-class VoiceProfile:
+class Voice:
     avg_bullet_length: float
     bullet_length_stddev: float
     opening_verbs: tuple[str, ...]
@@ -293,13 +280,13 @@ class VoiceProfile:
 
 
 @dataclass(frozen=True, slots=True)
-class DropReason:
+class Reason:
     item_id: str
     reason: str
 
 
 @dataclass(frozen=True, slots=True)
-class GroundedCitation:
+class Citation:
     tailored_path: str
     master_path: str
     verbatim_span: str
@@ -312,7 +299,7 @@ class GroundedCitation:
 
 
 @dataclass(frozen=True, slots=True)
-class JobDescription:
+class Job:
     url: str
     title: str
     company: str
@@ -324,23 +311,13 @@ class JobDescription:
 
 
 # ---------------------------------------------------------------------------
-# Traceability: WebSearch + Job + JobDescription
+# Traceability: WebSearch + Job + Job
 # ---------------------------------------------------------------------------
 
 
 @dataclass(frozen=True, slots=True)
-class WebSearch:
-    """A single WebSearch invocation by the writer agent."""
-
-    step_number: int
-    query: str
-    result_snippet: str
-    reason: str
-
-
-@dataclass(frozen=True, slots=True)
-class JobMetadata:
-    """Typed metadata attached to a Job, replacing primitive dict[str, str]."""
+class StepMeta:
+    """Typed metadata attached to a Step, replacing primitive dict[str, str]."""
 
     url: str | None = None
     gate: AtsGate | None = None
@@ -358,20 +335,20 @@ class JobMetadata:
 
 
 @dataclass(frozen=True, slots=True)
-class SourceReference:
+class Source:
     """Pointer from a tailored claim back to a master span."""
 
     master_path: str
     verbatim_span: str
     master_hash: str
 
-    def description(self) -> SourceReference:
+    def description(self) -> Source:
         return self
 
 
 @dataclass(frozen=True, slots=True)
-class SourceDescription:
-    """Serializable form of ``SourceReference`` produced by ``.description()``."""
+class SourceView:
+    """Serializable form of ``Source`` produced by ``.description()``."""
 
     master_path: str
     verbatim_span: str
@@ -379,24 +356,24 @@ class SourceDescription:
 
 
 @dataclass(frozen=True, slots=True)
-class Job:
+class Step:
     """A unit of work performed during a run."""
 
     id: str
-    type: JobType
+    type: StepKind
     started_at: str
     completed_at: str
-    status: JobStatus
-    inputs: tuple[SourceReference, ...]
+    status: StepStatus
+    inputs: tuple[Source, ...]
     outputs: tuple[str, ...]
     rationale: str
     model: str
     tool_name: str | None
-    metadata: JobMetadata
+    metadata: StepMeta
 
-    def description(self) -> JobDescriptionData:
-        """Return the serializable ``JobDescription`` for traceability."""
-        return JobDescriptionData(
+    def description(self) -> JobData:
+        """Return the serializable view for traceability."""
+        return JobData(
             id=self.id,
             type=self.type,
             started_at=self.started_at,
@@ -412,15 +389,15 @@ class Job:
 
 
 @dataclass(frozen=True, slots=True)
-class JobDescriptionData:
-    """Serializable description of a ``Job``, produced by ``Job.description()``."""
+class JobData:
+    """Serializable description of a ``Step``, produced by ``Step.description()``."""
 
     id: str
-    type: JobType
+    type: StepKind
     started_at: str
     completed_at: str
-    status: JobStatus
-    inputs: tuple[SourceReference, ...]
+    status: StepStatus
+    inputs: tuple[Source, ...]
     outputs: tuple[str, ...]
     rationale: str
     model: str
@@ -449,7 +426,7 @@ class JobDescriptionData:
             "metadata": dict(self.metadata),
         }
 
-    def to_markdown_row(self) -> str:
+    def markdown(self) -> str:
         inputs_repr = ", ".join(ref.master_path for ref in self.inputs) or "—"
         outputs_repr = ", ".join(self.outputs) or "—"
         return (
@@ -474,8 +451,8 @@ class Run:
     model: str
     draft_model: str | None
 
-    def description(self) -> RunDescription:
-        return RunDescription(
+    def description(self) -> RunView:
+        return RunView(
             id=self.id,
             started_at=self.started_at,
             master_hash=self.master_hash,
@@ -486,7 +463,7 @@ class Run:
 
 
 @dataclass(frozen=True, slots=True)
-class RunDescription:
+class RunView:
     id: str
     started_at: str
     master_hash: str
@@ -503,16 +480,16 @@ class RunResult:
     total_input_tokens: int
     total_output_tokens: int
     retry_attempts: int
-    final_outcome: FinalOutcome
-    jobs: tuple[Job, ...]
+    final_outcome: Outcome
+    jobs: tuple[Step, ...]
 
     @property
-    def websearch_calls(self) -> tuple[Job, ...]:
+    def websearch_calls(self) -> tuple[Step, ...]:
         """Derived property: jobs of type ``WEBSEARCH``."""
-        return tuple(job_ for job_ in self.jobs if job_.type == JobType.WEBSEARCH)
+        return tuple(job_ for job_ in self.jobs if job_.type == StepKind.WEBSEARCH)
 
-    def describe(self) -> RunDescriptionExtended:
-        return RunDescriptionExtended(
+    def describe(self) -> RunFull:
+        return RunFull(
             run=self.run.description(),
             completed_at=self.completed_at,
             duration_seconds=self.duration_seconds,
@@ -525,15 +502,15 @@ class RunResult:
 
 
 @dataclass(frozen=True, slots=True)
-class RunDescriptionExtended:
-    run: RunDescription
+class RunFull:
+    run: RunView
     completed_at: str
     duration_seconds: float
     total_input_tokens: int
     total_output_tokens: int
     retry_attempts: int
-    final_outcome: FinalOutcome
-    jobs: tuple[JobDescriptionData, ...]
+    final_outcome: Outcome
+    jobs: tuple[JobData, ...]
 
 
 # ---------------------------------------------------------------------------
@@ -542,7 +519,7 @@ class RunDescriptionExtended:
 
 
 @dataclass(frozen=True, slots=True)
-class CoverLetterParagraph:
+class Paragraph:
     """A single paragraph in a cover letter."""
 
     text: str
@@ -555,14 +532,14 @@ class CoverLetter:
     """A tailored cover letter for a specific job description."""
 
     salutation: str
-    paragraphs: tuple[CoverLetterParagraph, ...]
+    paragraphs: tuple[Paragraph, ...]
     signoff: str
     sender_name: str
     recipient: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
-class PreflightReport:
+class Report:
     """Result of a Tailor preflight check (no LLM call)."""
 
     tokens_estimate: int
@@ -578,20 +555,20 @@ class PreflightReport:
 
 
 @dataclass(frozen=True, slots=True)
-class TailoredResume:
+class Tailored:
     """The tailored output plus full traceability."""
 
-    contact: ContactInformation
+    contact: Contact
     summary: str
-    skills: SkillsByCategory
+    skills: Skills
     experiences: tuple[Experience, ...]
     projects: tuple[Project, ...]
     education: tuple[Education, ...]
     awards: tuple[Award, ...]
-    dropped: tuple[DropReason, ...]
+    dropped: tuple[Reason, ...]
     rationale: str
-    grounding: tuple[GroundedCitation, ...]
-    jobs: tuple[Job, ...]
+    grounding: tuple[Citation, ...]
+    jobs: tuple[Step, ...]
     run_result: RunResult | None = None
 
     @property
@@ -599,10 +576,10 @@ class TailoredResume:
         """Canonical access to the run identity via ``run_result.run``.
 
         Raises:
-            ResumeTailoringError: If ``run_result`` was not set.
+            TailorError: If ``run_result`` was not set.
         """
         if self.run_result is None:
-            raise ResumeTailoringError("run_result not set on TailoredResume")
+            raise TailorError("run_result not set on Tailored")
         return self.run_result.run
 
 
@@ -612,49 +589,49 @@ class TailoredResume:
 
 
 @dataclass(frozen=True, slots=True)
-class JobEnvelope:
+class StepEnv:
     """Shared fields across all job types.
 
     Per AGENTS.md §980-993 (configuration objects over long parameter lists),
     the factory functions below accept only the envelope specific to their
-    kind plus a single ``JobEnvelope`` carrying the common metadata.
+    kind plus a single ``StepEnv`` carrying the common metadata.
     """
 
     model: str = ""
     tool_name: str | None = None
-    metadata: JobMetadata = field(default_factory=JobMetadata)
-    status: JobStatus = JobStatus.SUCCESS
+    metadata: StepMeta = field(default_factory=StepMeta)
+    status: StepStatus = StepStatus.SUCCESS
     started_at: str | None = None
     completed_at: str | None = None
     job_id: str | None = None
 
 
 def job(
-    kind: JobType,
-    inputs: tuple[SourceReference, ...] = (),
+    kind: StepKind,
+    inputs: tuple[Source, ...] = (),
     outputs: tuple[str, ...] = (),
     rationale: str = "",
-    envelope: JobEnvelope | None = None,
-) -> Job:
-    """Construct a generic ``Job`` from a kind + envelope.
+    envelope: StepEnv | None = None,
+) -> Step:
+    """Construct a generic ``Step`` from a kind + envelope.
 
     For most call sites, prefer one of the focused factories below
     (``job_tailor``, ``job_validate``, ``job_lookup``). Use this generic
     factory only for kinds that don't yet have a dedicated builder.
 
     Args:
-        kind: The pipeline stage or capability this Job represents.
+        kind: The pipeline stage or capability this Step represents.
         inputs: Source references consumed by this step.
         outputs: Stable identifiers of produced artefacts.
         rationale: One-sentence explanation of why this step ran.
         envelope: Shared metadata (model, status, timestamps, tool name).
 
     Returns:
-        A fully-populated ``Job`` with auto-generated id and timestamps.
+        A fully-populated ``Step`` with auto-generated id and timestamps.
     """
-    env = envelope or JobEnvelope()
+    env = envelope or StepEnv()
     timestamp = now()
-    return Job(
+    return Step(
         id=env.job_id if env.job_id is not None else new_uuid(),
         type=kind,
         started_at=env.started_at or timestamp,
@@ -673,12 +650,12 @@ def job_tailor(
     outputs: tuple[str, ...],
     rationale: str,
     *,
-    inputs: tuple[SourceReference, ...] = (),
-    envelope: JobEnvelope | None = None,
-) -> Job:
-    """Construct a TAILOR-kind Job."""
+    inputs: tuple[Source, ...] = (),
+    envelope: StepEnv | None = None,
+) -> Step:
+    """Construct a TAILOR-kind Step."""
     return job(
-        JobType.TAILOR,
+        StepKind.TAILOR,
         inputs=inputs,
         outputs=outputs,
         rationale=rationale,
@@ -687,14 +664,14 @@ def job_tailor(
 
 
 def job_validate(
-    kind: JobType,
+    kind: StepKind,
     outputs: tuple[str, ...],
     rationale: str,
     *,
-    inputs: tuple[SourceReference, ...] = (),
-    envelope: JobEnvelope | None = None,
-) -> Job:
-    """Construct a VALIDATE_*-kind Job.
+    inputs: tuple[Source, ...] = (),
+    envelope: StepEnv | None = None,
+) -> Step:
+    """Construct a VALIDATE_*-kind Step.
 
     Args:
         kind: Must be one of VALIDATE_GROUNDING, VALIDATE_STYLE,
@@ -708,12 +685,12 @@ def job_lookup(
     outputs: tuple[str, ...],
     rationale: str,
     *,
-    inputs: tuple[SourceReference, ...] = (),
-    envelope: JobEnvelope | None = None,
-) -> Job:
-    """Construct a LOOKUP-kind Job (read-only tool call)."""
-    env = envelope or JobEnvelope(tool_name=tool_name)
-    return job(JobType.LOOKUP, inputs=inputs, outputs=outputs, rationale=rationale, envelope=env)
+    inputs: tuple[Source, ...] = (),
+    envelope: StepEnv | None = None,
+) -> Step:
+    """Construct a LOOKUP-kind Step (read-only tool call)."""
+    env = envelope or StepEnv(tool_name=tool_name)
+    return job(StepKind.LOOKUP, inputs=inputs, outputs=outputs, rationale=rationale, envelope=env)
 
 
 __all__ = [
@@ -721,38 +698,36 @@ __all__ = [
     "AtsGate",
     "Award",
     "Bullet",
-    "ContactInformation",
+    "Contact",
     "CoverLetter",
-    "CoverLetterParagraph",
-    "JobEnvelope",
-    "PreflightReport",
-    "DropReason",
+    "Paragraph",
+    "StepEnv",
+    "Report",
+    "Reason",
     "Education",
     "Experience",
-    "FinalOutcome",
-    "GroundedCitation",
+    "Outcome",
+    "Citation",
     "HARD_GATES",
     "GateStatus",
     "GateTier",
     "Job",
-    "JobDescription",
-    "JobDescriptionData",
-    "JobMetadata",
-    "JobStatus",
-    "JobType",
+    "JobData",
+    "Step",
+    "StepMeta",
+    "StepStatus",
+    "StepKind",
     "KeywordTier",
-    "MasterResume",
+    "Master",
     "Project",
     "Run",
-    "RunDescription",
-    "RunDescriptionExtended",
+    "RunView",
+    "RunFull",
     "RunResult",
-    "SkillsByCategory",
-    "SourceDescription",
-    "SourceReference",
-    "StepType",
-    "TailoredResume",
-    "VoiceProfile",
-    "WebSearch",
+    "Skills",
+    "SourceView",
+    "Source",
+    "Tailored",
+    "Voice",
     "job",
 ]
