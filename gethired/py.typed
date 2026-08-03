@@ -1,0 +1,8 @@
+"""Marker file (PEP 561) declaring gethired ships inline type annotations.
+
+With this marker in place, downstream type checkers (mypy, pyright)
+will see gethired's type hints without requiring users to install
+stub packages.
+"""
+
+from __future__ import annotations
