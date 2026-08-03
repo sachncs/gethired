@@ -593,7 +593,3 @@ __all__ = [
     "plagiarism_check",
     "style_check",
 ]
-
-
-FINAL_TAILORED_TO_TEXT = tailored_to_text
-FINAL_GROUNDING = grounding_check

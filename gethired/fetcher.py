@@ -10,8 +10,9 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import time
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Final
@@ -24,9 +25,7 @@ from gethired.exceptions import JobDescriptionRetrievalError
 from gethired.models import JobDescription
 from gethired.observability import step_logger
 
-USER_AGENT: Final[str] = (
-    "Mozilla/5.0 (compatible; gethired/0.1; +https://github.com/gethired)"
-)
+USER_AGENT: Final[str] = "Mozilla/5.0 (compatible; gethired/0.1; +https://github.com/gethired)"
 FETCH_TIMEOUT_SECONDS: Final[float] = 30.0
 
 
@@ -101,6 +100,8 @@ class JobDescriptionRetriever:
                     error=str(exc),
                     backoff_seconds=backoff_seconds,
                 )
+                if attempt < self._max_attempts:
+                    time.sleep(backoff_seconds)
         raise JobDescriptionRetrievalError(
             f"Failed to fetch {url} after {self._max_attempts} attempts: {last_exc}"
         )
@@ -126,7 +127,7 @@ class JobDescriptionRetriever:
 
     def __save_cache(self, entry: CacheEntry) -> None:
         path = self.__cache_path(entry.url_hash)
-        path.write_text(json.dumps(entry.__dict__, indent=2))
+        path.write_text(json.dumps(asdict(entry), indent=2))
 
     def __is_cache_fresh(self, entry: CacheEntry) -> bool:
         try:
@@ -211,14 +212,77 @@ def build_from_text(text: str, url: str, content_hash: str) -> JobDescription:
 
 KEYWORD_STOPWORDS: Final[frozenset[str]] = frozenset(
     {
-        "a", "an", "and", "are", "as", "at", "be", "by", "for", "from",
-        "has", "have", "in", "is", "it", "its", "of", "on", "or", "our",
-        "that", "the", "their", "they", "this", "to", "was", "were", "will",
-        "with", "you", "your", "we", "us", "i", "me", "my", "he", "she",
-        "his", "her", "them", "these", "those", "any", "all", "can", "may",
-        "should", "would", "could", "do", "does", "did", "been", "being",
-        "also", "more", "most", "such", "than", "then", "into", "about",
-        "over", "under", "between", "through", "during", "before", "after",
+        "a",
+        "an",
+        "and",
+        "are",
+        "as",
+        "at",
+        "be",
+        "by",
+        "for",
+        "from",
+        "has",
+        "have",
+        "in",
+        "is",
+        "it",
+        "its",
+        "of",
+        "on",
+        "or",
+        "our",
+        "that",
+        "the",
+        "their",
+        "they",
+        "this",
+        "to",
+        "was",
+        "were",
+        "will",
+        "with",
+        "you",
+        "your",
+        "we",
+        "us",
+        "i",
+        "me",
+        "my",
+        "he",
+        "she",
+        "his",
+        "her",
+        "them",
+        "these",
+        "those",
+        "any",
+        "all",
+        "can",
+        "may",
+        "should",
+        "would",
+        "could",
+        "do",
+        "does",
+        "did",
+        "been",
+        "being",
+        "also",
+        "more",
+        "most",
+        "such",
+        "than",
+        "then",
+        "into",
+        "about",
+        "over",
+        "under",
+        "between",
+        "through",
+        "during",
+        "before",
+        "after",
     }
 )
 KEYWORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]{1,}")

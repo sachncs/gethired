@@ -6,15 +6,6 @@ codebase should be defined here with a rationale in the docstring.
 
 from __future__ import annotations
 
-MAX_RETRIES: int = 2
-"""Maximum number of retry attempts after the first agent run."""
-
-MAX_VOICE_DEVIATION: float = 0.6
-"""Maximum allowed voice profile deviation score (0 = identical, 1 = fully divergent)."""
-
-MAX_BULLET_LENGTH_RATIO: float = 2.0
-"""Tailored bullets may not exceed this multiple of the master bullet length."""
-
 MAX_PAGES: int = 1
 """Maximum resume length in pages for candidates with under ten years of experience."""
 
@@ -23,9 +14,6 @@ MAX_WEBSEARCH_PER_RUN: int = 3
 
 MODEL_ENV_VAR: str = "MODEL"
 """Environment variable name used to read the default model identifier."""
-
-DRAFT_MODEL_ENV_VAR: str = "DRAFT_MODEL"
-"""Environment variable name used to read the optional draft model identifier."""
 
 WEBSEARCH_PROVIDER_ENV_VAR: str = "WEBSEARCH_PROVIDER"
 """Environment variable name used to read the WebSearch provider name."""

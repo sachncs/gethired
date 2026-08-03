@@ -151,9 +151,7 @@ class Writer:
                 "(or ANTHROPIC_API_KEY / OPENAI_API_KEY), or pass "
                 "model_instance=TestModel() for offline tests."
             )
-        return self.__llm_tailor(
-            master, analysis, voice, previous_violations, on_progress
-        )
+        return self.__llm_tailor(master, analysis, voice, previous_violations, on_progress)
 
     # ------------------------------------------------------------------
     # LLM-backed tailoring
@@ -214,9 +212,7 @@ class Writer:
 
         tailored = apply_writer_output(master, writer_output, analysis)
         model_name = (
-            getattr(model, "model_name", None)
-            if not isinstance(model, str)
-            else str(model)
+            getattr(model, "model_name", None) if not isinstance(model, str) else str(model)
         )
         all_jobs = tool_jobs + (
             job_tailor(
@@ -282,9 +278,7 @@ class Writer:
                 return {}
 
         @agent.tool
-        async def lookup_project(
-            ctx: RunContext[WriterDeps], name: str
-        ) -> dict[str, Any]:
+        async def lookup_project(ctx: RunContext[WriterDeps], name: str) -> dict[str, Any]:
             """Look up a project in the master by name."""
             master = ctx.deps.master
             lowered = name.lower()
@@ -330,20 +324,10 @@ class Writer:
             }
 
     # ---------------------------------------------------------------------------
+
+
 # Helpers (module-level)
 # ---------------------------------------------------------------------------
-
-
-def rank_experiences(master: MasterResume, analysis: DescriptionAnalysis):
-    must_have = {kw.lower() for kw in analysis.must_have_skills}
-    nice = {kw.lower() for kw in analysis.nice_to_have_skills}
-    scored: list[tuple[int, int, object]] = []
-    for idx, exp in enumerate(master.experiences):
-        text = " ".join((exp.role, exp.company, *(b.text for b in exp.bullets))).lower()
-        score = sum(2 for kw in must_have if kw in text) + sum(1 for kw in nice if kw in text)
-        scored.append((score, -idx, exp))
-    scored.sort(key=lambda t: (-t[0], t[1]))
-    return tuple(item[2] for item in scored)
 
 
 def reorder_skills(skills: SkillsByCategory, mirror_keywords):
@@ -387,9 +371,8 @@ projects, dates, numbers, or skills."""
 def rubric_dynamic_instruction(previous_violations: tuple[str, ...]) -> str:
     if not previous_violations:
         return ""
-    return (
-        "PRIOR VIOLATIONS TO AVOID (retry constraints):\n"
-        + "\n".join(f"- {v}" for v in previous_violations)
+    return "PRIOR VIOLATIONS TO AVOID (retry constraints):\n" + "\n".join(
+        f"- {v}" for v in previous_violations
     )
 
 
@@ -464,6 +447,40 @@ def jobs_from_tool_calls(result: Any) -> tuple[Job, ...]:
     return tuple(jobs)
 
 
+def rewrite_bullets(
+    bullets: tuple[Bullet, ...],
+    container_path: str,
+    tailored_bullets: dict[str, list[str]],
+    dropped: frozenset[str],
+) -> tuple[list[Bullet], list[GroundedCitation]]:
+    """Rewrite or drop bullets in a single experience/project container.
+
+    ``container_path`` is the master path prefix without the bullet index, e.g.
+    ``"experiences[2].bullets"``. Returns the surviving bullets plus the
+    grounding citations for any rewritten text.
+    """
+    rewritten: list[Bullet] = []
+    grounding: list[GroundedCitation] = []
+    for b_idx, bullet in enumerate(bullets):
+        master_path = f"{container_path}[{b_idx}]"
+        if master_path in dropped:
+            continue
+        if master_path in tailored_bullets:
+            candidates = tailored_bullets[master_path]
+            rewritten.append(Bullet(text=candidates[0] if candidates else bullet.text))
+            grounding.append(
+                GroundedCitation(
+                    tailored_path=master_path,
+                    master_path=master_path,
+                    verbatim_span=bullet.text,
+                    job_id="writer-agent",
+                )
+            )
+        else:
+            rewritten.append(bullet)
+    return rewritten, grounding
+
+
 def apply_writer_output(
     master: MasterResume,
     output: WriterOutput,
@@ -475,27 +492,21 @@ def apply_writer_output(
     ``tailored_bullets`` map of master paths → rewritten bullet text.
     This function applies those rewrites onto the master, preserving
     canonical fields (company, dates, urls, contact, education, awards).
+    Entries listed in ``output.dropped`` are removed from the result.
     """
+    dropped = frozenset(output.dropped)
     new_experiences: list[Experience] = []
     new_grounding: list[GroundedCitation] = []
     for idx, exp in enumerate(master.experiences):
-        rewritten_bullets: list[Bullet] = []
-        for b_idx, bullet in enumerate(exp.bullets):
-            master_path = f"experiences[{idx}].bullets[{b_idx}]"
-            if master_path in output.tailored_bullets:
-                candidates = output.tailored_bullets[master_path]
-                new_text = candidates[0] if candidates else bullet.text
-                rewritten_bullets.append(Bullet(text=new_text))
-                new_grounding.append(
-                    GroundedCitation(
-                        tailored_path=master_path,
-                        master_path=master_path,
-                        verbatim_span=bullet.text,
-                        job_id="writer-agent",
-                    )
-                )
-            else:
-                rewritten_bullets.append(bullet)
+        if f"experiences[{idx}]" in dropped:
+            continue
+        rewritten_bullets, bullet_grounding = rewrite_bullets(
+            exp.bullets,
+            f"experiences[{idx}].bullets",
+            output.tailored_bullets,
+            dropped,
+        )
+        new_grounding.extend(bullet_grounding)
         new_experiences.append(
             Experience(
                 role=exp.role,
@@ -508,23 +519,15 @@ def apply_writer_output(
 
     new_projects: list[Project] = []
     for p_idx, project in enumerate(master.projects):
-        rewritten_bullets = []
-        for b_idx, bullet in enumerate(project.bullets):
-            master_path = f"projects[{p_idx}].bullets[{b_idx}]"
-            if master_path in output.tailored_bullets:
-                candidates = output.tailored_bullets[master_path]
-                new_text = candidates[0] if candidates else bullet.text
-                rewritten_bullets.append(Bullet(text=new_text))
-                new_grounding.append(
-                    GroundedCitation(
-                        tailored_path=master_path,
-                        master_path=master_path,
-                        verbatim_span=bullet.text,
-                        job_id="writer-agent",
-                    )
-                )
-            else:
-                rewritten_bullets.append(bullet)
+        if f"projects[{p_idx}]" in dropped:
+            continue
+        rewritten_bullets, bullet_grounding = rewrite_bullets(
+            project.bullets,
+            f"projects[{p_idx}].bullets",
+            output.tailored_bullets,
+            dropped,
+        )
+        new_grounding.extend(bullet_grounding)
         new_projects.append(
             Project(
                 name=project.name,
@@ -533,7 +536,7 @@ def apply_writer_output(
             )
         )
 
-    dropped = tuple(
+    dropped_reasons = tuple(
         DropReason(
             item_id=path,
             reason=f"Marked for drop by writer agent: {output.rationale[:80]}",
@@ -549,7 +552,7 @@ def apply_writer_output(
         projects=tuple(new_projects),
         education=master.education,
         awards=master.awards,
-        dropped=dropped,
+        dropped=dropped_reasons,
         rationale=output.rationale,
         grounding=tuple(new_grounding),
         jobs=(),

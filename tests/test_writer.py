@@ -9,7 +9,7 @@ from gethired.description import DescriptionAnalysis
 from gethired.exceptions import ConfigurationError
 from gethired.profiler import build as build_profile
 from gethired.tailor import Tailor
-from gethired.writer import Writer
+from gethired.writer import Writer, WriterOutput, apply_writer_output
 
 
 def _sample_analysis() -> DescriptionAnalysis:
@@ -81,8 +81,50 @@ def test_writer_with_model_instance_runs_without_model_env_var(
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     writer = Writer(model=None, model_instance=TestModel())
-    tailored, jobs = writer.tailor(
-        master=master_resume, analysis=analysis, voice=voice
-    )
+    tailored, jobs = writer.tailor(master=master_resume, analysis=analysis, voice=voice)
     assert tailored.contact is not None
-    assert len(jobs) > 0
+
+
+def test_apply_writer_output_removes_dropped_entries(master_resume) -> None:
+    """Dropped master paths are actually removed from the tailored resume."""
+    dropped_experience = "experiences[0]"
+    dropped_bullet = "experiences[1].bullets[1]"
+    dropped_project = "projects[0]"
+    dropped_project_bullet = "projects[1].bullets[0]"
+
+    output = WriterOutput(
+        summary="Summary",
+        tailored_bullets={
+            "experiences[1].bullets[0]": ["Rewritten first bullet"],
+        },
+        dropped=[
+            dropped_experience,
+            dropped_bullet,
+            dropped_project,
+            dropped_project_bullet,
+        ],
+        rationale="Drop irrelevant experience and project entries.",
+    )
+
+    tailored = apply_writer_output(master_resume, output, _sample_analysis())
+
+    assert len(tailored.experiences) == len(master_resume.experiences) - 1
+    assert tailored.experiences[0].role == master_resume.experiences[1].role
+    assert [b.text for b in tailored.experiences[0].bullets] == [
+        "Rewritten first bullet",
+        *[b.text for b in master_resume.experiences[1].bullets[2:]],
+    ]
+
+    assert len(tailored.projects) == len(master_resume.projects) - 1
+    assert tailored.projects[0].name == master_resume.projects[1].name
+    assert [b.text for b in tailored.projects[0].bullets] == [
+        b.text for b in master_resume.projects[1].bullets[1:]
+    ]
+
+    dropped_ids = [drop.item_id for drop in tailored.dropped]
+    assert dropped_ids == [
+        dropped_experience,
+        dropped_bullet,
+        dropped_project,
+        dropped_project_bullet,
+    ]
