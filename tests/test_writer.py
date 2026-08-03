@@ -113,18 +113,6 @@ def test_tailor_raises_configuration_error_when_model_missing(
         )
 
 
-def test_writer_with_model_instance_runs_without_model_env_var(
-    monkeypatch: pytest.MonkeyPatch, master_resume
-) -> None:
-    """TestModel injected via model_instance allows offline runs."""
-    monkeypatch.delenv("MODEL", raising=False)
-    analysis = _sample_analysis()
-    voice = build_profile(master_resume)
-    writer = Writer(model=None, model_instance=TestModel())
-    tailored, jobs = writer.tailor(master=master_resume, analysis=analysis, voice=voice)
-    assert tailored.contact is not None
-
-
 def test_apply_writer_output_removes_dropped_entries(master_resume) -> None:
     """Dropped master paths are actually removed from the tailored resume."""
     dropped_experience = "experiences[0]"

@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import json
+
 from pydantic_ai.models.test import TestModel
 
 from gethired.description import consolidate
@@ -106,7 +108,5 @@ def test_tailor_run_with_multiple_jds_persists_artifacts(master_resume, tmp_path
     assert (run_dir / "tailored.txt").exists()
     assert (run_dir / "match_report.md").exists()
     # The on-disk JSON must round-trip to the same model
-    import json
-
     on_disk = json.loads((run_dir / "tailored.json").read_text())
     assert on_disk["contact"]["name"] == result.contact.name

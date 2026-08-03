@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import re
+
 from gethired.cover_letter import (
     compose,
     markdown,
@@ -43,8 +45,6 @@ def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
     matching. We also verify that the keyword appears as a distinct word
     (not as a substring of another word).
     """
-    import re
-
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)

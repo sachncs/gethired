@@ -9,6 +9,7 @@ artefact generation.
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
 
 import pytest
@@ -51,7 +52,6 @@ def test_show_master_existing_file(
     round-trips the parsed master. The show command looks at a fixed
     relative path, so we change directory to the ingest target.
     """
-    import os
     data_dir = tmp_path / "data"
     data_dir.mkdir()
     out = data_dir / "master.json"

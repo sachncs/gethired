@@ -15,6 +15,8 @@ from pydantic_ai.models.test import TestModel
 
 from gethired.models import Job
 from gethired.parser import parse_tex as tex
+from gethired.renderer import tex as render_tex
+from gethired.renderer import text as render_text
 from gethired.tailor import Tailor
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
@@ -118,12 +120,12 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
         matching = [j for j in result.jobs if j.type.value == kind]
         assert matching, f"no {kind} step found in trail"
     # 4. The rendered output must be non-empty
-    from gethired.renderer import text as render_text
+
 
     txt = render_text(result)
     assert master.contact.name in txt, "rendered text must contain master name"
     # 5. The TeX source must contain standard section headings
-    from gethired.renderer import tex as render_tex
+
 
     tex_source = render_tex(result)
     assert "\\section{Summary}" in tex_source

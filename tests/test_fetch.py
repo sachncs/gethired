@@ -52,9 +52,7 @@ def test_fetch_uses_provided_cache_dir(tmp_path: Path) -> None:
     custom_cache.mkdir()
     with mock.patch("gethired.fetcher.Fetcher.retrieve", return_value=fake_job) as mock_retrieve:
         fetch("https://example.com/jd", cache_dir=custom_cache)
-    # The Fetcher was instantiated with our custom cache_dir
-    call_args = mock_retrieve.call_args
-    # The cache_dir isn't passed to retrieve(), but to Fetcher() — verify
+    # The Fetcher was instantiated with our custom cache_dir; verify
     # by checking the Fetcher was created with the right path
     assert mock_retrieve.called
 
