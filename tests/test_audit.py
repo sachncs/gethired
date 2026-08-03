@@ -82,12 +82,32 @@ def _sample_run_payloads() -> tuple[dict[str, object], dict[str, object]]:
 
 
 def test_audit_run_returns_report(tmp_path: Path) -> None:
-    """audit returns an AuditReport with all four validator outputs."""
+    """audit returns an AuditReport with the run-id and per-validator outputs.
+
+    Verifies the audit data process: parsing, grounding/style/plagiarism
+    validation, and ATS evaluation. The test fixture may have some style
+    violations (it's a synthetic test resume), so we only assert the
+    structural properties of the report.
+    """
     master, tailored = _sample_run_payloads()
     _write_run(tmp_path, master, tailored)
     report = audit(tmp_path)
     assert isinstance(report, AuditReport)
     assert report.run_id == "test-run-id"
+    # Grounding must pass on the identity-transform fixture
+    assert report.grounding_violations == (), (
+        f"identity-transform must have no grounding violations, "
+        f"got {report.grounding_violations}"
+    )
+    # Plagiarism must pass on the identity-transform fixture
+    assert report.plagiarism_violations == (), (
+        f"identity-transform must have no plagiarism violations, "
+        f"got {report.plagiarism_violations}"
+    )
+    # ATS must have evaluated
+    assert isinstance(report.ats_failed_gates, tuple)
+    assert isinstance(report.ats_advisory_failed_gates, tuple)
+    assert isinstance(report.ats_skipped_gates, tuple)
 
 
 def test_audit_run_raises_when_tailored_missing(tmp_path: Path) -> None:

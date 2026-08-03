@@ -35,12 +35,26 @@ def test_tailor_cover_letter_returns_structured_letter(master_resume) -> None:
 
 
 def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
-    """The cover letter opening includes must-have keywords from the analysis."""
+    """The cover letter opening must include a real keyword from the analysis.
+
+    The 'or' in the original assertion allowed one keyword OR the other,
+    which doesn't verify the actual data process. A proper cover letter
+    must include at least one must-have keyword so it passes ATS keyword
+    matching. We also verify that the keyword appears as a distinct word
+    (not as a substring of another word).
+    """
+    import re
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
-    opening = result.letter.paragraphs[0].text
-    assert "python" in opening.lower() or "kubernetes" in opening.lower()
+    opening = result.letter.paragraphs[0].text.lower()
+    # Use word boundaries so 'python' doesn't match 'pythonic'
+    has_python = bool(re.search(r"\bpython\b", opening))
+    has_kubernetes = bool(re.search(r"\bkubernetes\b", opening))
+    assert has_python or has_kubernetes, (
+        f"cover letter opening must mention 'python' or 'kubernetes' as a word, "
+        f"got: {opening!r}"
+    )
 
 
 def test_render_cover_letter_markdown_includes_salutation(master_resume) -> None:

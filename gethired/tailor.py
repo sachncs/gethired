@@ -130,6 +130,7 @@ class Tailor:
         self.tailored_dir = Path(tailored_dir)
         self.cache_dir = Path(data_dir) / "jd_cache"
         self.master_json = Path(data_dir) / "master.json"
+        self.cached_master: Master | None = None
         self.logger = logger("tailor", debug=debug)
 
     # ------------------------------------------------------------------
@@ -370,6 +371,13 @@ class Tailor:
         self.master_json.parent.mkdir(parents=True, exist_ok=True)
         self.master_json.write_text(render_json(snapshot(master)))
         return master
+
+    @property
+    def master(self) -> Master:
+        """The parsed master resume (read-only). Loads on first access."""
+        if self.cached_master is None:
+            self.cached_master = self.__load_master()
+        return self.cached_master
 
     def __load_jds(self) -> tuple[Job, ...]:
         if isinstance(self.jd_input, Job):

@@ -46,6 +46,12 @@ SAMPLE_JD = Job(
 
 
 def test_end_to_end_pipeline_runs() -> None:
+    """The full pipeline produces a TailoredResume with persisted artefacts.
+
+    Verifies the on-disk data process: parsing, JD input, run-id
+    generation, and the persistence of all four artefacts. Each artefact
+    must contain non-empty content (not just be a 0-byte file).
+    """
     tailor = Tailor(
         resume="resume.tex",
         job_description=SAMPLE_JD,
@@ -54,12 +60,22 @@ def test_end_to_end_pipeline_runs() -> None:
         model_instance=TestModel(),
     )
     result = tailor.run()
-    assert result.run.id
+    # Run-id must be a UUID
+    assert len(result.run.id) == 36, f"run.id must be UUID-shaped, got {result.run.id!r}"
+    # The master's contact must round-trip
+    assert result.contact.name == "Placeholder Name", (
+        f"contact.name not preserved: {result.contact.name!r}"
+    )
+    assert result.contact.email == "placeholder@example.com"
+    # All four artefacts must be persisted with non-empty content
     run_dir = Path("tailored") / result.run.id
-    assert (run_dir / "tailored.tex").exists()
-    assert (run_dir / "tailored.txt").exists()
-    assert (run_dir / "tailored.json").exists()
-    assert (run_dir / "match_report.md").exists()
+    for name in ("tailored.tex", "tailored.txt", "tailored.json", "match_report.md"):
+        path = run_dir / name
+        assert path.exists(), f"missing artefact: {path}"
+        assert path.stat().st_size > 0, f"empty artefact: {path}"
+    # The match report must reference the run
+    report_text = (run_dir / "match_report.md").read_text()
+    assert result.run.id in report_text, "match_report.md must reference the run-id"
 
 
 def test_end_to_end_atg_gates_all_evaluated() -> None:

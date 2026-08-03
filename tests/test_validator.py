@@ -59,12 +59,25 @@ def _make_tailored(master: Master) -> Tailored:
 
 
 def test_grounding_passes_for_identity_transform(master_resume) -> None:
+    """An identity-transform tailored resume produces zero grounding violations.
+
+    When every skill, number, and company in the tailored resume comes
+    directly from the master, grounding() must return an empty tuple.
+    """
     tailored = _make_tailored(master_resume)
     violations = grounding(tailored, master_resume)
-    assert violations == ()
+    assert violations == (), (
+        f"identity transform must not produce violations, got {violations}"
+    )
 
 
 def test_grounding_detects_invented_skill(master_resume) -> None:
+    """Grounding flags a skill that does not appear anywhere in the master.
+
+    Verifies the data safety property: no fabricated skills can pass
+    grounding. The violation path must point to the tailored.skills
+    category and the detail must name the invented skill.
+    """
     tailored = _make_tailored(master_resume)
     fake = Tailored(
         contact=tailored.contact,
@@ -85,10 +98,23 @@ def test_grounding_detects_invented_skill(master_resume) -> None:
         run_result=tailored.run_result,
     )
     violations = grounding(fake, master_resume)
-    assert any(v.detail.startswith("Skill 'QuantumScript'") for v in violations)
+    skill_violations = [v for v in violations if v.detail.startswith("Skill 'QuantumScript'")]
+    assert skill_violations, (
+        f"grounding() did not flag the fabricated skill 'QuantumScript'; "
+        f"got violations: {violations}"
+    )
+    # The path must point at the skills tree
+    assert skill_violations[0].path.startswith("skills"), (
+        f"expected violation path to start with 'skills', got {skill_violations[0].path!r}"
+    )
 
 
 def test_grounding_detects_invented_number(master_resume) -> None:
+    """Grounding flags a numeric claim that does not appear in the master.
+
+    The invented number 99999999 is not present in any master bullet, so
+    grounding() must produce a violation naming the specific number.
+    """
     tailored = _make_tailored(master_resume)
     fake = Tailored(
         contact=master_resume.contact,
@@ -105,7 +131,11 @@ def test_grounding_detects_invented_number(master_resume) -> None:
         run_result=tailored.run_result,
     )
     violations = grounding(fake, master_resume)
-    assert any("99999999" in v.detail for v in violations)
+    number_violations = [v for v in violations if "99999999" in v.detail]
+    assert number_violations, (
+        f"grounding() did not flag the fabricated number 99999999; "
+        f"got violations: {violations}"
+    )
 
 
 def test_style_detects_banned_word(master_resume) -> None:
@@ -191,11 +221,42 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
 
 
 def test_ats_check_produces_full_report(master_resume) -> None:
+    """ats() evaluates all 12 gates with valid status values and tier annotations.
+
+    Verifies the data process: every gate must produce a result, the result
+    must have a valid status (pass/fail/skip), and the gate's tier must be
+    set. Without a PDF, 4 PDF-dependent gates should be SKIP and the rest
+    should evaluate against the test inputs.
+    """
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
     t2 = text(tailored)
     report = ats(tailored, t, None, t2, ())
+
+    # Every gate produces a result
     assert len(report.results) == len(list(AtsGate))
+    # Every result has a valid status and a tier
+    valid_statuses = {GateStatus.PASS, GateStatus.FAIL, GateStatus.SKIP}
+    expected_gates = {r.gate for r in report.results}
+    assert expected_gates == set(AtsGate), (
+        f"missing gates: {set(AtsGate) - expected_gates}"
+    )
+    for result in report.results:
+        assert result.status in valid_statuses, (
+            f"gate {result.gate.value} has invalid status {result.status}"
+        )
+        assert result.gate.tier in {GateTier.HARD, GateTier.ADVISORY}
+    # With pdf_path=None, PDF-dependent gates must be SKIP
+    pdf_gates = {
+        AtsGate.PDF_COMPILES,
+        AtsGate.PDF_TEXT_EXTRACTABLE,
+        AtsGate.PDF_TEXT_MATCHES_TXT,
+        AtsGate.LENGTH_WITHIN_LIMIT,
+    }
+    skipped = {r.gate for r in report.results if r.status is GateStatus.SKIP}
+    assert pdf_gates.issubset(skipped), (
+        f"expected {pdf_gates - skipped} to be SKIP without a PDF"
+    )
 
 
 def test_ats_section_headings_pass_for_master(master_resume) -> None:

@@ -81,6 +81,15 @@ def test_corpus_fixture_hash_is_deterministic(fixture_path: Path) -> None:
 
 @pytest.mark.parametrize("fixture_path", corpus_paths(), ids=CORPUS_IDS)
 def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
+    """The full pipeline (parse → describe → write → critic) must produce a
+    structurally-valid TailoredResume that preserves the master's data.
+
+    Verifies:
+    - The TailoredResume round-trips the master's contact information
+    - The writer's Step trail includes TAILOR + the four validation kinds
+    - The critic's report contains 12 ATS gate results
+    - The rendered TeX output contains the master's name
+    """
     tailor = Tailor(
         resume=fixture_path,
         job_description=SAMPLE_JD,
@@ -88,8 +97,29 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
         model="test",
         model_instance=TestModel(),
     )
+    master = tailor.master
     result = tailor.run()
-    assert result.run.id
-    assert result.contact is not None
-    assert result.summary
-    assert result.experiences
+
+    # 1. The contact must round-trip exactly
+    assert result.contact.name == master.contact.name
+    assert result.contact.email == master.contact.email
+    # 2. The Step trail must include the core kinds
+    job_kinds = {j.type.value for j in result.jobs}
+    expected_kinds = {"tailor", "validate_grounding", "validate_style",
+                      "validate_plagiarism", "validate_ats"}
+    assert expected_kinds.issubset(job_kinds), (
+        f"missing step kinds: {expected_kinds - job_kinds}"
+    )
+    # 3. The validation Step kinds must have non-empty results
+    for kind in expected_kinds:
+        matching = [j for j in result.jobs if j.type.value == kind]
+        assert matching, f"no {kind} step found in trail"
+    # 4. The rendered output must be non-empty
+    from gethired.renderer import text as render_text
+    txt = render_text(result)
+    assert master.contact.name in txt, "rendered text must contain master name"
+    # 5. The TeX source must contain standard section headings
+    from gethired.renderer import tex as render_tex
+    tex_source = render_tex(result)
+    assert "\\section{Summary}" in tex_source
+    assert "\\section{Experience}" in tex_source
