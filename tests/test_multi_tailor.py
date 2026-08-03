@@ -82,9 +82,7 @@ def test_tailor_with_multiple_jds_consolidates_analysis() -> None:
         assert skill in consolidated.keywords
 
 
-def test_tailor_run_with_multiple_jds_persists_artifacts(
-    master_resume, tmp_path
-) -> None:
+def test_tailor_run_with_multiple_jds_persists_artifacts(master_resume, tmp_path) -> None:
     """Multi-JD run produces a single run-dir with all expected files.
 
     Verifies the on-disk data process: parsing, JD input, run-id
@@ -109,5 +107,6 @@ def test_tailor_run_with_multiple_jds_persists_artifacts(
     assert (run_dir / "match_report.md").exists()
     # The on-disk JSON must round-trip to the same model
     import json
+
     on_disk = json.loads((run_dir / "tailored.json").read_text())
     assert on_disk["contact"]["name"] == result.contact.name

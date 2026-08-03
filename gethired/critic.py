@@ -12,6 +12,7 @@ from gethired.constants import QUANTIFY
 from gethired.models import (
     Job,
     Master,
+    Step,
     StepEnv,
     StepKind,
     Tailored,
@@ -43,13 +44,13 @@ class Critic:
         txt_source: str,
         pdf_path: Path | None,
         quantification_threshold: float = QUANTIFY,
-    ) -> tuple[AtsReport, tuple[Job, ...]]:
-        """Run all four validators and emit Job records.
+    ) -> tuple[AtsReport, tuple[Step, ...]]:
+        """Run all four validators and emit Step records.
 
         Returns:
             Tuple of ``(AtsReport, jobs)``.
         """
-        jobs: list[Job] = []
+        jobs: list[Step] = []
 
         jobs.append(
             job_validate(

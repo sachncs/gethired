@@ -322,7 +322,9 @@ def extract_awards(body: str) -> tuple[Award, ...]:
         if not date:
             year_match = SINGLE_YEAR_RE.search(block)
             date = year_match.group(0) if year_match else ""
-        description_lines = [clean(strip_bullet(line)) for line in lines if BULLET_PREFIX_RE.match(line)]
+        description_lines = [
+            clean(strip_bullet(line)) for line in lines if BULLET_PREFIX_RE.match(line)
+        ]
         awards.append(
             Award(
                 title=clean(title),

@@ -96,13 +96,11 @@ def test_audit_run_returns_report(tmp_path: Path) -> None:
     assert report.run_id == "test-run-id"
     # Grounding must pass on the identity-transform fixture
     assert report.grounding_violations == (), (
-        f"identity-transform must have no grounding violations, "
-        f"got {report.grounding_violations}"
+        f"identity-transform must have no grounding violations, got {report.grounding_violations}"
     )
     # Plagiarism must pass on the identity-transform fixture
     assert report.plagiarism_violations == (), (
-        f"identity-transform must have no plagiarism violations, "
-        f"got {report.plagiarism_violations}"
+        f"identity-transform must have no plagiarism violations, got {report.plagiarism_violations}"
     )
     # ATS must have evaluated
     assert isinstance(report.ats_failed_gates, tuple)

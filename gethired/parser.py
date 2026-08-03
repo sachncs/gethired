@@ -459,7 +459,7 @@ def text(text: str) -> Master:
         ParseError: When a required contact field is missing.
     """
     if "\\documentclass" in text or "\\begin{document}" in text:
-        return _tex(text)
+        return tex(text)
     return plain(text)
 
 

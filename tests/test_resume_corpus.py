@@ -105,21 +105,26 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
     assert result.contact.email == master.contact.email
     # 2. The Step trail must include the core kinds
     job_kinds = {j.type.value for j in result.jobs}
-    expected_kinds = {"tailor", "validate_grounding", "validate_style",
-                      "validate_plagiarism", "validate_ats"}
-    assert expected_kinds.issubset(job_kinds), (
-        f"missing step kinds: {expected_kinds - job_kinds}"
-    )
+    expected_kinds = {
+        "tailor",
+        "validate_grounding",
+        "validate_style",
+        "validate_plagiarism",
+        "validate_ats",
+    }
+    assert expected_kinds.issubset(job_kinds), f"missing step kinds: {expected_kinds - job_kinds}"
     # 3. The validation Step kinds must have non-empty results
     for kind in expected_kinds:
         matching = [j for j in result.jobs if j.type.value == kind]
         assert matching, f"no {kind} step found in trail"
     # 4. The rendered output must be non-empty
     from gethired.renderer import text as render_text
+
     txt = render_text(result)
     assert master.contact.name in txt, "rendered text must contain master name"
     # 5. The TeX source must contain standard section headings
     from gethired.renderer import tex as render_tex
+
     tex_source = render_tex(result)
     assert "\\section{Summary}" in tex_source
     assert "\\section{Experience}" in tex_source

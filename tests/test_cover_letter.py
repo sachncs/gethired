@@ -44,6 +44,7 @@ def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
     (not as a substring of another word).
     """
     import re
+
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     result = compose(master_resume, analysis, voice)
@@ -52,8 +53,7 @@ def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
     has_python = bool(re.search(r"\bpython\b", opening))
     has_kubernetes = bool(re.search(r"\bkubernetes\b", opening))
     assert has_python or has_kubernetes, (
-        f"cover letter opening must mention 'python' or 'kubernetes' as a word, "
-        f"got: {opening!r}"
+        f"cover letter opening must mention 'python' or 'kubernetes' as a word, got: {opening!r}"
     )
 
 

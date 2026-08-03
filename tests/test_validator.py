@@ -66,9 +66,7 @@ def test_grounding_passes_for_identity_transform(master_resume) -> None:
     """
     tailored = _make_tailored(master_resume)
     violations = grounding(tailored, master_resume)
-    assert violations == (), (
-        f"identity transform must not produce violations, got {violations}"
-    )
+    assert violations == (), f"identity transform must not produce violations, got {violations}"
 
 
 def test_grounding_detects_invented_skill(master_resume) -> None:
@@ -133,8 +131,7 @@ def test_grounding_detects_invented_number(master_resume) -> None:
     violations = grounding(fake, master_resume)
     number_violations = [v for v in violations if "99999999" in v.detail]
     assert number_violations, (
-        f"grounding() did not flag the fabricated number 99999999; "
-        f"got violations: {violations}"
+        f"grounding() did not flag the fabricated number 99999999; got violations: {violations}"
     )
 
 
@@ -238,9 +235,7 @@ def test_ats_check_produces_full_report(master_resume) -> None:
     # Every result has a valid status and a tier
     valid_statuses = {GateStatus.PASS, GateStatus.FAIL, GateStatus.SKIP}
     expected_gates = {r.gate for r in report.results}
-    assert expected_gates == set(AtsGate), (
-        f"missing gates: {set(AtsGate) - expected_gates}"
-    )
+    assert expected_gates == set(AtsGate), f"missing gates: {set(AtsGate) - expected_gates}"
     for result in report.results:
         assert result.status in valid_statuses, (
             f"gate {result.gate.value} has invalid status {result.status}"
@@ -254,9 +249,7 @@ def test_ats_check_produces_full_report(master_resume) -> None:
         AtsGate.LENGTH_WITHIN_LIMIT,
     }
     skipped = {r.gate for r in report.results if r.status is GateStatus.SKIP}
-    assert pdf_gates.issubset(skipped), (
-        f"expected {pdf_gates - skipped} to be SKIP without a PDF"
-    )
+    assert pdf_gates.issubset(skipped), f"expected {pdf_gates - skipped} to be SKIP without a PDF"
 
 
 def test_ats_section_headings_pass_for_master(master_resume) -> None:

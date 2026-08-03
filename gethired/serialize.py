@@ -17,8 +17,7 @@ and ``run_result``.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 from uuid import uuid4
@@ -242,6 +241,7 @@ def render_json(tailored: Tailored) -> str:
     (e.g. ``UUID``-derived identifiers).
     """
     import json
+
     return json.dumps(asdict(tailored), indent=2, default=str)
 
 

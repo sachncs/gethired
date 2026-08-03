@@ -12,12 +12,12 @@ from typing import Final
 
 from jinja2 import Environment, FileSystemLoader, select_autoescape
 
+from gethired import serialize as serialize_module
 from gethired.models import (
     Run,
     RunResult,
     Tailored,
 )
-from gethired import serialize
 from gethired.validator import AtsReport
 
 TEMPLATES: Final[Path] = Path(__file__).parent / "templates"
@@ -160,9 +160,15 @@ def report(
     return "\n".join(lines)
 
 
+def to_json(tailored: Tailored) -> str:
+    """Serialise a Tailored resume to JSON."""
+    return serialize_module.render_json(tailored)
+
+
+# Backward-compat alias for the original 'json' name in the renderer module
 def json(tailored: Tailored) -> str:
-    """Serialise a Tailored resume to JSON. Backward-compat alias for the serialize module."""
-    return serialize.json(tailored)
+    """Deprecated: use to_json() instead. Kept for backward compat."""
+    return to_json(tailored)
 
 
 __all__ = [

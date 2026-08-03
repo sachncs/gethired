@@ -39,17 +39,22 @@ from gethired.models import (
     Report,
     Run,
     RunResult,
+    Step,
     StepKind,
     Tailored,
 )
 from gethired.observability import configure, logger, now
-from gethired.parser import parse_tex as tex
+from gethired.parser import parse_tex as parse_tex
 from gethired.profiler import build as build_profile
 from gethired.render_pdf import compile_pdf
 from gethired.renderer import (
-    report,
-    tex,
-    text,
+    report as render_report,
+)
+from gethired.renderer import (
+    tex as render_tex,
+)
+from gethired.renderer import (
+    text as render_text,
 )
 from gethired.serialize import (
     from_bullets,
@@ -188,8 +193,8 @@ class Tailor:
         )
 
         critic = Critic(debug=self.debug)
-        tex_source = tex(tailored)
-        txt_source = text(tailored)
+        tex_source = render_tex(tailored)
+        txt_source = render_text(tailored)
         ats_report, critic_jobs = critic.evaluate(
             tailored=tailored,
             master=master,
@@ -236,7 +241,7 @@ class Tailor:
 
         if self.produce_cover_letter and analysis is not None:
             cover_result = compose(master=master, analysis=analysis, voice=profile)
-            cover_md = markdown(cover_result.cover_letter)
+            cover_md = markdown(cover_result.letter)
             run_dir = self.tailored_dir / tailored_with_jobs.run.id
             (run_dir / "cover_letter.md").write_text(cover_md)
             self.logger.info("Cover letter written", path=str(run_dir / "cover_letter.md"))
@@ -327,8 +332,8 @@ class Tailor:
         run = tailored.run_result.run
         run_result = tailored.run_result
 
-        tex_source = tex(tailored)
-        txt_source = text(tailored)
+        tex_source = render_tex(tailored)
+        txt_source = render_text(tailored)
         json_source = render_json(tailored)
         ats_report = ats(
             tailored,
@@ -341,7 +346,9 @@ class Tailor:
         (run_dir / "tailored.tex").write_text(tex_source)
         (run_dir / "tailored.txt").write_text(txt_source)
         (run_dir / "tailored.json").write_text(json_source)
-        (run_dir / "match_report.md").write_text(report(run, run_result, tailored, ats_report))
+        (run_dir / "match_report.md").write_text(
+            render_report(run, run_result, tailored, ats_report)
+        )
         return tailored
 
     def diff(self, other_run_id: str) -> str:
@@ -367,7 +374,7 @@ class Tailor:
             return self.resume_input
         if self.master_json.exists():
             return load_master(self.master_json)
-        master = tex(Path(self.resume_input))
+        master = parse_tex(Path(self.resume_input))
         self.master_json.parent.mkdir(parents=True, exist_ok=True)
         self.master_json.write_text(render_json(snapshot(master)))
         return master
@@ -409,7 +416,7 @@ class Tailor:
         (run_dir / "tailored.json").write_text(render_json(tailored))
         if tailored.run_result is not None:
             (run_dir / "match_report.md").write_text(
-                report(tailored.run, tailored.run_result, tailored, ats_report)
+                render_report(tailored.run, tailored.run_result, tailored, ats_report)
             )
         return run_dir
 
@@ -471,7 +478,7 @@ VALIDATION: frozenset[StepKind] = frozenset(
 )
 
 
-def merge_steps(existing_jobs: tuple[Job, ...], critic_jobs: tuple[Job, ...]) -> tuple[Job, ...]:
+def merge_steps(existing_jobs: tuple[Step, ...], critic_jobs: tuple[Step, ...]) -> tuple[Step, ...]:
     """Replace previously emitted validation jobs with an authoritative critic pass.
 
     The critic is re-run after PDF compilation so PDF-dependent gates are

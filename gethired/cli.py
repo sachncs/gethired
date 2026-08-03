@@ -32,7 +32,6 @@ from gethired.exceptions import (
     GroundingError,
     PlagiarismError,
     StyleError,
-    TailorError,
 )
 from gethired.fetcher import Fetcher
 from gethired.models import (

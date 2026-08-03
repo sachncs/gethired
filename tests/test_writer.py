@@ -77,9 +77,7 @@ def test_writer_with_model_instance_runs_without_model_env_var(
     analysis = _sample_analysis()
     voice = build_profile(master_resume)
     writer = Writer(model=None, model_instance=TestModel())
-    tailored, jobs = writer.tailor(
-        master=master_resume, analysis=analysis, voice=voice
-    )
+    tailored, jobs = writer.tailor(master=master_resume, analysis=analysis, voice=voice)
     # The master's contact must round-trip through the writer
     assert tailored.contact.email == master_resume.contact.email
     # The tailored resume should have at least one experience (the writer

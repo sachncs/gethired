@@ -88,9 +88,7 @@ def test_grounding_citation_with_fabricated_span_fails(master_resume: Master) ->
         jobs=(),
     )
     violations = grounding(tailored, master_resume)
-    assert violations, (
-        "grounding() did not flag a fabricated citation span"
-    )
+    assert violations, "grounding() did not flag a fabricated citation span"
     assert any(fabricated_span in v.detail for v in violations), (
         f"grounding() violations do not name the fabricated span: {violations}"
     )
@@ -128,9 +126,7 @@ def test_grounding_citation_partial_span_still_passes(master_resume: Master) -> 
         jobs=(),
     )
     violations = grounding(tailored, master_resume)
-    assert not violations, (
-        f"grounding() should accept a substring span, got {violations}"
-    )
+    assert not violations, f"grounding() should accept a substring span, got {violations}"
 
 
 def test_tailor_pipeline_emits_real_grounding_citations(master_resume: Master) -> None:

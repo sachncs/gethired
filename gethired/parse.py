@@ -31,9 +31,7 @@ from gethired.parser import (
 from gethired.parser import (
     tex as _tex,
 )
-from gethired.parser import (
-    text as _text,
-)
+from gethired.plain_text import parse_plain_text as _plain_text
 
 __all__ = ["parse"]
 
@@ -54,4 +52,4 @@ def parse(source: str | Path) -> Master:
         if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
             return _image(path)
         return _tex(path.read_text())
-    return _text(_plain_text(str(source)))
+    return _plain_text(str(source))

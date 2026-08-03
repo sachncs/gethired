@@ -119,11 +119,11 @@ class Fetcher:
         try:
             data_dict = json.loads(path.read_text())
             return CacheEntry(
-                url=data["url"],
-                url_hash=data["url_hash"],
-                content_hash=data["content_hash"],
-                fetched_at=data["fetched_at"],
-                raw_html=data["raw_html"],
+                url=data_dict["url"],
+                url_hash=data_dict["url_hash"],
+                content_hash=data_dict["content_hash"],
+                fetched_at=data_dict["fetched_at"],
+                raw_html=data_dict["raw_html"],
             )
         except (json.JSONDecodeError, KeyError):
             return None
@@ -163,10 +163,10 @@ def jsonld(html: str) -> dict | None:
             data_dict = json.loads(match.group(1))
         except json.JSONDecodeError:
             continue
-        if isinstance(data, dict) and data.get("@type") == "JobPosting":
-            return data
-        if isinstance(data, list):
-            for item in data:
+        if isinstance(data_dict, dict) and data_dict.get("@type") == "JobPosting":
+            return data_dict
+        if isinstance(data_dict, list):
+            for item in data_dict:
                 if isinstance(item, dict) and item.get("@type") == "JobPosting":
                     return item
     return None
@@ -206,9 +206,9 @@ def from_text(text: str, url: str, content_hash: str) -> Job:
         title="",
         company="",
         full_text=text,
-        keywords=keywords,
+        keywords=keywords(text),
         must_have_keywords=(),
-        nice_to_have_keywords=keywords,
+        nice_to_have_keywords=keywords(text),
         content_hash=content_hash,
     )
 

@@ -37,11 +37,11 @@ from gethired.models import (
     Bullet,
     Citation,
     Experience,
-    Job,
     Master,
     Project,
     Reason,
     Skills,
+    Step,
     StepEnv,
     Tailored,
     Voice,
@@ -137,8 +137,8 @@ class Writer:
         voice: Voice,
         previous_violations: tuple[str, ...] = (),
         on_progress: Callback | None = None,
-    ) -> tuple[Tailored, tuple[Job, ...]]:
-        """Produce a tailored resume and the Job trail.
+    ) -> tuple[Tailored, tuple[Step, ...]]:
+        """Produce a tailored resume and the Step trail.
 
         Args:
             master: The canonical master resume.
@@ -171,7 +171,7 @@ class Writer:
         voice: Voice,
         previous_violations: tuple[str, ...],
         on_progress: Callback | None = None,
-    ) -> tuple[Tailored, tuple[Job, ...]]:
+    ) -> tuple[Tailored, tuple[Step, ...]]:
         """Run the Pydantic AI Agent against the configured model.
 
         Args:
@@ -417,7 +417,7 @@ def prompt(master: Master, analysis: Analysis) -> str:
     )
 
 
-def from_tools(result: Any) -> tuple[Job, ...]:
+def from_tools(result: Any) -> tuple[Step, ...]:
     """Extract Job records from the agent's tool calls.
 
     Best-effort: walks ``result.all_messages`` looking for tool-call parts.
@@ -426,7 +426,7 @@ def from_tools(result: Any) -> tuple[Job, ...]:
     result's message tree, the parameter is removed (forward-only,
     no deprecation shim per user directive).
     """
-    jobs: list[Job] = []
+    jobs: list[Step] = []
     messages = result.all_messages()
     for message in messages:
         for part in getattr(message, "parts", []):
