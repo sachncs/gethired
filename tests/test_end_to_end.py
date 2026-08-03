@@ -108,11 +108,11 @@ def test_end_to_end_section_headings_present() -> None:
     )
     result = tailor.run()
     t = tex(result)
-    assert "\\section{Summary}" in tex
-    assert "\\section{Experience}" in tex
-    assert "\\section{Education}" in tex
-    assert "\\section{Technical Skills}" in tex
-    assert "\\section{Selected Projects}" in tex
+    assert "\\section{Summary}" in t
+    assert "\\section{Experience}" in t
+    assert "\\section{Education}" in t
+    assert "\\section{Technical Skills}" in t
+    assert "\\section{Selected Projects}" in t
 
 
 def test_merge_critic_jobs_replaces_all_prior_validation_jobs() -> None:

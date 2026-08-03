@@ -248,7 +248,7 @@ def test_hard_gate_failure_is_blocking(master_resume) -> None:
     tailored = _make_tailored(master_resume)
     t = tex(tailored)
     t2 = text(tailored)
-    tex_with_layout = tex + r"\begin{multicols}{2}"
+    tex_with_layout = t + r"\begin{multicols}{2}"
     report = ats(tailored, tex_with_layout, None, t2, ())
     assert AtsGate.NO_TABLES_FOR_LAYOUT in report.hard_failed_gates
     assert AtsGate.NO_TABLES_FOR_LAYOUT in report.failed_gates

@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Final
 
 import httpx
-import trafilatura
+import trafilatura as _trafilatura
 
 from gethired.constants import (
     CACHE_DAYS,
@@ -63,14 +63,14 @@ class Fetcher:
         Raises:
             FetchError: If retrieval fails after all retries.
         """
-        logger = logger("fetch_jd")
+        log = logger("fetch_jd")
         url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
         cached = self.__load_cache(url_hash)
         if cached is not None and self.__is_cache_fresh(cached):
-            logger.info("fetch cache hit", url=url, url_hash=url_hash)
+            log.info("fetch cache hit", url=url, url_hash=url_hash)
             return self.__parse(cached.raw_html, url, cached.content_hash)
 
-        raw_html = self.__fetch_with_retry(url, logger)
+        raw_html = self.__fetch_with_retry(url, log)
         content_hash = hashlib.sha256(raw_html.encode()).hexdigest()
         self.__save_cache(
             CacheEntry(
@@ -93,8 +93,8 @@ class Fetcher:
                     follow_redirects=True,
                 ) as client:
                     response_value = client.get(url)
-                    response.raise_for_status()
-                    return response.text
+                    response_value.raise_for_status()
+                    return response_value.text
             except (httpx.HTTPError, httpx.StreamError) as exc:
                 last_exc = exc
                 backoff_seconds = 2 ** (attempt - 1)
@@ -145,9 +145,9 @@ class Fetcher:
         return age <= timedelta(days=CACHE_DAYS)
 
     def __parse(self, raw_html: str, url: str, content_hash: str) -> Job:
-        jsonld = jsonld(raw_html)
-        if jsonld is not None:
-            return from_jsonld(jsonld, url, content_hash)
+        parsed_jsonld = jsonld(raw_html)
+        if parsed_jsonld is not None:
+            return from_jsonld(parsed_jsonld, url, content_hash)
 
         text = trafilatura(raw_html)
         if not text:
@@ -175,7 +175,7 @@ def jsonld(html: str) -> dict | None:
 
 
 def trafilatura(html: str) -> str:
-    extracted = trafilatura.extract(html)
+    extracted = _trafilatura.extract(html)
     return extracted or ""
 
 
@@ -187,14 +187,14 @@ def from_jsonld(data: dict, url: str, content_hash: str) -> Job:
         company = str(hiring_org.get("name", ""))
     description = str(data.get("description", ""))
     full_text = f"{title}\n\n{description}".strip()
-    keywords = keywords(full_text)
+    extracted_keywords = keywords(full_text)
     must_have, nice_to_have = tier(data, full_text)
     return Job(
         url=url,
         title=title,
         company=company,
         full_text=full_text,
-        keywords=keywords,
+        keywords=extracted_keywords,
         must_have_keywords=must_have,
         nice_to_have_keywords=nice_to_have,
         content_hash=content_hash,
@@ -202,7 +202,7 @@ def from_jsonld(data: dict, url: str, content_hash: str) -> Job:
 
 
 def from_text(text: str, url: str, content_hash: str) -> Job:
-    keywords = keywords(text)
+    extracted_keywords = keywords(text)
     return Job(
         url=url,
         title="",

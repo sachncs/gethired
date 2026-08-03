@@ -160,6 +160,11 @@ def report(
     return "\n".join(lines)
 
 
+def json(tailored: Tailored) -> str:
+    """Serialise a Tailored resume to JSON. Backward-compat alias for the serialize module."""
+    return render_json(tailored)
+
+
 __all__ = [
     "json",
     "report",

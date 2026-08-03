@@ -591,11 +591,11 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     analysis = Analysis(
         role=jd.title,
         seniority="senior",
-        must_have_skills=jd.must_have_keywords,
-        nice_to_have_skills=jd.nice_to_have_keywords,
-        keywords_to_mirror=jd.must_have_keywords + jd.nice_to_have_keywords[:5],
+        must_have=jd.must_have_keywords,
+        nice_to_have=jd.nice_to_have_keywords,
+        keywords=jd.must_have_keywords + jd.nice_to_have_keywords[:5],
         responsibilities=(),
-        company_context=jd.company,
+        company=jd.company,
     )
     voice = build_profile(master)
 
