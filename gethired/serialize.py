@@ -17,7 +17,7 @@ and ``run_result``.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict as _asdict
+from dataclasses import asdict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -241,7 +241,8 @@ def render_json(tailored: Tailored) -> str:
     values. ``default=str`` covers anything asdict doesn't recognise
     (e.g. ``UUID``-derived identifiers).
     """
-    return json.dumps(_asdict(tailored), indent=2, default=str)
+    import json
+    return json.dumps(asdict(tailored), indent=2, default=str)
 
 
 def as_dict(tailored: Tailored) -> dict[str, Any]:

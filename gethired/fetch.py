@@ -30,12 +30,12 @@ def fetch(url: str, cache_dir: str | Path | None = None) -> Job:
     Returns:
         A populated ``Job`` (the JD).
     """
-    resolved_cache_dir = Path(cache_dir) if cache_dir is not None else _default_cache()
+    resolved_cache_dir = Path(cache_dir) if cache_dir is not None else default_cache_dir()
     retriever = Fetcher(cache_dir=resolved_cache_dir)
     return retriever.retrieve(url)
 
 
-def _default_cache() -> Path:
+def default_cache_dir() -> Path:
     override = os.environ.get("GETHIRED_CACHE_DIR")
     if override:
         return Path(override)

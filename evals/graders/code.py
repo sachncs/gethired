@@ -20,7 +20,8 @@ from gethired.normalize import (
     ngrams,
     tokenize,
 )
-from gethired.renderer import json as render_json, text
+from gethired.renderer import text
+from gethired.serialize import render_json
 
 
 @dataclass(frozen=True, slots=True)

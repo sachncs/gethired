@@ -18,7 +18,7 @@ from pathlib import Path
 from typing import Final
 
 import httpx
-import trafilatura as _trafilatura
+import trafilatura
 
 from gethired.constants import (
     CACHE_DAYS,
@@ -147,7 +147,7 @@ class Fetcher:
         if parsed_jsonld is not None:
             return from_jsonld(parsed_jsonld, url, content_hash)
 
-        text = trafilatura(raw_html)
+        text = extract_text(raw_html)
         if not text:
             raise FetchError(f"No text extracted from {url}")
         return from_text(text, url, content_hash)
@@ -172,8 +172,8 @@ def jsonld(html: str) -> dict | None:
     return None
 
 
-def trafilatura(html: str) -> str:
-    extracted = _trafilatura.extract(html)
+def extract_text(html: str) -> str:
+    extracted = trafilatura.extract(html)
     return extracted or ""
 
 

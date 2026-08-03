@@ -13,8 +13,8 @@ from pathlib import Path
 
 import typer
 
+import gethired.audit as audit_module
 from gethired.audit import (
-    audit,
     audit_json,
     audit_markdown,
 )
@@ -32,6 +32,7 @@ from gethired.exceptions import (
     GroundingError,
     PlagiarismError,
     StyleError,
+    TailorError,
 )
 from gethired.fetcher import Fetcher
 from gethired.models import (
@@ -292,8 +293,8 @@ def trace(
         typer.echo(f"  {idx}. [{job.get('type')}] {job.get('rationale')[:80]}")
 
 
-@app.command()
-def audit(
+@app.command(name="audit")
+def audit_cmd(
     run_dir: Path = typer.Argument(..., exists=True),
 ) -> None:
     """Re-run all validators against a previous run directory.
@@ -302,7 +303,7 @@ def audit(
     if any validator reports a failure.
     """
     configure()
-    report = audit(run_dir)
+    report = audit_module.audit(run_dir)
     (Path(run_dir) / "audit.json").write_text(audit_json(report))
     (Path(run_dir) / "audit.md").write_text(audit_markdown(report))
     typer.echo(f"Audit written to {run_dir}/audit.json and audit.md")

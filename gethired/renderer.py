@@ -17,7 +17,7 @@ from gethired.models import (
     RunResult,
     Tailored,
 )
-from gethired.serialize import json as render_json
+from gethired import serialize
 from gethired.validator import AtsReport
 
 TEMPLATES: Final[Path] = Path(__file__).parent / "templates"
@@ -162,7 +162,7 @@ def report(
 
 def json(tailored: Tailored) -> str:
     """Serialise a Tailored resume to JSON. Backward-compat alias for the serialize module."""
-    return render_json(tailored)
+    return serialize.json(tailored)
 
 
 __all__ = [

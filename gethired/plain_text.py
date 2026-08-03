@@ -206,7 +206,7 @@ def extract_name(text: str) -> str:
 def extract_skills(body: str) -> Skills:
     categories: dict[str, list[str]] = {}
     for raw_line in body.splitlines():
-        line = _strip(raw_line)
+        line = strip_bullet(raw_line)
         if not line:
             continue
         category, _, values_text = split_category(line)
@@ -235,7 +235,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
         start_date, end_date = extract_dates(lines)
         role, company = split_heading(heading_text)
         bullets = tuple(
-            Bullet(text=clean(_strip(line))) for line in lines if BULLET_PREFIX_RE.match(line)
+            Bullet(text=clean(strip_bullet(line))) for line in lines if BULLET_PREFIX_RE.match(line)
         )
         experiences.append(
             Experience(
@@ -260,7 +260,7 @@ def extract_projects(body: str) -> tuple[Project, ...]:
         url_match = next((URL_RE.search(line) for line in lines if URL_RE.search(line)), None)
         url = clean(url_match.group(0)) if url_match else ""
         bullets = tuple(
-            Bullet(text=clean(_strip(line))) for line in lines if BULLET_PREFIX_RE.match(line)
+            Bullet(text=clean(strip_bullet(line))) for line in lines if BULLET_PREFIX_RE.match(line)
         )
         projects.append(Project(name=name, url=url, bullets=bullets))
     return tuple(projects)
@@ -278,6 +278,7 @@ def extract_education(body: str) -> tuple[Education, ...]:
         major = ""
         if "," in degree:
             degree, _, rest = degree.partition(",")
+            rest = rest.strip()
             if INSTITUTION_START_RE.match(rest):
                 institution = rest
             else:
@@ -321,7 +322,7 @@ def extract_awards(body: str) -> tuple[Award, ...]:
         if not date:
             year_match = SINGLE_YEAR_RE.search(block)
             date = year_match.group(0) if year_match else ""
-        description_lines = [clean(_strip(line)) for line in lines if BULLET_PREFIX_RE.match(line)]
+        description_lines = [clean(strip_bullet(line)) for line in lines if BULLET_PREFIX_RE.match(line)]
         awards.append(
             Award(
                 title=clean(title),
@@ -363,5 +364,5 @@ def split_heading(heading: str) -> tuple[str, str]:
     return heading, ""
 
 
-def _strip(line: str) -> str:
+def strip_bullet(line: str) -> str:
     return BULLET_PREFIX_RE.sub("", line)
