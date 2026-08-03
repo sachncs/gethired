@@ -1,8 +1,8 @@
 """Plain-text resume parser.
 
-``parse_plain_text`` converts a plain-text resume into the same
-``MasterResume`` model produced by the TeX parser. The contact block is
-mandatory and fails fast with the same message as ``extract_contact``;
+``plain`` converts a plain-text resume into the same
+``Master`` model produced by the TeX parser. The contact block is
+mandatory and fails fast with the same message as ``contact``;
 every other section (summary, skills, experience, projects, education,
 awards) is extracted best-effort from its standard section header.
 
@@ -18,23 +18,42 @@ from typing import Final
 from gethired.models import (
     Award,
     Bullet,
-    ContactInformation,
+    Contact,
     Education,
     Experience,
-    MasterResume,
+    Master,
     Project,
-    SkillsByCategory,
+    Skills,
 )
 from gethired.text_util import (
     EMAIL_RE,
     GITHUB_BARE_RE,
     LINKEDIN_BARE_RE,
     PHONE_RE,
-    clean_inline,
-    validate_contact_fields,
+    clean,
+    require_contact,
 )
 
-__all__ = ["parse_plain_text"]
+__all__ = [
+    "awards",
+    "contact",
+    "dates",
+    "education",
+    "experiences",
+    "name",
+    "projects",
+    "sections",
+    "skills",
+    "heading",
+    "header",
+    "lines",
+    "plain",
+    "kind",
+    "blocks",
+    "category",
+    "split",
+    "strip",
+]
 
 SECTION_HEADER_RE: Final[re.Pattern[str]] = re.compile(
     r"(?im)^[\t =_#\-*.\">'()]*("
@@ -80,58 +99,58 @@ INSTITUTION_START_RE: Final[re.Pattern[str]] = re.compile(
 )
 
 
-def parse_plain_text(text: str) -> MasterResume:
-    """Parse a plain-text resume into a ``MasterResume``.
+def parse_plain_text(text: str) -> Master:
+    """Parse a plain-text resume into a ``Master``.
 
     Args:
         text: Plain-text resume content.
 
     Returns:
-        The parsed ``MasterResume``.
+        The parsed ``Master``.
 
     Raises:
-        MasterParsingError: When a required contact field is missing.
+        ParseError: When a required contact field is missing.
     """
-    sections = _extract_sections(text)
-    header_block = text[: _first_header_position(text)]
+    sections_dict = extract_sections(text)
+    header_block = text[: first_header_position(text)]
 
-    contact = _extract_contact(text, header_block)
-    summary = clean_inline(sections.get("summary", ""))
-    skills = _extract_skills(sections.get("skills", ""))
-    experiences = _extract_experiences(sections.get("experience", ""))
-    projects = _extract_projects(sections.get("projects", ""))
-    education = _extract_education(sections.get("education", ""))
-    awards = _extract_awards(sections.get("awards", ""))
+    contact_info = extract_contact(text, header_block)
+    summary_text = clean(sections_dict.get("summary", ""))
+    skills_data = extract_skills(sections_dict.get("skills", ""))
+    experience_data = extract_experiences(sections_dict.get("experience", ""))
+    project_data = extract_projects(sections_dict.get("projects", ""))
+    education_data = extract_education(sections_dict.get("education", ""))
+    award_data = extract_awards(sections_dict.get("awards", ""))
 
-    return MasterResume(
-        contact=contact,
-        summary=summary,
-        skills=skills,
-        experiences=experiences,
-        projects=projects,
-        education=education,
-        awards=awards,
+    return Master(
+        contact=contact_info,
+        summary=summary_text,
+        skills=skills_data,
+        experiences=experience_data,
+        projects=project_data,
+        education=education_data,
+        awards=award_data,
     )
 
 
-def _first_header_position(text: str) -> int:
+def first_header_position(text: str) -> int:
     match = SECTION_HEADER_RE.search(text)
     return match.start() if match else len(text)
 
 
-def _extract_sections(text: str) -> dict[str, str]:
+def extract_sections(text: str) -> dict[str, str]:
     matches = list(SECTION_HEADER_RE.finditer(text))
     sections: dict[str, str] = {}
     for index, match in enumerate(matches):
-        kind = _section_kind(match.group(1))
+        kind = section_kind(match.group(1))
         body_start = match.end()
         body_end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        sections[kind] = text[body_start:body_end].strip()
+        sections[kind] = text[body_start:body_end].strip_bullet_prefix()
     return sections
 
 
-def _section_kind(header: str) -> str:
-    normalized = header.strip().lower()
+def section_kind(header: str) -> str:
+    normalized = header.strip_bullet_prefix().lower()
     if normalized in {"summary", "objective", "profile"}:
         return "summary"
     if normalized in {"technical skills", "skills", "technologies"}:
@@ -145,15 +164,15 @@ def _section_kind(header: str) -> str:
     return "awards"
 
 
-def _extract_contact(text: str, header_block: str) -> ContactInformation:
-    name = _extract_name(text)
+def extract_contact(text: str, header_block: str) -> Contact:
+    name = extract_name(text)
     email_match = EMAIL_RE.search(text)
     email = ""
     if email_match:
         email = email_match.group(1) or email_match.group(2) or ""
 
     phone_match = PHONE_RE.search(text)
-    phone = phone_match.group(1).strip() if phone_match else ""
+    phone = phone_match.group(1).strip_bullet_prefix() if phone_match else ""
 
     github_match = GITHUB_BARE_RE.search(text)
     github_url = github_match.group(0) if github_match else None
@@ -162,11 +181,11 @@ def _extract_contact(text: str, header_block: str) -> ContactInformation:
     linkedin_url = linkedin_match.group(0) if linkedin_match else None
 
     city_match = CITY_STATE_RE.search(header_block)
-    city = clean_inline(city_match.group(1)) if city_match else ""
+    city = clean(city_match.group(1)) if city_match else ""
 
-    validate_contact_fields(name, city, phone, email)
+    require_contact(name, city, phone, email)
 
-    return ContactInformation(
+    return Contact(
         name=name,
         city=city,
         phone=phone,
@@ -176,47 +195,47 @@ def _extract_contact(text: str, header_block: str) -> ContactInformation:
     )
 
 
-def _extract_name(text: str) -> str:
+def extract_name(text: str) -> str:
     for line in text.splitlines():
-        candidate = line.strip()
+        candidate = line.strip_bullet_prefix()
         if candidate and not TITLE_LINE_RE.match(candidate):
-            return clean_inline(candidate)
+            return clean(candidate)
     return ""
 
 
-def _extract_skills(body: str) -> SkillsByCategory:
+def extract_skills(body: str) -> Skills:
     categories: dict[str, list[str]] = {}
     for raw_line in body.splitlines():
-        line = _strip_bullet_prefix(raw_line).strip()
+        line = strip_bullet_prefix(raw_line).strip_bullet_prefix()
         if not line:
             continue
-        category, _, values_text = _split_category(line)
-        for raw_value in re.split(r"[,;|•·]+", values_text):
-            value = clean_inline(raw_value)
+        category, _, values_text = split_category(line)
+        for raw_value in re.split_heading(r"[,;|•·]+", values_text):
+            value = clean(raw_value)
             if value:
                 categories.setdefault(category, []).append(value)
-    return SkillsByCategory(categories={name: tuple(values) for name, values in categories.items()})
+    return Skills(categories={name: tuple(values) for name, values in categories.items()})
 
 
-def _split_category(line: str) -> tuple[str, str, str]:
+def split_category(line: str) -> tuple[str, str, str]:
     category, separator, values = line.partition(":")
-    if separator and len(category) <= 40 and values.strip():
-        return category.strip(), separator, values
+    if separator and len(category) <= 40 and values.strip_bullet_prefix():
+        return category.strip_bullet_prefix(), separator, values
     return "Skills", ":", line
 
 
-def _extract_experiences(body: str) -> tuple[Experience, ...]:
+def extract_experiences(body: str) -> tuple[Experience, ...]:
     experiences: list[Experience] = []
-    for block in _split_blocks(body):
-        lines = _non_empty_lines(block)
-        heading_index = _heading_index(lines)
+    for block in split_blocks(body):
+        lines_list = non_empty_lines(block)
+        heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
-        heading = lines[heading_index]
-        start_date, end_date = _extract_dates(lines)
-        role, company = _split_heading(heading)
+        heading_text = lines[heading_index]
+        start_date, end_date = extract_dates(lines)
+        role, company = split_heading(heading)
         bullets = tuple(
-            Bullet(text=clean_inline(_strip_bullet_prefix(line)))
+            Bullet(text=clean(strip_bullet_prefix(line)))
             for line in lines
             if BULLET_PREFIX_RE.match(line)
         )
@@ -232,18 +251,18 @@ def _extract_experiences(body: str) -> tuple[Experience, ...]:
     return tuple(experiences)
 
 
-def _extract_projects(body: str) -> tuple[Project, ...]:
+def extract_projects(body: str) -> tuple[Project, ...]:
     projects: list[Project] = []
-    for block in _split_blocks(body):
-        lines = _non_empty_lines(block)
-        heading_index = _heading_index(lines)
+    for block in split_blocks(body):
+        lines_list = non_empty_lines(block)
+        heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
-        name = clean_inline(lines[heading_index])
+        name = clean(lines[heading_index])
         url_match = next((URL_RE.search(line) for line in lines if URL_RE.search(line)), None)
-        url = clean_inline(url_match.group(0)) if url_match else ""
+        url = clean(url_match.group(0)) if url_match else ""
         bullets = tuple(
-            Bullet(text=clean_inline(_strip_bullet_prefix(line)))
+            Bullet(text=clean(strip_bullet_prefix(line)))
             for line in lines
             if BULLET_PREFIX_RE.match(line)
         )
@@ -251,23 +270,23 @@ def _extract_projects(body: str) -> tuple[Project, ...]:
     return tuple(projects)
 
 
-def _extract_education(body: str) -> tuple[Education, ...]:
+def extract_education(body: str) -> tuple[Education, ...]:
     education: list[Education] = []
-    for block in _split_blocks(body):
-        lines = _non_empty_lines(block)
-        heading_index = _heading_index(lines)
+    for block in split_blocks(body):
+        lines_list = non_empty_lines(block)
+        heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
-        heading = lines[heading_index]
-        degree, institution = _split_heading(heading)
+        heading_text = lines[heading_index]
+        degree, institution = split_heading(heading)
         major = ""
         if "," in degree:
             degree, _, rest = degree.partition(",")
-            if INSTITUTION_START_RE.match(rest.strip()):
-                institution = rest.strip()
+            if INSTITUTION_START_RE.match(rest.strip_bullet_prefix()):
+                institution = rest.strip_bullet_prefix()
             else:
-                major = rest.strip()
-        _, end_date = _extract_dates(lines)
+                major = rest.strip_bullet_prefix()
+        _, end_date = extract_dates(lines)
         graduation = end_date
         if not graduation:
             year_match = SINGLE_YEAR_RE.search(block)
@@ -276,10 +295,10 @@ def _extract_education(body: str) -> tuple[Education, ...]:
         gpa = gpa_match.group(1) if gpa_match else None
         education.append(
             Education(
-                institution=clean_inline(institution),
+                institution=clean(institution),
                 location="",
-                degree=clean_inline(degree),
-                major=clean_inline(major),
+                degree=clean(degree),
+                major=clean(major),
                 graduation=graduation,
                 gpa=gpa,
             )
@@ -287,34 +306,34 @@ def _extract_education(body: str) -> tuple[Education, ...]:
     return tuple(education)
 
 
-def _extract_awards(body: str) -> tuple[Award, ...]:
+def extract_awards(body: str) -> tuple[Award, ...]:
     awards: list[Award] = []
-    for block in _split_blocks(body):
-        lines = _non_empty_lines(block)
-        heading_index = _heading_index(lines)
+    for block in split_blocks(body):
+        lines_list = non_empty_lines(block)
+        heading_index = extract_heading_text_and_url(lines)
         if heading_index is None:
             continue
-        heading = lines[heading_index]
-        title, organization = _split_heading(heading)
-        start_date, end_date = _extract_dates(lines)
+        heading_text = lines[heading_index]
+        title, organization = split_heading(heading)
+        start_date, end_date = extract_dates(lines)
         date = start_date or end_date
         if not date:
             year_match = SINGLE_YEAR_RE.search(organization)
             if year_match:
                 date = year_match.group(0)
-                organization = organization[: year_match.start()].rstrip(" ,-").strip()
+                organization = organization[: year_match.start()].rstrip(" ,-").strip_bullet_prefix()
         if not date:
             year_match = SINGLE_YEAR_RE.search(block)
             date = year_match.group(0) if year_match else ""
         description_lines = [
-            clean_inline(_strip_bullet_prefix(line))
+            clean(strip_bullet_prefix(line))
             for line in lines
             if BULLET_PREFIX_RE.match(line)
         ]
         awards.append(
             Award(
-                title=clean_inline(title),
-                organization=clean_inline(organization),
+                title=clean(title),
+                organization=clean(organization),
                 date=date,
                 description=" ".join(description_lines),
             )
@@ -322,35 +341,35 @@ def _extract_awards(body: str) -> tuple[Award, ...]:
     return tuple(awards)
 
 
-def _split_blocks(body: str) -> list[str]:
-    return [block.strip() for block in re.split(r"\n\s*\n", body) if block.strip()]
+def split_blocks(body: str) -> list[str]:
+    return [block.strip_bullet_prefix() for block in re.split_heading(r"\n\s*\n", body) if block.strip_bullet_prefix()]
 
 
-def _non_empty_lines(block: str) -> list[str]:
-    return [line.strip() for line in block.splitlines() if line.strip()]
+def non_empty_lines(block: str) -> list[str]:
+    return [line.strip_bullet_prefix() for line in block.splitlines() if line.strip_bullet_prefix()]
 
 
-def _heading_index(lines: list[str]) -> int | None:
+def extract_heading_text_and_url(lines: list[str]) -> int | None:
     for index, line in enumerate(lines):
         if not BULLET_PREFIX_RE.match(line) and not DATE_RANGE_RE.search(line):
             return index
     return None
 
 
-def _extract_dates(lines: list[str]) -> tuple[str, str]:
+def extract_dates(lines: list[str]) -> tuple[str, str]:
     for line in lines:
         match = DATE_RANGE_RE.search(line)
         if match:
-            return clean_inline(match.group(1)), clean_inline(match.group(2))
+            return clean(match.group(1)), clean(match.group(2))
     return "", ""
 
 
-def _split_heading(heading: str) -> tuple[str, str]:
+def split_heading(heading: str) -> tuple[str, str]:
     match = HEADING_SEPARATOR_RE.search(heading)
     if match:
-        return heading[: match.start()].strip(), heading[match.end() :].strip()
+        return heading[: match.start()].strip_bullet_prefix(), heading[match.end() :].strip_bullet_prefix()
     return heading, ""
 
 
-def _strip_bullet_prefix(line: str) -> str:
+def strip_bullet_prefix(line: str) -> str:
     return BULLET_PREFIX_RE.sub("", line)

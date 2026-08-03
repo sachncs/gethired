@@ -1,11 +1,11 @@
 """Parser for the master resume.
 
-Supports four input formats, all yielding the same ``MasterResume``:
+Supports four input formats, all yielding the same ``Master``:
 
-* ``parse_tex(text)`` — deterministic TeX parser for the existing resume style
-* ``parse_text(text)`` — plain-text fallback
-* ``parse_pdf(path)`` — extracts text via PyMuPDF, then routes through TeX-style parser
-* ``parse_image(path)`` — uses a vision-capable model to extract text, then parses
+* ``tex(text)`` — deterministic TeX parser for the existing resume style
+* ``text(text)`` — plain-text fallback
+* ``pdf(path)`` — extracts text via PyMuPDF, then routes through TeX-style parser
+* ``image(path)`` — uses a vision-capable model to extract text, then parses
 
 The TeX parser handles the macros in the existing resume (``\\resumeSubheading``,
 ``\\resumeItem``, ``\\resumeProjectHeading``, ``\\href``, ``\\textbf``, ``R\\&D``,
@@ -23,18 +23,18 @@ from typing import Final
 import pymupdf
 from pydantic_ai import Agent, BinaryContent
 
-from gethired.exceptions import MasterParsingError
+from gethired.exceptions import ParseError
 from gethired.models import (
     Award,
     Bullet,
-    ContactInformation,
+    Contact,
     Education,
     Experience,
-    MasterResume,
+    Master,
     Project,
-    SkillsByCategory,
+    Skills,
 )
-from gethired.plain_text import parse_plain_text
+from gethired.plain_text import parse_plain_text as plain
 from gethired.provider import resolve_model
 from gethired.text_util import (
     EMAIL_RE,
@@ -44,16 +44,16 @@ from gethired.text_util import (
     LINKEDIN_BARE_RE,
     LINKEDIN_RE,
     PHONE_RE,
-    clean_inline,
-    validate_contact_fields,
+    clean,
+    require_contact,
 )
 
 __all__ = [
     "parse",
-    "parse_image",
-    "parse_pdf",
-    "parse_text",
-    "parse_tex",
+    "image",
+    "pdf",
+    "text",
+    "tex",
 ]
 
 
@@ -101,7 +101,7 @@ def strip_comments(body: str) -> str:
 def extract_body(source: str) -> str:
     match = BEGIN_DOCUMENT_RE.search(source)
     if match is None:
-        raise MasterParsingError("Could not locate \\begin{document} ... \\end{document} body")
+        raise ParseError("Could not locate \\begin{document} ... \\end{document} body")
     return match.group(1)
 
 
@@ -148,9 +148,9 @@ def find_macro_invocations(
     return results
 
 
-def extract_contact(body: str) -> ContactInformation:
+def extract_contact(body: str) -> Contact:
     name_match = HUGE_NAME_RE.search(body)
-    name = clean_inline(name_match.group(1)) if name_match else ""
+    name = clean(name_match.group(1)) if name_match else ""
 
     github_match = GITHUB_RE.search(body)
     if github_match is None:
@@ -178,11 +178,11 @@ def extract_contact(body: str) -> ContactInformation:
         r"\\small\s+([A-Za-z](?:[A-Za-z .'-]|\\[`'^~=.][A-Za-z])*?)\s*\$\\cdot\$",
         body,
     )
-    city = clean_inline(city_match.group(1)) if city_match else ""
+    city = clean(city_match.group(1)) if city_match else ""
 
-    validate_contact_fields(name, city, phone, email)
+    require_contact(name, city, phone, email)
 
-    return ContactInformation(
+    return Contact(
         name=name,
         city=city,
         phone=phone,
@@ -203,37 +203,37 @@ def extract_summary(body: str) -> str:
     section_text = match.group(1)
     inline = re.search(r"\{\\small\s+(.*?)\}", section_text, re.DOTALL)
     if inline is None:
-        return clean_inline(section_text)
-    return clean_inline(inline.group(1))
+        return clean(section_text)
+    return clean(inline.group(1))
 
 
-def extract_skills(body: str) -> SkillsByCategory:
+def extract_skills(body: str) -> Skills:
     match = re.search(
         r"\\section\{Technical Skills\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
         re.DOTALL,
     )
     if match is None:
-        return SkillsByCategory(categories={})
+        return Skills(categories={})
 
     section_text = match.group(1)
     categories: dict[str, tuple[str, ...]] = {}
     for line in SKILL_LINE_RE.finditer(section_text):
-        raw_category = clean_inline(line.group(1))
+        raw_category = clean(line.group(1))
         category = raw_category.rstrip(":").strip()
         raw_values = SKILL_VSPACE_RE.sub("", line.group(2))
         values = tuple(
-            value for raw_value in raw_values.split(",") if (value := clean_inline(raw_value))
+            value for raw_value in raw_values.split(",") if (value := clean(raw_value))
         )
         if category and values:
             categories[category] = values
-    return SkillsByCategory(categories=categories)
+    return Skills(categories=categories)
 
 
 def extract_bullets(section_text: str, start: int) -> tuple[Bullet, ...]:
-    next_marker = next_subheading_or_project(section_text, start)
-    bullet_section = section_text[start:next_marker]
-    return tuple(Bullet(text=clean_inline(m.group(1))) for m in BULLET_RE.finditer(bullet_section))
+    next_idx = next_subheading_or_project(section_text, start)
+    bullet_section = section_text[start:next_idx]
+    return tuple(Bullet(text=clean(m.group(1))) for m in BULLET_RE.finditer(bullet_section))
 
 
 def next_subheading_or_project(section_text: str, start: int) -> int:
@@ -255,9 +255,9 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
     section_text = match.group(1)
     experiences: list[Experience] = []
     for _, args in find_macro_invocations(section_text, "resumeSubheading", 3):
-        role = clean_inline(args[0])
-        company = clean_inline(args[1])
-        dates = clean_inline(args[2])
+        role = clean(args[0])
+        company = clean(args[1])
+        dates = clean(args[2])
         start_date, _, end_date = dates.partition(" -- ")
         # Re-find the position for bullet extraction (start from end of macro call)
         pattern = re.compile(r"\\resumeSubheading\b\s*")
@@ -268,16 +268,16 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
             macro_end = match_iter[idx].end()
             # advance past the three args
             _, after = find_balanced_args(section_text, macro_end, 3)
-            bullets = extract_bullets(section_text, after)
+            section_bullets = extract_bullets(section_text, after)
         else:
-            bullets = ()
+            section_bullets = ()
         experiences.append(
             Experience(
                 role=role,
                 company=company,
                 start_date=start_date.strip(),
                 end_date=end_date.strip(),
-                bullets=bullets,
+                bullets=section_bullets,
             )
         )
     return tuple(experiences)
@@ -288,9 +288,9 @@ def extract_heading_text_and_url(heading: str) -> tuple[str, str]:
     href_match = HREF_RE.search(heading)
     if href_match is not None:
         url = href_match.group(1)
-        name = clean_inline(href_match.group(2))
+        name = clean(href_match.group(2))
         return name, url
-    return clean_inline(heading), ""
+    return clean(heading), ""
 
 
 def extract_projects(body: str) -> tuple[Project, ...]:
@@ -312,10 +312,10 @@ def extract_projects(body: str) -> tuple[Project, ...]:
         macro_matches = list(pattern.finditer(section_text))
         if idx < len(macro_matches):
             _, after = find_balanced_args(section_text, macro_matches[idx].end(), 2)
-            bullets = extract_bullets(section_text, after)
+            section_bullets = extract_bullets(section_text, after)
         else:
-            bullets = ()
-        projects.append(Project(name=name, url=url, bullets=bullets))
+            section_bullets = ()
+        projects.append(Project(name=name, url=url, bullets=section_bullets))
     return tuple(projects)
 
 
@@ -336,7 +336,7 @@ def extract_education(body: str) -> tuple[Education, ...]:
         institution_args = headings[index][1]
         degree_args = headings[index + 1][1]
 
-        gpa_full = clean_inline(degree_args[2])
+        gpa_full = clean(degree_args[2])
         gpa: str | None = None
         gpa_match = re.match(r"CGPA:\s*(\S+)", gpa_full)
         if gpa_match:
@@ -344,11 +344,11 @@ def extract_education(body: str) -> tuple[Education, ...]:
 
         education.append(
             Education(
-                institution=clean_inline(institution_args[0]),
-                location=clean_inline(institution_args[1]),
-                graduation=clean_inline(institution_args[2]),
-                degree=clean_inline(degree_args[0]),
-                major=clean_inline(degree_args[1]),
+                institution=clean(institution_args[0]),
+                location=clean(institution_args[1]),
+                graduation=clean(institution_args[2]),
+                degree=clean(degree_args[0]),
+                major=clean(degree_args[1]),
                 gpa=gpa,
             )
         )
@@ -372,16 +372,16 @@ def extract_awards(body: str) -> tuple[Award, ...]:
         find_macro_invocations(section_text, "resumeProjectHeading", 2)
     ):
         heading_raw = args[0]
-        date = clean_inline(args[1])
+        date = clean(args[1])
         title, _ = extract_heading_text_and_url(heading_raw)
 
         macro_matches = list(pattern.finditer(section_text))
         if idx < len(macro_matches):
             _, after = find_balanced_args(section_text, macro_matches[idx].end(), 2)
-            bullets = extract_bullets(section_text, after)
+            section_bullets = extract_bullets(section_text, after)
         else:
-            bullets = ()
-        description = bullets[0].text if bullets else ""
+            section_bullets = ()
+        description = section_bullets[0].text if section_bullets else ""
         organization = ""
         organisation_match = re.match(r"(.+?)\s+---\s+(.+)$", title)
         if organisation_match is not None:
@@ -398,17 +398,17 @@ def extract_awards(body: str) -> tuple[Award, ...]:
     return tuple(awards)
 
 
-def parse_tex(source: str | Path) -> MasterResume:
-    """Parse a TeX source resume into a ``MasterResume``.
+def tex(source: str | Path) -> Master:
+    """Parse a TeX source resume into a ``Master``.
 
     Args:
         source: Either the raw TeX text or a path to a ``.tex`` file.
 
     Returns:
-        The parsed ``MasterResume``.
+        The parsed ``Master``.
 
     Raises:
-        MasterParsingError: If the source cannot be parsed into a resume.
+        ParseError: If the source cannot be parsed into a resume.
     """
     try:
         if isinstance(source, Path):
@@ -419,63 +419,63 @@ def parse_tex(source: str | Path) -> MasterResume:
             candidate = Path(source)
             text = candidate.read_text() if candidate.exists() else source
     except FileNotFoundError as exc:
-        raise MasterParsingError(f"TeX source not found: {source}") from exc
-    body = extract_body(strip_comments(text))
-    if not body.strip():
-        raise MasterParsingError("Could not locate \\begin{document} ... \\end{document} body")
+        raise ParseError(f"TeX source not found: {source}") from exc
+    body_text = extract_body(strip_comments(text))
+    if not body_text.strip():
+        raise ParseError("Could not locate \\begin{document} ... \\end{document} body")
 
-    contact = extract_contact(body)
-    summary = extract_summary(body)
-    skills = extract_skills(body)
-    experiences = extract_experiences(body)
-    projects = extract_projects(body)
-    education = extract_education(body)
-    awards = extract_awards(body)
+    contact_info = extract_contact(body_text)
+    summary_text = extract_summary(body_text)
+    skills_data = extract_skills(body_text)
+    experience_data = extract_experiences(body_text)
+    project_data = extract_projects(body_text)
+    education_data = extract_education(body_text)
+    award_data = extract_awards(body_text)
 
-    return MasterResume(
-        contact=contact,
-        summary=summary,
-        skills=skills,
-        experiences=experiences,
-        projects=projects,
-        education=education,
-        awards=awards,
+    return Master(
+        contact=contact_info,
+        summary=summary_text,
+        skills=skills_data,
+        experiences=experience_data,
+        projects=project_data,
+        education=education_data,
+        awards=award_data,
     )
 
 
-def parse_text(text: str) -> MasterResume:
-    """Parse a plain-text resume into a ``MasterResume``.
+def text(text: str) -> Master:
+    """Parse a plain-text resume into a ``Master``.
 
-    Routes to ``parse_tex`` when the text contains TeX markers. Otherwise
+    Routes to ``tex`` when the text contains TeX markers. Otherwise
     the text is parsed as a plain-text resume: the contact block is
-    mandatory (same fail-fast error as ``extract_contact``) and every other
+    mandatory (same fail-fast error as ``contact``) and every other
     section is extracted best-effort.
 
     Args:
         text: Plain-text resume content.
 
     Returns:
-        The parsed ``MasterResume``.
+        The parsed ``Master``.
 
     Raises:
-        MasterParsingError: When a required contact field is missing.
+        ParseError: When a required contact field is missing.
     """
     if "\\documentclass" in text or "\\begin{document}" in text:
-        return parse_tex(text)
-    return parse_plain_text(text)
+        return _tex(text)
+    return parse_plain(text)
 
 
-def parse_pdf(path: Path) -> MasterResume:
+def pdf(path: Path) -> Master:
     """Extract text from a PDF and route through the TeX-style parser."""
     with pymupdf.open(path) as document:
         raw_text = "\n".join(document[i].get_text() for i in range(len(document)))
 
     if not raw_text.strip():
-        raise MasterParsingError(f"No text extracted from {path}")
-    return parse_tex(raw_text)
+        raise ParseError(f"No text extracted from {path}")
+    return tex(raw_text)
 
 
-def parse_image(path: Path) -> MasterResume:
+def image(path: Path) -> Master:
     """Extract text from an image via a vision-capable model.
 
     Requires a multimodal model identifier in ``IMAGE_MODEL`` (or the same
@@ -486,17 +486,17 @@ def parse_image(path: Path) -> MasterResume:
         path: Path to the image file (PNG, JPEG, WEBP, PDF-as-image).
 
     Returns:
-        The parsed ``MasterResume``.
+        The parsed ``Master``.
 
     Raises:
-        MasterParsingError: If the file is missing or the model returns no text.
+        ParseError: If the file is missing or the model returns no text.
     """
     if not path.exists():
-        raise MasterParsingError(f"Image not found: {path}")
+        raise ParseError(f"Image not found: {path}")
 
     image_model = os.environ.get("IMAGE_MODEL") or os.environ.get("MODEL", "")
     if not image_model:
-        raise MasterParsingError(
+        raise ParseError(
             "Image parsing requires IMAGE_MODEL or MODEL env var pointing to a multimodal model."
         )
     resolved = resolve_model(image_model)
@@ -521,24 +521,76 @@ def parse_image(path: Path) -> MasterResume:
         )
         raw_text = extracted.output
     except Exception as exc:
-        raise MasterParsingError(f"Vision model extraction failed for {path}: {exc}") from exc
+        raise ParseError(f"Vision model extraction failed for {path}: {exc}") from exc
 
     if not raw_text or not raw_text.strip():
-        raise MasterParsingError(f"No text extracted from image {path}")
-    return parse_tex(raw_text)
+        raise ParseError(f"No text extracted from image {path}")
+    return tex(raw_text)
 
 
-def parse(source: str | Path) -> MasterResume:
+def parse(source: str | Path) -> Master:
     """Route to the appropriate parser based on file extension."""
     path = Path(source)
     if not path.exists():
-        return parse_tex(source)
+        return tex(source)
 
     suffix = path.suffix.lower()
     if suffix == ".tex":
-        return parse_tex(path)
+        return tex(path)
     if suffix == ".pdf":
-        return parse_pdf(path)
+        return pdf(path)
     if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
-        return parse_image(path)
-    return parse_tex(path.read_text())
+        return image(path)
+    return tex(path.read_text())
+
+
+# Backward-compat aliases for the original public parser function names.
+parse_tex = tex
+parse_text = text
+parse_pdf = pdf
+parse_image = image
+parse = lambda source: __dispatch(source)
+
+
+def __dispatch(source: str | Path) -> Master:
+    """Backwards-compatible dispatcher; prefer :func:`dispatch`."""
+    if isinstance(source, str) and "\\" in source:
+        return tex(source)
+    path = Path(source)
+    if path.exists():
+        suffix = path.suffix.lower()
+        if suffix == ".tex":
+            return tex(path)
+        if suffix == ".pdf":
+            return pdf(path)
+        if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
+            return image(path)
+    return plain(str(source))
+
+__all__ = [
+    "tex",
+    "text",
+    "pdf",
+    "image",
+    "dispatch",
+    "parse_tex",
+    "parse_text",
+    "parse_pdf",
+    "parse_image",
+    "parse",
+    "extract_body",
+    "find_balanced_args",
+    "find_macro_invocations",
+    "extract_contact",
+    "extract_summary",
+    "extract_skills",
+    "extract_bullets",
+    "next_subheading_or_project",
+    "extract_experiences",
+    "extract_heading_text_and_url",
+    "extract_projects",
+    "extract_education",
+    "extract_awards",
+    "strip_comments",
+    "plain",
+]
