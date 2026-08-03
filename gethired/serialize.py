@@ -107,15 +107,19 @@ def from_master_dict(raw: dict[str, Any]) -> Master:
     )
 
 
-def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
-    """Construct a ``Tailored`` from the JSON-serialised shape.
+def _contact_from(raw: dict[str, Any]) -> Contact:
+    """Reconstruct the Contact dataclass from the serialised dict."""
+    return Contact(**raw["contact"])
 
-    Tolerates a missing ``run_result`` (legacy snapshots) by returning
-    ``run_result=None``.
-    """
-    contact_info = Contact(**raw["contact"])
-    skills_data = Skills(categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()})
-    experience_data = tuple(
+
+def _skills_from(raw: dict[str, Any]) -> Skills:
+    """Reconstruct the Skills dataclass from the serialised categories."""
+    return Skills(categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()})
+
+
+def _experiences_from(raw: dict[str, Any]) -> tuple[Experience, ...]:
+    """Reconstruct Experience entries from the serialised list."""
+    return tuple(
         Experience(
             role=exp["role"],
             company=exp["company"],
@@ -125,7 +129,11 @@ def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
         )
         for exp in raw["experiences"]
     )
-    project_data = tuple(
+
+
+def _projects_from(raw: dict[str, Any]) -> tuple[Project, ...]:
+    """Reconstruct Project entries from the serialised list."""
+    return tuple(
         Project(
             name=project["name"],
             url=project["url"],
@@ -133,22 +141,32 @@ def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
         )
         for project in raw["projects"]
     )
-    education_data = tuple(Education(**edu) for edu in raw["education"])
-    award_data = tuple(Award(**award) for award in raw["awards"])
-    run_result = from_run_result_dict(raw.get("run_result"))
+
+
+def _grounding_from(raw: dict[str, Any]) -> tuple[Citation, ...]:
+    """Reconstruct Citation entries from the serialised list."""
+    return tuple(Citation(**citation) for citation in raw.get("grounding", []))
+
+
+def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
+    """Construct a ``Tailored`` from the JSON-serialised shape.
+
+    Tolerates a missing ``run_result`` (legacy snapshots) by returning
+    ``run_result=None``.
+    """
     return Tailored(
-        contact=contact_info,
+        contact=_contact_from(raw),
         summary=raw["summary"],
-        skills=skills_data,
-        experiences=experience_data,
-        projects=project_data,
-        education=education_data,
-        awards=award_data,
+        skills=_skills_from(raw),
+        experiences=_experiences_from(raw),
+        projects=_projects_from(raw),
+        education=tuple(Education(**edu) for edu in raw["education"]),
+        awards=tuple(Award(**award) for award in raw["awards"]),
         dropped=tuple(Reason(**dropped) for dropped in raw.get("dropped", [])),
         rationale=raw.get("rationale", ""),
-        grounding=tuple(Citation(**citation) for citation in raw.get("grounding", [])),
+        grounding=_grounding_from(raw),
         jobs=(),
-        run_result=run_result,
+        run_result=from_run_result_dict(raw.get("run_result")),
     )
 
 

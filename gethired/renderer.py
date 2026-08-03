@@ -91,71 +91,131 @@ def text(tailored: Tailored) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def _run_description(run: Run) -> list[str]:
+    """Return the '## Run Description' section as a list of lines."""
+    lines = [
+        "## Run Description",
+        f"- Run.id: `{run.id}`",
+        f"- started_at: {run.started_at}",
+        f"- master_hash: `{run.master_hash}`",
+        f"- jd_urls_hash: `{run.jd_urls_hash}`",
+        f"- model: `{run.model}`",
+    ]
+    if run.draft_model:
+        lines.append(f"- draft_model: `{run.draft_model}`")
+    return lines
+
+
+def _result_description(run_result: RunResult) -> list[str]:
+    """Return the '## Result Description' section as a list of lines."""
+    return [
+        "## Result Description",
+        f"- completed_at: {run_result.completed_at}",
+        f"- duration_seconds: {run_result.duration_seconds:.2f}",
+        f"- total_input_tokens: {run_result.total_input_tokens}",
+        f"- total_output_tokens: {run_result.total_output_tokens}",
+        f"- retry_attempts: {run_result.retry_attempts}",
+        f"- final_outcome: `{run_result.final_outcome.value}`",
+    ]
+
+
+def _job_trail(run_result: RunResult) -> list[str]:
+    """Return the '## Job Trail' section as a list of lines."""
+    lines = [
+        "## Job Trail",
+        "| id | type | inputs | outputs | rationale | status |",
+        "|----|------|--------|---------|-----------|--------|",
+    ]
+    for job in run_result.jobs:
+        lines.append(job.description().markdown())
+    return lines
+
+
+def _websearch_audit(run_result: RunResult) -> list[str]:
+    """Return the '## Web Search Audit' section, or [] if no searches."""
+    searches = run_result.websearch_calls
+    if not searches:
+        return []
+    lines = [
+        "## Web Search Audit",
+        "| # | query | reason | result snippet |",
+        "|---|-------|--------|----------------|",
+    ]
+    for idx, ws in enumerate(searches, start=1):
+        query = ws.metadata.query or ""
+        lines.append(f"| {idx} | {query} | {ws.rationale} | (result snippet) |")
+    return lines
+
+
+def _ats_results(ats_report: AtsReport) -> list[str]:
+    """Return the '## ATS Gate Results' section as a list of lines."""
+    return [
+        "## ATS Gate Results",
+        "| gate | tier | status | detail |",
+        "|------|------|--------|--------|",
+        *[
+            f"| `{result.gate.value}` | {result.gate.tier.value} | "
+            f"{result.status.value.upper()} | {result.detail} |"
+            for result in ats_report.results
+        ],
+    ]
+
+
+def _reasoning_trace(run_result: RunResult) -> list[str]:
+    """Return the '## Reasoning Trace' section as a list of lines."""
+    return [
+        "## Reasoning Trace",
+        "| # | rationale |",
+        "|---|-----------|",
+        *[
+            f"| {idx} | {job.rationale} |"
+            for idx, job in enumerate(run_result.jobs, start=1)
+        ],
+    ]
+
+
+def _summary(tailored: Tailored) -> list[str]:
+    """Return the '## Tailored Summary' section, or [] if no summary."""
+    if not tailored.summary:
+        return []
+    return ["## Tailored Summary", tailored.summary]
+
+
 def report(
     run: Run,
     run_result: RunResult,
     tailored: Tailored,
     ats_report: AtsReport | None = None,
 ) -> str:
-    """Render a markdown match report covering the full run."""
-    lines: list[str] = []
-    lines.append(f"# gethired run `{run.id}`")
-    lines.append("")
-    lines.append("## Run Description")
-    lines.append(f"- Run.id: `{run.id}`")
-    lines.append(f"- started_at: {run.started_at}")
-    lines.append(f"- master_hash: `{run.master_hash}`")
-    lines.append(f"- jd_urls_hash: `{run.jd_urls_hash}`")
-    lines.append(f"- model: `{run.model}`")
-    if run.draft_model:
-        lines.append(f"- draft_model: `{run.draft_model}`")
-    lines.append("")
-    lines.append("## Result Description")
-    lines.append(f"- completed_at: {run_result.completed_at}")
-    lines.append(f"- duration_seconds: {run_result.duration_seconds:.2f}")
-    lines.append(f"- total_input_tokens: {run_result.total_input_tokens}")
-    lines.append(f"- total_output_tokens: {run_result.total_output_tokens}")
-    lines.append(f"- retry_attempts: {run_result.retry_attempts}")
-    lines.append(f"- final_outcome: `{run_result.final_outcome.value}`")
-    lines.append("")
-    lines.append("## Job Trail")
-    lines.append("| id | type | inputs | outputs | rationale | status |")
-    lines.append("|----|------|--------|---------|-----------|--------|")
-    for job in run_result.jobs:
-        desc = job.description()
-        lines.append(desc.markdown())
-    lines.append("")
-    searches = run_result.websearch_calls
-    if searches:
-        lines.append("## Web Search Audit")
-        lines.append("| # | query | reason | result snippet |")
-        lines.append("|---|-------|--------|----------------|")
-        for idx, ws in enumerate(searches, start=1):
-            query = ws.metadata.query or ""
-            lines.append(f"| {idx} | {query} | {ws.rationale} | (result snippet) |")
+    """Render a markdown match report covering the full run.
+
+    Composes the per-section helpers above into the full report.
+    """
+    lines: list[str] = [
+        f"# gethired run `{run.id}`",
+        "",
+        *_run_description(run),
+        "",
+        *_result_description(run_result),
+        "",
+        *_job_trail(run_result),
+        "",
+    ]
+    websearch = _websearch_audit(run_result)
+    if websearch:
+        lines.extend(websearch)
         lines.append("")
     if ats_report is not None:
-        lines.append("## ATS Gate Results")
-        lines.append("| gate | tier | status | detail |")
-        lines.append("|------|------|--------|--------|")
-        for result in ats_report.results:
-            lines.append(
-                f"| `{result.gate.value}` | {result.gate.tier.value} | "
-                f"{result.status.value.upper()} | {result.detail} |"
-            )
+        lines.extend(_ats_results(ats_report))
         lines.append("")
-    lines.append("## Reasoning Trace")
-    lines.append("| # | rationale |")
-    lines.append("|---|-----------|")
-    for idx, job in enumerate(run_result.jobs, start=1):
-        lines.append(f"| {idx} | {job.rationale} |")
+    lines.extend(_reasoning_trace(run_result))
     lines.append("")
     lines.append("## Keyword Coverage")
     lines.append("(See Job Trail above for per-step keyword usage.)")
     lines.append("")
-    if tailored.summary:
-        lines.append("## Tailored Summary")
-        lines.append(tailored.summary)
+    summary = _summary(tailored)
+    if summary:
+        lines.extend(summary)
         lines.append("")
     return "\n".join(lines)
 

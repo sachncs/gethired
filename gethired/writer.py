@@ -486,20 +486,12 @@ def rewrite(
     return rewritten, grounding
 
 
-def apply(
+def _apply_experiences(
     master: Master,
     output: WriterOutput,
-    analysis: Analysis,
-) -> Tailored:
-    """Apply the writer agent's output onto the master resume.
-
-    The agent produces a ``WriterOutput`` (Pydantic) with a flat
-    ``tailored_bullets`` map of master paths → rewritten bullet text.
-    This function applies those rewrites onto the master, preserving
-    canonical fields (company, dates, urls, contact, education, awards).
-    Entries listed in ``output.dropped`` are removed from the result.
-    """
-    dropped = frozenset(output.dropped)
+    dropped: frozenset[str],
+) -> tuple[tuple[Experience, ...], list[Citation]]:
+    """Apply the writer's bullet rewrites to the master's experiences."""
     new_experiences: list[Experience] = []
     new_grounding: list[Citation] = []
     for idx, exp in enumerate(master.experiences):
@@ -521,8 +513,17 @@ def apply(
                 bullets=tuple(rewritten_bullets),
             )
         )
+    return tuple(new_experiences), new_grounding
 
+
+def _apply_projects(
+    master: Master,
+    output: WriterOutput,
+    dropped: frozenset[str],
+) -> tuple[tuple[Project, ...], list[Citation]]:
+    """Apply the writer's bullet rewrites to the master's projects."""
     new_projects: list[Project] = []
+    new_grounding: list[Citation] = []
     for p_idx, project in enumerate(master.projects):
         if f"projects[{p_idx}]" in dropped:
             continue
@@ -540,8 +541,12 @@ def apply(
                 bullets=tuple(rewritten_bullets),
             )
         )
+    return tuple(new_projects), new_grounding
 
-    dropped_reasons = tuple(
+
+def _drop_reasons(output: WriterOutput) -> tuple[Reason, ...]:
+    """Convert each dropped master path into a Reason tuple."""
+    return tuple(
         Reason(
             item_id=path,
             reason=(f"Marked for drop by writer agent: {output.rationale[:DROP_CHARS]}"),
@@ -549,17 +554,34 @@ def apply(
         for path in output.dropped
     )
 
+
+def apply(
+    master: Master,
+    output: WriterOutput,
+    analysis: Analysis,
+) -> Tailored:
+    """Apply the writer agent's output onto the master resume.
+
+    The agent produces a ``WriterOutput`` (Pydantic) with a flat
+    ``tailored_bullets`` map of master paths → rewritten bullet text.
+    This function applies those rewrites onto the master, preserving
+    canonical fields (company, dates, urls, contact, education, awards).
+    Entries listed in ``output.dropped`` are removed from the result.
+    """
+    dropped = frozenset(output.dropped)
+    experiences, exp_grounding = _apply_experiences(master, output, dropped)
+    projects, proj_grounding = _apply_projects(master, output, dropped)
     return Tailored(
         contact=master.contact,
         summary=output.summary,
         skills=reorder(master.skills, analysis.keywords),
-        experiences=tuple(new_experiences),
-        projects=tuple(new_projects),
+        experiences=experiences,
+        projects=projects,
         education=master.education,
         awards=master.awards,
-        dropped=dropped_reasons,
+        dropped=_drop_reasons(output),
         rationale=output.rationale,
-        grounding=tuple(new_grounding),
+        grounding=tuple(exp_grounding + proj_grounding),
         jobs=(),
         run_result=None,
     )

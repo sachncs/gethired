@@ -51,6 +51,36 @@ class AuditReport:
         }
 
 
+def _audit_paths(run_dir: Path) -> dict[str, Path]:
+    """Return the input artefact paths for an audit run."""
+    return {
+        "tailored": Path(run_dir) / "tailored.json",
+        "master": Path(run_dir) / "master.json",
+        "tex": Path(run_dir) / "tailored.tex",
+        "txt": Path(run_dir) / "tailored.txt",
+        "pdf": Path(run_dir) / "tailored.pdf",
+    }
+
+
+def _audit_load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Master]:
+    """Load both JSON files or raise TailorError with the offending path."""
+    if not tailored_path.exists():
+        raise TailorError(f"tailored.json missing in {tailored_path.parent}")
+    if not master_path.exists():
+        raise TailorError(f"master.json missing in {master_path.parent}")
+    return __load(tailored_path, master_path)
+
+
+def _read_optional(path: Path) -> str:
+    """Return the file contents, or empty string if absent."""
+    return path.read_text() if path.exists() else ""
+
+
+def _stringify_violations(violations: tuple[Any, ...]) -> tuple[str, ...]:
+    """Convert validator-fault tuples to ``"path: detail"`` strings."""
+    return tuple(f"{v.path}: {v.detail}" for v in violations)
+
+
 def audit(run_dir: Path) -> AuditReport:
     """Re-run all four validators against a previous run directory.
 
@@ -63,35 +93,28 @@ def audit(run_dir: Path) -> AuditReport:
     Raises:
         TailorError: When ``run_dir`` does not contain the required inputs.
     """
-    tailored_path = Path(run_dir) / "tailored.json"
-    master_path = Path(run_dir) / "master.json"
-    tex_path = Path(run_dir) / "tailored.tex"
-    txt_path = Path(run_dir) / "tailored.txt"
-    pdf_path = Path(run_dir) / "tailored.pdf"
-    if not tailored_path.exists():
-        raise TailorError(f"tailored.json missing in {run_dir}")
-    if not master_path.exists():
-        raise TailorError(f"master.json missing in {run_dir}")
-    tailored, master = __load(tailored_path, master_path)
+    paths = _audit_paths(run_dir)
+    tailored, master = _audit_load(paths["tailored"], paths["master"])
 
     grounding_violations = grounding(tailored, master)
     style_violations = style(tailored)
     plagiarism_violations = plagiarism(tailored, ())
 
-    critic = Critic()
-    ats_report, _ = critic.evaluate(
+    ats_report, _ = Critic().evaluate(
         tailored=tailored,
         master=master,
         jds=(),
-        tex_source=tex_path.read_text() if tex_path.exists() else "",
-        txt_source=txt_path.read_text() if txt_path.exists() else "",
-        pdf_path=pdf_path if pdf_path.exists() else None,
+        tex_source=_read_optional(paths["tex"]),
+        txt_source=_read_optional(paths["txt"]),
+        pdf_path=paths["pdf"] if paths["pdf"].exists() else None,
     )
-    run_id = tailored.run_result.run.id if tailored.run_result is not None else run_dir.name
+    run_id = (
+        tailored.run_result.run.id if tailored.run_result is not None else run_dir.name
+    )
     return AuditReport(
         run_id=run_id,
-        grounding_violations=tuple(f"{v.path}: {v.detail}" for v in grounding_violations),
-        style_violations=tuple(f"{v.path}: {v.detail}" for v in style_violations),
+        grounding_violations=_stringify_violations(grounding_violations),
+        style_violations=_stringify_violations(style_violations),
         plagiarism_violations=tuple(f"{v.ngram}" for v in plagiarism_violations),
         ats_passed=not ats_report.hard_failed_gates,
         ats_failed_gates=tuple(g.value for g in ats_report.hard_failed_gates),

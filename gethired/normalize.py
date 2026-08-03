@@ -63,12 +63,12 @@ WORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]*")
 WHITESPACE_RE: Final[re.Pattern[str]] = re.compile(r"\s+")
 
 
-def numbers(text: str) -> set[int]:
-    """Return the set of integers expressed numerically in ``text``.
+_SUFFIX_MULTIPLIER = {"k": 1_000, "m": 1_000_000, "b": 1_000_000_000}
+_BIG_NUMBERS = frozenset({100, 1000, 1000000, 1000000000})
 
-    Handles forms like ``10000``, ``10,000+``, ``10K``, ``10k``, ``$5000``,
-    ``5%``, ``5.5``, and ``ten thousand``.
-    """
+
+def _extract_numeric_patterns(text: str) -> set[int]:
+    """Extract integers from the explicit numeric-patterns (``10000``, ``$5000``, ``5%``)."""
     found: set[int] = set()
     for pattern in NUMBER_PATTERNS:
         for match in pattern.finditer(text):
@@ -77,41 +77,71 @@ def numbers(text: str) -> set[int]:
                 found.add(int(float(digits)))
             except ValueError:
                 continue
+    return found
 
-    for match in re.finditer(r"\b(\d+(?:\.\d+)?)\s*([kKmMbB])\b", text):
+
+def _extract_suffix_multipliers(text: str) -> set[int]:
+    """Extract integers from suffix-multiplied forms (``10K``, ``5M``, ``2B``)."""
+    found: set[int] = set()
+    pattern = re.compile(r"\b(\d+(?:\.\d+)?)\s*([kKmMbB])\b")
+    for match in pattern.finditer(text):
         digits = float(match.group(1))
         suffix = match.group(2).lower()
-        multiplier = {"k": 1_000, "m": 1_000_000, "b": 1_000_000_000}[suffix]
-        found.add(int(digits * multiplier))
+        found.add(int(digits * _SUFFIX_MULTIPLIER[suffix]))
+    return found
 
-    for match in re.finditer(
+
+def _parse_word_phrase(tokens: list[str]) -> int:
+    """Convert a list of English number-word tokens to their integer sum."""
+    value = 0
+    current = 0
+    matched_any = False
+    for token in tokens:
+        if token not in NUMBER_WORDS:
+            continue
+        matched_any = True
+        n = NUMBER_WORDS[token]
+        if n in _BIG_NUMBERS:
+            current = max(current, 1) * n if current else n
+        else:
+            current += n
+    if matched_any:
+        value += current
+    return value
+
+
+def _extract_word_numbers(text: str) -> set[int]:
+    """Extract integers from English number-word phrases (``ten thousand``)."""
+    word_pattern_text = (
         r"\b((?:zero|one|two|three|four|five|six|seven|eight|nine|ten|"
         r"eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|"
         r"nineteen|twenty|thirty|forty|fifty|sixty|seventy|eighty|ninety|hundred|"
-        r"thousand|million|billion)(?:[\s-]+(?:zero|one|two|three|four|five|six|"
+        r"thousand|million|billion)"
+        r"(?:[\s-]+(?:zero|one|two|three|four|five|six|"
         r"seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|"
         r"seventeen|eighteen|nineteen|twenty|thirty|forty|fifty|sixty|seventy|"
-        r"eighty|ninety|hundred|thousand|million|billion))*)",
-        text.lower(),
-    ):
-        phrase = match.group(1)
-        tokens = [token for token in re.split(r"[\s-]+", phrase) if token]
-        value = 0
-        current = 0
-        matched_any = False
-        for token in tokens:
-            if token not in NUMBER_WORDS:
-                continue
-            matched_any = True
-            n = NUMBER_WORDS[token]
-            if n in {100, 1000, 1000000, 1000000000}:
-                current = max(current, 1) * n if current else n
-            else:
-                current += n
-        if matched_any:
-            value += current
+        r"eighty|ninety|hundred|thousand|million|billion))*)\b"
+    )
+    word_pattern = re.compile(word_pattern_text)
+    found: set[int] = set()
+    for match in word_pattern.finditer(text.lower()):
+        tokens = [t for t in re.split(r"[\s-]+", match.group(1)) if t]
+        value = _parse_word_phrase(tokens)
+        if value:
             found.add(value)
+    return found
 
+
+def numbers(text: str) -> set[int]:
+    """Return the set of integers expressed numerically in ``text``.
+
+    Handles forms like ``10000``, ``10,000+``, ``10K``, ``10k``, ``$5000``,
+    ``5%``, ``5.5``, and ``ten thousand``.
+    """
+    found: set[int] = set()
+    found |= _extract_numeric_patterns(text)
+    found |= _extract_suffix_multipliers(text)
+    found |= _extract_word_numbers(text)
     return found
 
 
