@@ -15,7 +15,8 @@
 gethired is a layered, multi-agent pipeline that rewrites a candidate's
 master resume against one or more job descriptions while staying
 strictly grounded in the master, blocking fabrication, and verifying
-the result against 11 ATS-compliance gates. Every collaborator
+the result against 12 ATS-compliance gates (9 hard-blocking, 3 advisory).
+Every collaborator
 (parser, fetcher, description, writer, critic, search, profiler,
 validator, renderer) is replaceable through small, well-typed
 interfaces; the default wiring uses Anthropic-compatible APIs.
@@ -26,7 +27,7 @@ ships with a loguru-backed central logger plus structured per-step
 trace events. Production defaults: every rewrite is grounded
 against the master via `GroundedCitation`, every batch is traced
 via `Job.id = uuid4()`, every output is run through grounding, style,
-plagiarism, and 11 ATS gates before render.
+plagiarism, and 12 ATS gates (9 hard-blocking, 3 advisory) before render.
 
 | Concern | Library |
 |---|---|
@@ -45,7 +46,7 @@ plagiarism, and 11 ATS gates before render.
 
 - **No fabrication** — Every rewrite traces back to a `GroundedCitation` (master path + verbatim span + sha256 of master). The validator refuses the output if any cited span isn't actually in `master.json`.
 - **Multi-agent architecture** — parser, fetcher, description, writer, critic, search. Each is a small class with a focused responsibility and a clean dependency contract.
-- **ATS hard contract** — 11 gates (PDF compile, text extract, headings, layout, no images, no colours, font size, length, keyword coverage per tier, bullet quantification, action verbs) run after every run.
+- **ATS hard contract** — 12 tri-state gates (pass/fail/skip) run after every run: 9 hard-blocking (PDF compiles, PDF text extractable, PDF text matches txt, standard section headings, no layout tables, no images, no colours, 10–12 pt font, length within limit) and 3 advisory (keyword coverage, bullet quantification, action verbs). A failed hard gate blocks the run; advisory failures and skipped PDF gates (when `LATEX_ENGINE=none`) never block.
 - **Anti-AI language** — Banned-word list with verb-stem matching; parallelism detector; voice-profile drift check; punctuation-density normalisation.
 - **Anti-plagiarism** — 5-gram overlap detector against the JD corpus, minus a curated `TECHNICAL_NGRAMS_ALLOWLIST` so common jargon doesn't false-positive.
 - **Voice preservation** — Per-master fingerprint (avg bullet length, std-dev, opening verbs, punctuation density, sentence count) injected into the writer's prompt so rewrites stay in the candidate's voice.
@@ -194,7 +195,7 @@ tailored/<run-id>/
 | Critic | `critic.py` | validation pipeline (grounding/style/plagiarism/ATS) |
 | Search | `search.py` | WebSearch sub-agent (duckduckgo default) |
 
-The `Tailor` class orchestrates them: `parse → fetch → describe → profile → write → critique → render`. Every step emits a `Job`; every render step is gated on `AtsGateReport.all_passed` (or the run exits non-zero).
+The `Tailor` class orchestrates them: `parse → fetch → describe → profile → write → critique → render`. Every step emits a `Job`; render is gated on the ATS report (a failed hard gate blocks the run, advisory and skipped gates do not).
 
 ## Project Structure
 
@@ -240,7 +241,7 @@ uv run --with pytest --with pytest-asyncio pytest tests/ -q
 uv run --with pytest --with pytest-asyncio pytest tests/ --cov=gethired --cov-report=term-missing
 ```
 
-The suite covers: parser (against the real `resume.tex`), normalisation (canonical numeric / latex-strip / tokenize), voice profiler, rubric, provider resolution (Anthropic / OpenAI / MiniMax), writer (LLM path with `TestModel`), all four validators (grounding, style, plagiarism, ATS), end-to-end pipeline runs, multi-JD consolidated runs, audit, cover letter, streaming, preflight, and PDF compile. Current count: 129 tests.
+The suite covers: parser (against the real `resume.tex`), normalisation (canonical numeric / latex-strip / tokenize), voice profiler, rubric, provider resolution (Anthropic / OpenAI / MiniMax), writer (LLM path with `TestModel`), all four validators (grounding, style, plagiarism, ATS with hard/advisory tiers and tri-state PDF gates), end-to-end pipeline runs, multi-JD consolidated runs, audit, cover letter, streaming, preflight, PDF compile, fetcher retries, and drop application. Current count: 208 tests.
 
 ## Smoke test against real LLM
 
@@ -273,7 +274,8 @@ Runs the full pipeline with the configured model on a synthetic JD; emits `tailo
 - **v0.3.0** — MiniMax provider integration. `Tailor(resume=…, job_description=…, debug=True)` programmatic API. LLM-backed writer via Pydantic AI. 81 tests.
 - **v0.4.0** — PDF compile via `tectonic` (pdflatex fallback), multi-JD consolidated run, `tailor audit <run-dir>`, cover-letter tailoring, streaming intermediate output, `--dry-run` preflight visualisation. 129 tests.
 - **v0.5.0** — OpenTelemetry-compatible tracing (`gethired/tracing.py`, JSONL span emission). Six deepeval-style agent-evaluation graders (component / reasoning / overall-execution layers). `parse_image` wired to a vision-capable model. `job()` factory split into focused builders. **Zero `# noqa:` / `# type: ignore` suppressions** across the codebase. 150 tests.
-- **v0.6.0** — Planned: tectonic CI integration, multi-JD ranked output, web UI for audit reports, full Golden adapter for deepeval's `assert_test`.
+- **v0.6.0** — Production-ready plain-text `parse_text`, 12 tri-state ATS gates split into 9 hard-blocking + 3 advisory, compile-based PDF page counting, PDF-gate `skip` when `LATEX_ENGINE=none`, missing contact fields fail fast with `MasterParsingError`, critic re-validates the compiled PDF exactly once, `tailor audit` reports hard/advisory/skipped breakdowns, fetcher exponential-backoff retries, dropped entries actually removed from the tailored resume. 208 tests.
+- **v0.7.0** — Planned: tectonic CI integration, multi-JD ranked output, web UI for audit reports, full Golden adapter for deepeval's `assert_test`.
 
 ## Contributing
 

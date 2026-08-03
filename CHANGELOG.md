@@ -5,6 +5,23 @@ All notable changes to gethired will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- **Tri-state ATS gates** — `AtsGateResult` now carries a `status` (`pass`/`fail`/`skip`); `GateStatus` and `GateTier` enums added. PDF-dependent gates `skip` when `LATEX_ENGINE=none` and no PDF artefact exists, so runs without a LaTeX engine are not falsely blocked.
+- **Gate tiers** — `AtsGate.tier` splits the 12 gates into `HARD_GATES` (9) and `ADVISORY_GATES` (3). `AtsGateReport.hard_failed_gates` / `advisory_failed_gates` / `skipped_gates`; `all_passed` tolerates `skip` and `outcome_from_ats` blocks only on hard failures. `tailor audit` reports the hard/advisory/skipped breakdown.
+- **Compile-based page counting** — `gate_length_within_limit` measures the compiled PDF's actual `page_count` via PyMuPDF against `MAX_PAGES`.
+
+### Changed
+
+- **Breaking**: missing contact fields in a master resume now raise `MasterParsingError` at parse time instead of being silently tolerated.
+- **Breaking**: `parse_text` is production-ready: stricter handling of math delimiters, multiple education entries, skill category boundaries, and residual TeX commands.
+- Critic re-runs against the compiled PDF exactly once per run; `merge_critic_jobs` drops all prior validation jobs before appending the authoritative pass.
+- Fetcher retries now sleep with exponential backoff between attempts; cache persistence uses `dataclasses.asdict`.
+- Writer drops are applied: entries listed in `WriterOutput.dropped` are removed from the tailored resume instead of only being recorded.
+- Removed dead code: `rank_experiences`, `FINAL_TAILORED_TO_TEXT`/`FINAL_GROUNDING` aliases, unused constants (`MAX_RETRIES`, `MAX_VOICE_DEVIATION`, `MAX_BULLET_LENGTH_RATIO`, `DRAFT_MODEL_ENV_VAR`), `render_diff`, and the `normalizer_helpers` shim.
+
 ## [0.5.0] - 2026-08-02
 
 ### Added
