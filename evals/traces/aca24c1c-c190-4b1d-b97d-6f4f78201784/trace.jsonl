@@ -1,2 +1,0 @@
-{"name":"tailor.run","kind":"agent","started_at":"2026-08-02T11:25:26.256Z","ended_at":"2026-08-02T11:25:26.256Z","duration_ms":0.19704201258718967,"attributes":{"run_id":"aca24c1c-c190-4b1d-b97d-6f4f78201784"},"parent_id":null,"span_id":"5fbdc99a7a8140f9b3fc53ea57ac8ccc"}
-{"name":"lookup_experience","kind":"tool","started_at":"2026-08-02T11:25:26.264Z","ended_at":"2026-08-02T11:25:26.264Z","duration_ms":0.03687490243464708,"attributes":{"role_or_company":"a","matched":true},"parent_id":null,"span_id":"c5e9b09fbc0a4afabe636ab103d52c61"}
