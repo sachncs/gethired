@@ -17,6 +17,7 @@ without triggering the full dependency chain.
 
 from __future__ import annotations
 
+import importlib
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -72,8 +73,6 @@ def __getattr__(name: str) -> Any:
         "__version__": "gethired.version",
     }
     if name in lazy_loads:
-        import importlib
-
         module = importlib.import_module(lazy_loads[name])
         attr = getattr(module, name)
         globals()[name] = attr

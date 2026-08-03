@@ -240,8 +240,6 @@ def render_json(tailored: Tailored) -> str:
     values. ``default=str`` covers anything asdict doesn't recognise
     (e.g. ``UUID``-derived identifiers).
     """
-    import json
-
     return json.dumps(asdict(tailored), indent=2, default=str)
 
 

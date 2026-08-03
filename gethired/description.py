@@ -179,7 +179,4 @@ __all__ = [
     "UNSPECIFIED",
     "analyze",
     "consolidate",
-    "responsibility",
-    "seniority",
-    "sentences",
 ]

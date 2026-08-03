@@ -25,8 +25,8 @@ from gethired.cover_letter import (
     markdown,
 )
 from gethired.critic import Critic
-from gethired.description import analyze as analyze
-from gethired.description import consolidate as consolidate
+from gethired.description import analyze_description
+from gethired.description import consolidate as consolidate_analysis
 from gethired.exceptions import (
     ConfigError,
     TailorError,
@@ -44,7 +44,7 @@ from gethired.models import (
     Tailored,
 )
 from gethired.observability import configure, logger, now
-from gethired.parser import parse_tex as parse_tex
+from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
 from gethired.render_pdf import compile_pdf
 from gethired.renderer import (
@@ -59,13 +59,9 @@ from gethired.renderer import (
 from gethired.serialize import (
     from_bullets,
     from_tailored_dict,
+    load_master,
     render_json,
-)
-from gethired.serialize import (
-    load_master as load_master,
-)
-from gethired.serialize import (
-    snapshot as snapshot,
+    snapshot,
 )
 from gethired.tracing import Tracer, tracer
 from gethired.validator import AtsReport, ats
@@ -166,7 +162,12 @@ class Tailor:
             master = self.__load_master()
             jds = self.__load_jds()
             profile = build_profile(master)
-            analysis = consolidate(jds) if len(jds) > 1 else (analyze(jds[0]) if jds else None)
+            if len(jds) > 1:
+                analysis = consolidate_analysis(jds)
+            elif jds:
+                analysis = analyze_description(jds[0])
+            else:
+                analysis = None
 
         # Refresh the run with hashes once master/jds are loaded.
         master_hash = master.content_hash() if master else ""
@@ -185,7 +186,7 @@ class Tailor:
             model_instance=self.model_instance,
             debug=self.debug,
         )
-        analysis_for_writer = analysis if analysis is not None else analyze(jds[0])
+        analysis_for_writer = analysis if analysis is not None else analyze_description(jds[0])
         tailored, writer_jobs = writer.tailor(
             master=master,
             analysis=analysis_for_writer,
@@ -258,7 +259,12 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = consolidate(jds) if len(jds) > 1 else (analyze(jds[0]) if jds else None)
+        if len(jds) > 1:
+            analysis = consolidate_analysis(jds)
+        elif jds:
+            analysis = analyze_description(jds[0])
+        else:
+            analysis = None
 
         bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
             len(p.bullets) for p in master.projects
@@ -287,7 +293,12 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        analysis = consolidate(jds) if len(jds) > 1 else (analyze(jds[0]) if jds else None)
+        if len(jds) > 1:
+            analysis = consolidate_analysis(jds)
+        elif jds:
+            analysis = analyze_description(jds[0])
+        else:
+            analysis = None
         bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
             len(p.bullets) for p in master.projects
         )

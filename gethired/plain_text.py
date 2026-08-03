@@ -35,24 +35,19 @@ from gethired.text_util import (
 )
 
 __all__ = [
-    "awards",
-    "contact",
-    "dates",
-    "education",
-    "experiences",
-    "name",
-    "projects",
-    "sections",
-    "skills",
-    "heading",
-    "header",
-    "lines",
-    "plain",
-    "kind",
-    "blocks",
-    "category",
-    "split",
-    "strip",
+    "parse_plain_text",
+    "extract_contact",
+    "extract_skills",
+    "extract_experiences",
+    "extract_projects",
+    "extract_education",
+    "extract_awards",
+    "extract_dates",
+    "split_blocks",
+    "non_empty_lines",
+    "extract_heading_text_and_url",
+    "split_heading",
+    "strip_bullet",
 ]
 
 SECTION_HEADER_RE: Final[re.Pattern[str]] = re.compile(

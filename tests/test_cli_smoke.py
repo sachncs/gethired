@@ -10,10 +10,8 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from unittest import mock
 
 import pytest
-from pydantic_ai.models.test import TestModel
 from typer.testing import CliRunner
 
 from gethired import cli as cli_module

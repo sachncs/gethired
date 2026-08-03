@@ -25,9 +25,9 @@ from gethired.description import Analysis, analyze
 # Backwards-compatible exception aliases (pre-0.4.0 import paths)
 from gethired.fetcher import CacheEntry
 from gethired.models import (
-    Outcome,
     Job,
     Master,
+    Outcome,
     Run,
     RunResult,
     Tailored,

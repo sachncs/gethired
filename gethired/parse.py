@@ -19,6 +19,7 @@ Raises:
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from pathlib import Path
 
 from gethired.models import Master
@@ -36,36 +37,46 @@ from gethired.plain_text import parse_plain_text as _plain_text
 __all__ = ["parse"]
 
 
+# Map file extension to parser function. Lookup avoids the chain of
+# ``if suffix == ...: return ...`` branches in the dispatcher below.
+_EXTENSION_PARSERS: dict[str, Callable[..., Master]] = {
+    ".tex": _tex,
+    ".pdf": _pdf,
+}
+_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".tiff", ".bmp"})
+
+
+def _dispatch_path(path: Path) -> Master:
+    """Parse a master from an existing Path by inspecting its extension."""
+    suffix = path.suffix.lower()
+    if suffix in _EXTENSION_PARSERS:
+        return _EXTENSION_PARSERS[suffix](path)
+    if suffix in _IMAGE_EXTENSIONS:
+        return _image(path)
+    return _tex(path.read_text())
+
+
+def _dispatch_string(source: str) -> Master:
+    """Parse a master from a string by content sniffing.
+
+    Strings with a TeX preamble are routed to the TeX parser; short
+    strings without newlines are treated as file paths; everything else
+    falls through to the plain-text parser.
+    """
+    if "\\documentclass" in source or "\\begin{document}" in source:
+        return _tex(source)
+    is_likely_path = "\n" not in source and len(source) < 4096
+    if is_likely_path and Path(source).exists():
+        return _dispatch_path(Path(source))
+    return _plain_text(source)
+
+
 def parse(source: str | Path) -> Master:
     """Parse a master resume from any supported format.
 
     Dispatches by file extension when ``source`` is a path, and by content
     sniffing when ``source`` is a string (TeX vs plain text).
     """
-    # If source is already a Path, dispatch directly by extension
     if isinstance(source, Path):
-        suffix = source.suffix.lower()
-        if suffix == ".tex":
-            return _tex(source)
-        if suffix == ".pdf":
-            return _pdf(source)
-        if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
-            return _image(source)
-        return _tex(source.read_text())
-    # source is a string
-    is_tex = "\\documentclass" in source or "\\begin{document}" in source
-    if is_tex:
-        return _tex(source)
-    is_likely_path = "\n" not in source and len(source) < 4096
-    if is_likely_path:
-        path = Path(source)
-        if path.exists():
-            suffix = path.suffix.lower()
-            if suffix == ".tex":
-                return _tex(path)
-            if suffix == ".pdf":
-                return _pdf(path)
-            if suffix in {".png", ".jpg", ".jpeg", ".tiff", ".bmp"}:
-                return _image(path)
-            return _tex(path.read_text())
-    return _plain_text(source)
+        return _dispatch_path(source)
+    return _dispatch_string(source)

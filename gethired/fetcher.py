@@ -200,7 +200,6 @@ def from_jsonld(data: dict, url: str, content_hash: str) -> Job:
 
 
 def from_text(text: str, url: str, content_hash: str) -> Job:
-    extracted_keywords = keywords(text)
     return Job(
         url=url,
         title="",

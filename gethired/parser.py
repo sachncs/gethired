@@ -54,6 +54,20 @@ __all__ = [
     "pdf",
     "text",
     "tex",
+    "strip_comments",
+    "extract_body",
+    "find_balanced_args",
+    "find_macro_invocations",
+    "extract_contact",
+    "extract_summary",
+    "extract_skills",
+    "extract_bullets",
+    "next_subheading_or_project",
+    "extract_experiences",
+    "extract_heading_text_and_url",
+    "extract_projects",
+    "extract_education",
+    "extract_awards",
 ]
 
 
@@ -562,7 +576,6 @@ parse_tex = tex
 parse_text = text
 parse_pdf = pdf
 parse_image = image
-parse = lambda source: __dispatch(source)
 
 
 def __dispatch(source: str | Path) -> Master:

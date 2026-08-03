@@ -16,8 +16,8 @@ from typing import Any
 
 from gethired.models import Master, Tailored
 from gethired.normalize import (
-    numbers,
     ngrams,
+    numbers,
     tokenize,
 )
 from gethired.renderer import text

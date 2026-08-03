@@ -17,7 +17,7 @@ if TYPE_CHECKING:
     # loguru does not export ``Logger`` as a runtime attribute; the type is
     # only available to static type checkers. Callers import ``Logger`` from
     # this module and annotate parameters with it.
-    from loguru import Logger as Logger
+    from loguru import Logger
 else:
     Logger = type(default_logger)  # alias usable as a runtime annotation
 
