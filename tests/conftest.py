@@ -9,6 +9,7 @@ import pytest
 
 from gethired.parser import parse_tex as tex
 
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
 
 
@@ -20,7 +21,7 @@ def disable_pdf_compilation() -> None:
 
 @pytest.fixture(scope="session")
 def resume_tex_path() -> Path:
-    return FIXTURES_DIR / "resume.tex"
+    return PROJECT_ROOT / "sample.tex"
 
 
 @pytest.fixture(scope="session")
@@ -30,7 +31,7 @@ def resume_tex_text(resume_tex_path: Path) -> str:
 
 @pytest.fixture(scope="session")
 def master_resume(resume_tex_path: Path):
-    """Parsed Master from the fixture resume.tex."""
+    """Parsed Master from the fixture sample.tex."""
     return tex(resume_tex_path)
 
 

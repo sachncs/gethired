@@ -20,9 +20,10 @@ from gethired.renderer import text as render_text
 from gethired.tailor import Tailor
 
 FIXTURES_DIR = Path(__file__).parent / "fixtures"
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 CORPUS_DIR = FIXTURES_DIR / "resumes"
-CANONICAL = FIXTURES_DIR / "resume.tex"
+CANONICAL = PROJECT_ROOT / "sample.tex"
 
 
 def corpus_paths() -> list[Path]:

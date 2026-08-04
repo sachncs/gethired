@@ -107,7 +107,7 @@ def test_tailor_raises_configuration_error_when_model_missing(
     monkeypatch.delenv("MODEL", raising=False)
     with pytest.raises(ConfigError, match="MODEL is required"):
         Tailor(
-            resume="resume.tex",
+            resume="sample.tex",
             job_description="https://example.com/jd",
             debug=False,
         )

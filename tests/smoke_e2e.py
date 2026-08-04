@@ -26,7 +26,7 @@ if _ENV_PATH.exists():
 
 
 def main() -> int:
-    master = tex("resume.tex")
+    master = tex("sample.tex")
 
     # Synthetic JD to avoid network dependency
     jd = Job(

@@ -1,4 +1,4 @@
-"""Tests for the parser against the real resume.tex fixture."""
+"""Tests for the parser against the real sample.tex fixture."""
 
 from __future__ import annotations
 

@@ -5,7 +5,7 @@ task:
   type: parser
   tags: [regression]
   input:
-    tex_path: tests/fixtures/resume.tex
+    tex_path: sample.tex
   graders:
     - name: code.field_present
       args:

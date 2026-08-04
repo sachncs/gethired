@@ -78,7 +78,7 @@ class Tailor:
 
     Example::
 
-        tailor = Tailor(resume="resume.tex", job_description="https://example.com/jd", debug=True)
+        tailor = Tailor(resume="sample.tex", job_description="https://example.com/jd", debug=True)
         result = tailor.run()
     """
 

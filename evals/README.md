@@ -47,12 +47,12 @@ evals/
 ```yaml
 task:
   id: parser_basic_001
-  desc: Parser extracts contact fields from the canonical resume.tex
+  desc: Parser extracts contact fields from the canonical sample.tex
   category: parser
   type: parser                          # runner key in harness._REGISTRY
   tags: [capability, regression]        # classification
   input:
-    tex_path: tests/fixtures/resume.tex
+    tex_path: sample.tex
   graders:
     - name: code.field_present          # grader registered name
       args:

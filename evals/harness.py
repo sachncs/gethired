@@ -460,12 +460,12 @@ def resolve_args(
 
 
 def load_shared_master() -> Master | None:
-    """Load the canonical master.json (or dispatch the canonical resume.tex).
+    """Load the canonical master.json (or dispatch the canonical sample.tex).
 
     The master is loaded once per eval run and shared across tasks so that
     every writer/critic task operates on the same source of truth.
     """
-    canonical = Path("resume.tex")
+    canonical = Path("sample.tex")
     if canonical.exists():
         return tex(canonical)
     cached = Path("data/master.json")

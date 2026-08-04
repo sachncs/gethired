@@ -127,7 +127,7 @@ def show_cmd(
 @app.command()
 def plan(
     urls: list[str] = typer.Argument(...),
-    resume: Path = typer.Option(Path("resume.tex"), "--resume", "-r"),
+    resume: Path = typer.Option(Path("sample.tex"), "--resume", "-r"),
     model: str | None = typer.Option(None, "--model", "-m"),
 ) -> None:
     """Estimate cost without running the agent."""
@@ -142,7 +142,7 @@ def plan(
 @app.command()
 def run(
     urls: list[str] = typer.Argument(...),
-    resume: Path = typer.Option(Path("resume.tex"), "--resume", "-r"),
+    resume: Path = typer.Option(Path("sample.tex"), "--resume", "-r"),
     model: str | None = typer.Option(None, "--model", "-m"),
     debug: bool = typer.Option(False, "--debug", "-d"),
     out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir"),
@@ -171,7 +171,7 @@ def run(
 @app.command()
 def cover(
     urls: list[str] = typer.Argument(...),
-    resume: Path = typer.Option(Path("resume.tex"), "--resume", "-r"),
+    resume: Path = typer.Option(Path("sample.tex"), "--resume", "-r"),
     model: str | None = typer.Option(None, "--model", "-m"),
     debug: bool = typer.Option(False, "--debug", "-d"),
     out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir"),
@@ -205,7 +205,7 @@ def cover(
 @app.command()
 def preflight(
     urls: list[str] = typer.Argument(...),
-    resume: Path = typer.Option(Path("resume.tex"), "--resume", "-r"),
+    resume: Path = typer.Option(Path("sample.tex"), "--resume", "-r"),
     model: str | None = typer.Option(None, "--model", "-m"),
 ) -> None:
     """Dry-run preflight: estimate cost and gate outcomes without invoking the LLM."""

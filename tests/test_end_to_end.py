@@ -53,7 +53,7 @@ def test_end_to_end_pipeline_runs() -> None:
     must contain non-empty content (not just be a 0-byte file).
     """
     tailor = Tailor(
-        resume="resume.tex",
+        resume="sample.tex",
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
@@ -80,7 +80,7 @@ def test_end_to_end_pipeline_runs() -> None:
 
 def test_end_to_end_atg_gates_all_evaluated() -> None:
     tailor = Tailor(
-        resume="resume.tex",
+        resume="sample.tex",
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
@@ -98,7 +98,7 @@ def test_end_to_end_atg_gates_all_evaluated() -> None:
 
 def test_end_to_end_job_trail_emitted() -> None:
     tailor = Tailor(
-        resume="resume.tex",
+        resume="sample.tex",
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
@@ -116,7 +116,7 @@ def test_end_to_end_job_trail_emitted() -> None:
 def test_end_to_end_section_headings_present() -> None:
     """The rendered TeX must contain the standard ATS section headings."""
     tailor = Tailor(
-        resume="resume.tex",
+        resume="sample.tex",
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
@@ -167,7 +167,7 @@ def test_pipeline_pdf_pass_revalidates_and_recomputes_outcome(tmp_path: Path, mo
 
     monkeypatch.setattr("gethired.tailor.compile_pdf", fake_compile)
     tailor = Tailor(
-        resume="resume.tex",
+        resume="sample.tex",
         job_description=SAMPLE_JD,
         debug=False,
         model="test",

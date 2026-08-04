@@ -88,7 +88,7 @@ Core deps only: pydantic-ai, pydantic, httpx, trafilatura, readability-lxml, pym
 from gethired import Tailor, Master, Job
 
 tailor = Tailor(
-    resume="resume.tex",
+    resume="sample.tex",
     job_description="https://example.com/jd",
     debug=True,
     model="MiniMax-M3",
@@ -106,7 +106,7 @@ You don't need `Tailor` if you only need one piece of the pipeline. Every agent 
 ```python
 # Parse a master resume from any supported format
 from gethired import parse
-master = parse("resume.tex")             # or parse_text, parse_pdf, parse_image
+master = parse("sample.tex")             # or parse_text, parse_pdf, parse_image
 
 # Fetch a job description URL (with content-hash cache + retry)
 from gethired import fetch
@@ -144,7 +144,7 @@ cp .env.example .env
 # Edit .env: set API_KEY=<your-MiniMax-key>, MODEL=MiniMax-M3, BASE_URL=https://api.minimax.io/anthropic
 
 # Parse master, fetch JD, run full pipeline
-gethired ingest resume.tex
+gethired ingest sample.tex
 gethired run https://example.com/jd
 gethired show master
 gethired trace <run-id>
@@ -274,7 +274,7 @@ uv run --with pytest --with pytest-asyncio pytest tests/ -q
 uv run --with pytest --with pytest-asyncio pytest tests/ --cov=gethired --cov-report=term-missing
 ```
 
-The suite covers: parser (against the real `resume.tex`), normalisation (canonical numeric / latex-strip / tokenize), voice profiler, rubric, provider resolution (Anthropic / OpenAI / MiniMax), writer (LLM path with `TestModel`), all four validators (grounding, style, plagiarism, ATS with hard/advisory tiers and tri-state PDF gates), end-to-end pipeline runs, multi-JD consolidated runs, audit, cover letter, streaming, preflight, PDF compile, fetcher retries, and drop application. Current count: 230 tests (208 unit/integration + 9 property-based + 10 CLI end-to-end + 3 misc).
+The suite covers: parser (against the real `sample.tex`), normalisation (canonical numeric / latex-strip / tokenize), voice profiler, rubric, provider resolution (Anthropic / OpenAI / MiniMax), writer (LLM path with `TestModel`), all four validators (grounding, style, plagiarism, ATS with hard/advisory tiers and tri-state PDF gates), end-to-end pipeline runs, multi-JD consolidated runs, audit, cover letter, streaming, preflight, PDF compile, fetcher retries, and drop application. Current count: 230 tests (208 unit/integration + 9 property-based + 10 CLI end-to-end + 3 misc).
 
 ## Smoke test against real LLM
 
