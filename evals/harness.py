@@ -662,22 +662,22 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         content_hash="eval",
     )
 
-    grounding = grounding(tailored, master)
-    style = style(tailored)
-    plagiarism = plagiarism(tailored, (jd,))
+    grounding_violations = grounding(tailored, master)
+    style_violations = style(tailored)
+    plagiarism_violations = plagiarism(tailored, (jd,))
     return (
         {
             "master": master,
             "tailored": tailored,
-            "grounding": grounding,
-            "style": style,
-            "plagiarism": plagiarism,
+            "grounding": grounding_violations,
+            "style": style_violations,
+            "plagiarism": plagiarism_violations,
         },
         {
             "task_id": task.id,
-            "n_grounding_violations": len(grounding),
-            "n_style_violations": len(style),
-            "n_plagiarism_violations": len(plagiarism),
+            "n_grounding_violations": len(grounding_violations),
+            "n_style_violations": len(style_violations),
+            "n_plagiarism_violations": len(plagiarism_violations),
         },
     )
 
