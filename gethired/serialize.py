@@ -29,7 +29,6 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-    Job,
     Master,
     Outcome,
     Project,
@@ -37,6 +36,7 @@ from gethired.models import (
     Run,
     RunResult,
     Skills,
+    Step,
     StepKind,
     StepMeta,
     StepStatus,
@@ -289,12 +289,12 @@ def from_run_result_dict(raw: dict[str, Any] | None) -> RunResult | None:
     return RunResult(**data_dict)
 
 
-def from_step_dict(raw: dict[str, Any]) -> Job:
-    """Rebuild a ``Job`` from its serialised form, restoring StrEnum fields."""
+def from_step_dict(raw: dict[str, Any]) -> Step:
+    """Rebuild a ``Step`` from its serialised form, restoring StrEnum fields."""
     if "type" in raw and isinstance(raw["type"], str):
         raw = {**raw, "type": StepKind(raw["type"])}
     if "status" in raw and isinstance(raw["status"], str):
         raw = {**raw, "status": StepStatus(raw["status"])}
     if "metadata" in raw and isinstance(raw["metadata"], dict):
         raw = {**raw, "metadata": StepMeta(**raw["metadata"])}
-    return Job(**raw)
+    return Step(**raw)

@@ -70,9 +70,7 @@ AGENTS.md
 agents.md
 
 # ── Project runtime data ─────────────────────────────────────────────
-data/master.json
-data/jd_cache/
-data/cache/
+data/
 tailored/
 run-output/
 

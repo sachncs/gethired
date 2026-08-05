@@ -22,13 +22,38 @@ from gethired.validator import AtsReport
 
 TEMPLATES: Final[Path] = Path(__file__).parent / "templates"
 
+_TEX_ESCAPES: Final[dict[str, str]] = {
+    "\\": r"\textbackslash{}",
+    "&": r"\&",
+    "%": r"\%",
+    "$": r"\$",
+    "#": r"\#",
+    "_": r"\_",
+    "{": r"\{",
+    "}": r"\}",
+    "~": r"\textasciitilde{}",
+    "^": r"\textasciicircum{}",
+}
+
+
+def tex_escape(value: object) -> str:
+    """Escape LaTeX special characters in user-supplied text."""
+    if value is None:
+        return ""
+    text = str(value)
+    for char, replacement in _TEX_ESCAPES.items():
+        text = text.replace(char, replacement)
+    return text
+
 
 def env() -> Environment:
-    return Environment(
+    jinja_env = Environment(
         loader=FileSystemLoader(str(TEMPLATES)),
         autoescape=select_autoescape(disabled_extensions=("tex",), default=False),
         keep_trailing_newline=True,
     )
+    jinja_env.filters["tex"] = tex_escape
+    return jinja_env
 
 
 def tex(tailored: Tailored) -> str:

@@ -73,25 +73,25 @@
 {% endraw -%}
 
 \begin{center}
-    {\Huge \scshape {{ resume.contact.name }}} \\ \vspace{5pt}
-    \small {{ resume.contact.city }} $\cdot$ {{ resume.contact.phone }} $\cdot$
-    \href{mailto:{{ resume.contact.email }}}{{ resume.contact.email }}
+    {\Huge \scshape {{ resume.contact.name | tex }}} \\ \vspace{5pt}
+    \small {{ resume.contact.city | tex }} $\cdot$ {{ resume.contact.phone | tex }} $\cdot$
+    \href{mailto:{{ resume.contact.email | tex }}}{{ resume.contact.email | tex }}
     {%- if resume.contact.github_url %}
-    $\cdot$ \href{ {{ resume.contact.github_url }} }{github.com/{{ resume.contact.github_url | replace('https://github.com/', '') }} }
+    $\cdot$ \href{ {{ resume.contact.github_url | tex }} }{github.com/{{ resume.contact.github_url | replace('https://github.com/', '') | tex }} }
     {%- endif %}
     {%- if resume.contact.linkedin_url %}
-    $\cdot$ \href{ {{ resume.contact.linkedin_url }} }{linkedin.com/{{ resume.contact.linkedin_url | replace('https://www.linkedin.com/in/', '/in/') | replace('https://linkedin.com/in/', '/in/') }} }
+    $\cdot$ \href{ {{ resume.contact.linkedin_url | tex }} }{linkedin.com/{{ resume.contact.linkedin_url | replace('https://www.linkedin.com/in/', '/in/') | replace('https://linkedin.com/in/', '/in/') | tex }} }
     {%- endif %}
 \end{center}
 
 \section{Summary}
-{\small {{ resume.summary }}}
+{\small {{ resume.summary | tex }}}
 
 \section{Technical Skills}
 \begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=0pt]
     \small{\item{
     {%- for category, items in resume.skills.categories.items() %}
-    \textbf{ {{ category }}:} {{ items | join(', ') }} \\ \vspace{2pt}
+    \textbf{ {{ category | tex }}:} {{ items | join(', ') | tex }} \\ \vspace{2pt}
     {%- endfor %}
     }}
 \end{itemize}
@@ -99,10 +99,10 @@
 \section{Experience}
 \resumeSubHeadingListStart
 {%- for exp in resume.experiences %}
-\resumeSubheading{ {{ exp.role }} }{ {{ exp.company }} }{ {{ exp.start_date }} -- {{ exp.end_date }} }
+\resumeSubheading{ {{ exp.role | tex }} }{ {{ exp.company | tex }} }{ {{ exp.start_date | tex }} -- {{ exp.end_date | tex }} }
 \resumeItemListStart
 {%- for bullet in exp.bullets %}
-\resumeItem{ {{ bullet.text }} }
+\resumeItem{ {{ bullet.text | tex }} }
 {%- endfor %}
 \resumeItemListEnd
 {%- endfor %}
@@ -113,10 +113,10 @@
 \section{Selected Projects}
 \resumeSubHeadingListStart
 {%- for project in resume.projects %}
-\resumeProjectHeading{\href{ {{ project.url }} }{\textbf{ {{ project.name }} }}}{}
+\resumeProjectHeading{\href{ {{ project.url | tex }} }{\textbf{ {{ project.name | tex }} }}}{}
 \resumeItemListStart
 {%- for bullet in project.bullets %}
-\resumeItem{ {{ bullet.text }} }
+\resumeItem{ {{ bullet.text | tex }} }
 {%- endfor %}
 \resumeItemListEnd
 {%- endfor %}
@@ -126,9 +126,9 @@
 \section{Education}
 \resumeSubHeadingListStart
 {%- for edu in resume.education %}
-\resumeSubheading{ {{ edu.institution }} }{ {{ edu.location }} }{ {{ edu.graduation }} }
+\resumeSubheading{ {{ edu.institution | tex }} }{ {{ edu.location | tex }} }{ {{ edu.graduation | tex }} }
 \vspace{-15pt}
-\resumeSubheading{ {{ edu.degree }} }{ {{ edu.major }} }{% if edu.gpa %}{CGPA: {{ edu.gpa }}}{% endif %}
+\resumeSubheading{ {{ edu.degree | tex }} }{ {{ edu.major | tex }} }{% if edu.gpa %}{CGPA: {{ edu.gpa | tex }}}{% endif %}
 {%- endfor %}
 \resumeSubHeadingListEnd
 
@@ -137,10 +137,10 @@
 \section{Awards \& Recognition}
 \resumeSubHeadingListStart
 {%- for award in resume.awards %}
-\resumeProjectHeading{\textbf{ {{ award.title }} }}{{ award.date }} }
+\resumeProjectHeading{\textbf{ {{ award.title | tex }} }}{{ award.date | tex }}
 {%- if award.description %}
 \resumeItemListStart
-\resumeItem{ {{ award.description }} }
+\resumeItem{ {{ award.description | tex }} }
 \resumeItemListEnd
 {%- endif %}
 {%- endfor %}

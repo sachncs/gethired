@@ -30,7 +30,11 @@ from gethired.exceptions import FetchError
 from gethired.models import Job
 from gethired.observability import Logger, logger
 
-USER_AGENT: Final[str] = "Mozilla/5.0 (compatible; gethired/0.1; +https://github.com/gethired)"
+USER_AGENT: Final[str] = (
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/120.0.0.0 Safari/537.36"
+)
 FETCH_TIMEOUT_SECONDS: Final[float] = 30.0
 
 

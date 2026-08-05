@@ -53,14 +53,20 @@ def compile_pdf(tex_source: str, output_dir: Path) -> Path | None:
     output_dir.mkdir(parents=True, exist_ok=True)
     tex_path = output_dir / "tailored.tex"
     tex_path.write_text(tex_source)
-    subprocess.run(
-        [binary_path, str(tex_path)],
+    result = subprocess.run(
+        [binary_path, "-interaction=nonstopmode", str(tex_path)],
         cwd=output_dir,
-        check=True,
+        check=False,
         capture_output=True,
         timeout=COMPILE_TIMEOUT,
     )
-    return tex_path.with_suffix(".pdf")
+    pdf_path = tex_path.with_suffix(".pdf")
+    if not pdf_path.exists():
+        raise CompileError(
+            f"{binary} failed (exit {result.returncode}). "
+            f"stderr: {result.stderr.decode(errors='replace')[-500:]}"
+        )
+    return pdf_path
 
 
 __all__ = ["compile_pdf"]
