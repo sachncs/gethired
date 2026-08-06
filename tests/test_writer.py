@@ -34,7 +34,7 @@ def _sample_analysis() -> Analysis:
     )
 
 
-def test_writer_with_test_model_produces_tailored_resume(master_resume) -> None:
+def test_writer_with_test_model_produces_tailored_resume(resume) -> None:
     """The writer produces a TailoredResume with the master's contact preserved.
 
     Verifies the data path: contact information is preserved, skills are
@@ -42,41 +42,41 @@ def test_writer_with_test_model_produces_tailored_resume(master_resume) -> None:
     the expected Step kinds (TALOR, plus tool lookups for read-only tools).
     """
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
+    voice = build_profile(resume)
 
     test_model = TestModel()
     writer = Writer(model="test", model_instance=test_model)
     tailored, jobs = writer.tailor(
-        master=master_resume,
+        master=resume,
         analysis=analysis,
         voice=voice,
     )
 
     # Contact information must be preserved from the master
-    assert tailored.contact.name == master_resume.contact.name
-    assert tailored.contact.email == master_resume.contact.email
-    assert tailored.contact.phone == master_resume.contact.phone
+    assert tailored.name == resume.name
+    assert tailored.email == resume.email
+    assert tailored.phone == resume.phone
     # Summary is non-empty (the writer may rewrite it, but should not blank it)
     assert tailored.summary, "tailored.summary must be non-empty"
     # Skills must propagate from the master (no fabricated skills)
     assert tailored.skills.categories, "tailored.skills.categories must be non-empty"
     for category, items in tailored.skills.categories.items():
-        assert category in master_resume.skills.categories, (
+        assert category in resume.skills.categories, (
             f"fabricated category {category!r} not in master"
         )
         for item in items:
-            assert item in master_resume.skills.categories[category], (
+            assert item in resume.skills.categories[category], (
                 f"fabricated skill {item!r} in category {category!r}"
             )
     # Experiences must be preserved (or explicitly dropped)
-    assert tailored.experiences, "tailored.experiences must be non-empty"
+    assert tailored.experience, "tailored.experience must be non-empty"
     # Jobs must include the TAILOR step
     job_kinds = {j.type.value for j in jobs}
     assert "tailor" in job_kinds, f"missing TAILOR step in {job_kinds}"
 
 
 def test_writer_with_model_instance_runs_without_model_env_var(
-    monkeypatch: pytest.MonkeyPatch, master_resume
+    monkeypatch: pytest.MonkeyPatch, resume
 ) -> None:
     """TestModel injected via model_instance allows offline runs.
 
@@ -85,18 +85,18 @@ def test_writer_with_model_instance_runs_without_model_env_var(
     """
     monkeypatch.delenv("MODEL", raising=False)
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
+    voice = build_profile(resume)
     writer = Writer(model=None, model_instance=TestModel())
-    tailored, jobs = writer.tailor(master=master_resume, analysis=analysis, voice=voice)
+    tailored, jobs = writer.tailor(master=resume, analysis=analysis, voice=voice)
     # The master's contact must round-trip through the writer
-    assert tailored.contact.email == master_resume.contact.email
+    assert tailored.email == resume.email
     # The tailored resume should have at least one experience (the writer
     # preserves experiences unless explicitly dropped)
-    assert len(tailored.experiences) == len(master_resume.experiences)
+    assert len(tailored.experience) == len(resume.experience)
 
 
 def test_writer_raises_configuration_error_when_model_missing(
-    monkeypatch: pytest.MonkeyPatch, master_resume
+    monkeypatch: pytest.MonkeyPatch, resume
 ) -> None:
     """Writer.tailor raises ConfigError when neither model nor model_instance.
 
@@ -104,10 +104,10 @@ def test_writer_raises_configuration_error_when_model_missing(
     """
     monkeypatch.delenv("MODEL", raising=False)
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
+    voice = build_profile(resume)
     writer = Writer(model=None)
     with pytest.raises(ConfigError, match="MODEL is required"):
-        writer.tailor(master=master_resume, analysis=analysis, voice=voice)
+        writer.tailor(master=resume, analysis=analysis, voice=voice)
 
 
 def test_tailor_raises_configuration_error_when_model_missing(
@@ -123,7 +123,7 @@ def test_tailor_raises_configuration_error_when_model_missing(
         )
 
 
-def test_apply_writer_output_removes_dropped_entries(master_resume) -> None:
+def test_apply_writer_output_removes_dropped_entries(resume) -> None:
     """Dropped master paths are actually removed from the tailored resume."""
     dropped_experience = "experiences[0]"
     dropped_bullet = "experiences[1].bullets[1]"
@@ -144,19 +144,19 @@ def test_apply_writer_output_removes_dropped_entries(master_resume) -> None:
         rationale="Drop irrelevant experience and project entries.",
     )
 
-    tailored = apply(master_resume, output, _sample_analysis())
+    tailored = apply(resume, output, _sample_analysis())
 
-    assert len(tailored.experiences) == len(master_resume.experiences) - 1
-    assert tailored.experiences[0].role == master_resume.experiences[1].role
-    assert [b.text for b in tailored.experiences[0].bullets] == [
+    assert len(tailored.experience) == len(resume.experience) - 1
+    assert tailored.experience[0].role == resume.experience[1].role
+    assert [b.text for b in tailored.experience[0].bullets] == [
         "Rewritten first bullet",
-        *[b.text for b in master_resume.experiences[1].bullets[2:]],
+        *[b.text for b in resume.experience[1].bullets[2:]],
     ]
 
-    assert len(tailored.projects) == len(master_resume.projects) - 1
-    assert tailored.projects[0].name == master_resume.projects[1].name
+    assert len(tailored.projects) == len(resume.projects) - 1
+    assert tailored.projects[0].name == resume.projects[1].name
     assert [b.text for b in tailored.projects[0].bullets] == [
-        b.text for b in master_resume.projects[1].bullets[1:]
+        b.text for b in resume.projects[1].bullets[1:]
     ]
 
     dropped_ids = [drop.item_id for drop in tailored.dropped]
@@ -174,30 +174,30 @@ def test_apply_writer_output_removes_dropped_entries(master_resume) -> None:
 
 
 def test_enumerate_bullet_paths_covers_every_experience_and_project_bullet(
-    master_resume,
+    resume,
 ) -> None:
     """``enumerate_bullet_paths`` returns one path per experience/project bullet."""
-    paths = enumerate_bullet_paths(master_resume)
-    expected_count = sum(len(e.bullets) for e in master_resume.experiences) + sum(
-        len(p.bullets) for p in master_resume.projects
+    paths = enumerate_bullet_paths(resume)
+    expected_count = sum(len(e.bullets) for e in resume.experience) + sum(
+        len(p.bullets) for p in resume.projects
     )
     assert len(paths) == expected_count
     assert all(p.startswith("experiences[") or p.startswith("projects[") for p in paths)
 
 
-def test_lookup_bullet_text_round_trips(master_resume) -> None:
+def test_lookup_bullet_text_round_trips(resume) -> None:
     """``lookup_bullet_text`` returns the original bullet at any enumerated path."""
-    paths = enumerate_bullet_paths(master_resume)
+    paths = enumerate_bullet_paths(resume)
     for path in paths:
-        text = lookup_bullet_text(master_resume, path)
+        text = lookup_bullet_text(resume, path)
         assert text is not None, f"missing bullet text at {path}"
         assert text.strip(), f"empty bullet text at {path}"
 
 
-def test_rephrase_missing_bullets_test_model_returns_originals(master_resume) -> None:
+def test_rephrase_missing_bullets_test_model_returns_originals(resume) -> None:
     """Under TestModel, the fallback keeps the master text verbatim (test determinism)."""
-    paths = enumerate_bullet_paths(master_resume)
-    missing = [(p, lookup_bullet_text(master_resume, p) or "") for p in paths]
+    paths = enumerate_bullet_paths(resume)
+    missing = [(p, lookup_bullet_text(resume, p) or "") for p in paths]
     out = rephrase_missing_bullets(
         missing,
         _sample_analysis(),
@@ -216,7 +216,7 @@ def test_rephrase_missing_bullets_empty_input_returns_empty() -> None:
     ) == {}
 
 
-def test_rephrase_missing_bullets_invokes_agent(monkeypatch, master_resume) -> None:
+def test_rephrase_missing_bullets_invokes_agent(monkeypatch, resume) -> None:
     """The rephrase batch agent is invoked with all missing paths in one call."""
     captured: dict[str, object] = {}
 
@@ -249,24 +249,24 @@ def test_rephrase_missing_bullets_invokes_agent(monkeypatch, master_resume) -> N
     monkeypatch.setattr("gethired.writer.Agent", real_agent)
 
 
-def test_writer_rephrases_every_bullet_in_production(monkeypatch, master_resume) -> None:
+def test_writer_rephrases_every_bullet_in_production(monkeypatch, resume) -> None:
     """Production writer run with a TestModel that omits some paths triggers the fallback."""
 
     # TestModel returns `tailored_bullets={}` (default TestModel behaviour) for
     # the main WriterOutput call. The writer's fallback must then rephrase
     # every missing bullet via its own TestModel-backed batch agent.
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
+    voice = build_profile(resume)
     writer = Writer(model="test", model_instance=TestModel())
-    tailored, _ = writer.tailor(master=master_resume, analysis=analysis, voice=voice)
+    tailored, _ = writer.tailor(master=resume, analysis=analysis, voice=voice)
 
     # Every original bullet must appear, rephrased (TestModel returns the
     # original verbatim under the fallback path).
-    expected_paths = enumerate_bullet_paths(master_resume)
+    expected_paths = enumerate_bullet_paths(resume)
     rewritten_paths = {c.tailored_path for c in tailored.grounding}
     assert expected_paths, "master has no bullets"
     for path in expected_paths:
-        original = lookup_bullet_text(master_resume, path) or ""
+        original = lookup_bullet_text(resume, path) or ""
         rewritten = next(
             (
                 c
@@ -281,7 +281,7 @@ def test_writer_rephrases_every_bullet_in_production(monkeypatch, master_resume)
             tail = path[len("experiences[") :]
             idx_str, rest = tail.split("].bullets[", 1)
             idx, b_idx = int(idx_str), int(rest.rstrip("]"))
-            actual = tailored.experiences[idx].bullets[b_idx].text
+            actual = tailored.experience[idx].bullets[b_idx].text
         else:
             tail = path[len("projects[") :]
             idx_str, rest = tail.split("].bullets[", 1)

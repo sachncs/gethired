@@ -15,7 +15,7 @@ from typing import Any
 
 from gethired.critic import Critic
 from gethired.exceptions import TailorError
-from gethired.models import Master, Tailored
+from gethired.models import Resume, Tailored
 from gethired.serialize import from_master_dict, from_tailored_dict
 from gethired.validator import (
     grounding,
@@ -51,7 +51,7 @@ class AuditReport:
         }
 
 
-def _audit_paths(run_dir: Path) -> dict[str, Path]:
+def audit_paths(run_dir: Path) -> dict[str, Path]:
     """Return the input artefact paths for an audit run."""
     return {
         "tailored": Path(run_dir) / "tailored.json",
@@ -62,7 +62,7 @@ def _audit_paths(run_dir: Path) -> dict[str, Path]:
     }
 
 
-def _audit_load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Master]:
+def audit_load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Master]:
     """Load both JSON files or raise TailorError with the offending path."""
     if not tailored_path.exists():
         raise TailorError(f"tailored.json missing in {tailored_path.parent}")
@@ -71,12 +71,12 @@ def _audit_load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Maste
     return __load(tailored_path, master_path)
 
 
-def _read_optional(path: Path) -> str:
+def read_optional(path: Path) -> str:
     """Return the file contents, or empty string if absent."""
     return path.read_text() if path.exists() else ""
 
 
-def _stringify_violations(violations: tuple[Any, ...]) -> tuple[str, ...]:
+def stringify_violations(violations: tuple[Any, ...]) -> tuple[str, ...]:
     """Convert validator-fault tuples to ``"path: detail"`` strings."""
     return tuple(f"{v.path}: {v.detail}" for v in violations)
 
@@ -93,7 +93,7 @@ def audit(run_dir: Path) -> AuditReport:
     Raises:
         TailorError: When ``run_dir`` does not contain the required inputs.
     """
-    paths = _audit_paths(run_dir)
+    paths = audit_paths(run_dir)
     tailored, master = _audit_load(paths["tailored"], paths["master"])
 
     grounding_violations = grounding(tailored, master)

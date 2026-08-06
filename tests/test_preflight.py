@@ -19,10 +19,10 @@ SAMPLE_JD = Job(
 )
 
 
-def test_preflight_returns_report(master_resume) -> None:
+def test_preflight_returns_report(resume) -> None:
     """preflight returns a Report with the expected fields."""
     tailor = Tailor(
-        resume=master_resume,
+        resume=resume,
         job_description=SAMPLE_JD,
         model="test",
         model_instance=TestModel(),
@@ -34,10 +34,10 @@ def test_preflight_returns_report(master_resume) -> None:
     assert 0.0 <= report.voice_drift_risk <= 1.0
 
 
-def test_preflight_identifies_missing_must_haves(master_resume) -> None:
+def test_preflight_identifies_missing_must_haves(resume) -> None:
     """preflight flags must-have keywords absent from the master."""
     tailor = Tailor(
-        resume=master_resume,
+        resume=resume,
         job_description=SAMPLE_JD,
         model="test",
         model_instance=TestModel(),

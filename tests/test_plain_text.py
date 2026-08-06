@@ -15,12 +15,12 @@ def fixture(name: str) -> str:
 
 def test_plain_text_contact_is_extracted() -> None:
     resume = text(fixture("plain_text_resume.txt"))
-    assert resume.contact.name == "Jane Smith"
-    assert resume.contact.city == "Austin"
-    assert resume.contact.phone == "(512) 555-0142"
-    assert resume.contact.email == "jane.smith@example.com"
-    assert resume.contact.github_url == "github.com/janesmith"
-    assert resume.contact.linkedin_url == "linkedin.com/in/janesmith"
+    assert resume.name == "Jane Smith"
+    assert resume.city == "Austin"
+    assert resume.phone == "(512) 555-0142"
+    assert resume.email == "jane.smith@example.com"
+    assert resume.github == "github.com/janesmith"
+    assert resume.linkedin == "linkedin.com/in/janesmith"
 
 
 def test_plain_text_summary_is_extracted() -> None:
@@ -39,8 +39,8 @@ def test_plain_text_skills_are_categorised() -> None:
 
 def test_plain_text_experiences_are_extracted() -> None:
     resume = text(fixture("plain_text_resume.txt"))
-    assert len(resume.experiences) == 2
-    first, second = resume.experiences
+    assert len(resume.experience) == 2
+    first, second = resume.experience
     assert first.role == "Senior Software Engineer"
     assert first.company == "Acme Corp"
     assert first.start_date == "May 2021"
@@ -103,8 +103,8 @@ def test_plain_text_title_line_is_skipped() -> None:
         "SUMMARY\nGreat engineer.\n"
     )
     resume = text(payload)
-    assert resume.contact.name == "Bob Jones"
-    assert resume.contact.city == "Paris"
+    assert resume.name == "Bob Jones"
+    assert resume.city == "Paris"
 
 
 def test_plain_text_education_major_split() -> None:

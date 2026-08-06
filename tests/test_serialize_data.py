@@ -14,7 +14,7 @@ import pytest
 
 from gethired.models import (
     Contact,
-    Master,
+Resume,
     Skills,
     Step,
     StepKind,
@@ -37,17 +37,11 @@ from gethired.serialize import (
 
 def _sample_master() -> Master:
     return Master(
-        contact=Contact(
-            name="Jane Doe",
-            city="Austin",
-            phone="555-0100",
-            email="jane@example.com",
-            github_url=None,
-            linkedin_url=None,
+        contact=Resume(name="Jane Doe", city="Austin", phone="555-0100", email="jane@example.com", github=None, linkedin=None,
         ),
         summary="Engineer.",
         skills=Skills(categories={"Languages": ("Python",)}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),
@@ -88,7 +82,7 @@ def test_from_tailored_dict_handles_empty_grounding() -> None:
         contact=master.contact,
         summary=master.summary,
         skills=master.skills,
-        experiences=master.experiences,
+        experience=master.experience,
         projects=master.projects,
         education=master.education,
         awards=master.awards,
@@ -110,7 +104,7 @@ def test_from_tailored_dict_handles_empty_jobs() -> None:
         contact=master.contact,
         summary=master.summary,
         skills=master.skills,
-        experiences=master.experiences,
+        experience=master.experience,
         projects=master.projects,
         education=master.education,
         awards=master.awards,

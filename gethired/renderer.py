@@ -22,7 +22,7 @@ from gethired.validator import AtsReport
 
 TEMPLATES: Final[Path] = Path(__file__).parent / "templates"
 
-_TEX_ESCAPES: Final[dict[str, str]] = {
+TEX_ESCAPES: Final[dict[str, str]] = {
     "\\": r"\textbackslash{}",
     "&": r"\&",
     "%": r"\%",
@@ -66,12 +66,12 @@ def tex(tailored: Tailored) -> str:
 def text(tailored: Tailored) -> str:
     """Render the tailored resume as a plain-text ATS version."""
     lines: list[str] = []
-    lines.append(tailored.contact.name)
-    contact_bits = [tailored.contact.city, tailored.contact.phone, tailored.contact.email]
-    if tailored.contact.github_url:
-        contact_bits.append(tailored.contact.github_url)
-    if tailored.contact.linkedin_url:
-        contact_bits.append(tailored.contact.linkedin_url)
+    lines.append(tailored.name)
+    contact_bits = [tailored.city, tailored.phone, tailored.email]
+    if tailored.github:
+        contact_bits.append(tailored.github)
+    if tailored.linkedin:
+        contact_bits.append(tailored.linkedin)
     lines.append(" | ".join(bit for bit in contact_bits if bit))
     lines.append("")
     lines.append("SUMMARY")
@@ -82,7 +82,7 @@ def text(tailored: Tailored) -> str:
         lines.append(f"{category}: {', '.join(items)}")
     lines.append("")
     lines.append("EXPERIENCE")
-    for exp in tailored.experiences:
+    for exp in tailored.experience:
         lines.append(f"{exp.role}, {exp.company} ({exp.start_date} -- {exp.end_date})")
         for bullet in exp.bullets:
             lines.append(f"- {bullet.text}")
@@ -116,7 +116,7 @@ def text(tailored: Tailored) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
-def _run_description(run: Run) -> list[str]:
+def run_description(run: Run) -> list[str]:
     """Return the '## Run Description' section as a list of lines."""
     lines = [
         "## Run Description",
@@ -131,7 +131,7 @@ def _run_description(run: Run) -> list[str]:
     return lines
 
 
-def _result_description(run_result: RunResult) -> list[str]:
+def result_description(run_result: RunResult) -> list[str]:
     """Return the '## Result Description' section as a list of lines."""
     return [
         "## Result Description",
@@ -144,7 +144,7 @@ def _result_description(run_result: RunResult) -> list[str]:
     ]
 
 
-def _job_trail(run_result: RunResult) -> list[str]:
+def job_trail(run_result: RunResult) -> list[str]:
     """Return the '## Job Trail' section as a list of lines."""
     lines = [
         "## Job Trail",
@@ -156,7 +156,7 @@ def _job_trail(run_result: RunResult) -> list[str]:
     return lines
 
 
-def _websearch_audit(run_result: RunResult) -> list[str]:
+def websearch_audit(run_result: RunResult) -> list[str]:
     """Return the '## Web Search Audit' section, or [] if no searches."""
     searches = run_result.websearch_calls
     if not searches:
@@ -172,7 +172,7 @@ def _websearch_audit(run_result: RunResult) -> list[str]:
     return lines
 
 
-def _ats_results(ats_report: AtsReport) -> list[str]:
+def ats_results(ats_report: AtsReport) -> list[str]:
     """Return the '## ATS Gate Results' section as a list of lines."""
     return [
         "## ATS Gate Results",
@@ -186,7 +186,7 @@ def _ats_results(ats_report: AtsReport) -> list[str]:
     ]
 
 
-def _reasoning_trace(run_result: RunResult) -> list[str]:
+def reasoning_trace(run_result: RunResult) -> list[str]:
     """Return the '## Reasoning Trace' section as a list of lines."""
     return [
         "## Reasoning Trace",
@@ -199,7 +199,7 @@ def _reasoning_trace(run_result: RunResult) -> list[str]:
     ]
 
 
-def _summary(tailored: Tailored) -> list[str]:
+def render_summary(tailored: Tailored) -> list[str]:
     """Return the '## Tailored Summary' section, or [] if no summary."""
     if not tailored.summary:
         return []

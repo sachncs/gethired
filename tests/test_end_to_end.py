@@ -274,7 +274,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                 contact=master.contact,
                 summary="",
                 skills=master.skills,
-                experiences=master.experiences,
+                experience=master.experience,
                 projects=master.projects,
                 education=master.education,
                 awards=master.awards,

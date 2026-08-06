@@ -30,7 +30,7 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-    Master,
+Resume,
     Project,
     Skills,
 )
@@ -162,7 +162,7 @@ def find_macro_invocations(
     return results
 
 
-def extract_contact(body: str) -> Contact:
+def extract_contact(body: str) -> tuple[str, str, str, str, str | None, str | None]:
     name_match = HUGE_NAME_RE.search(body)
     name = clean(name_match.group(1)) if name_match else ""
 
@@ -196,14 +196,7 @@ def extract_contact(body: str) -> Contact:
 
     require_contact(name, city, phone, email)
 
-    return Contact(
-        name=name,
-        city=city,
-        phone=phone,
-        email=email,
-        github_url=github_url,
-        linkedin_url=linkedin_url,
-    )
+    return (name, city, phone, email, github_url, linkedin_url)
 
 
 def extract_summary(body: str) -> str:
@@ -265,7 +258,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
         return ()
 
     section_text = match.group(1)
-    experiences: list[Experience] = []
+    experience: list[Experience] = []
     for _, args in find_macro_invocations(section_text, "resumeSubheading", 3):
         role = clean(args[0])
         company = clean(args[1])
@@ -275,7 +268,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
         pattern = re.compile(r"\\resumeSubheading\b\s*")
         match_iter = list(pattern.finditer(section_text))
         # Use the corresponding match for position
-        idx = len(experiences)
+        idx = len(experience)
         if idx < len(match_iter):
             macro_end = match_iter[idx].end()
             # advance past the three args
@@ -283,7 +276,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
             section_bullets = extract_bullets(section_text, after)
         else:
             section_bullets = ()
-        experiences.append(
+        experience.append(
             Experience(
                 role=role,
                 company=company,
@@ -292,7 +285,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
                 bullets=section_bullets,
             )
         )
-    return tuple(experiences)
+    return tuple(experience)
 
 
 def extract_heading_text_and_url(heading: str) -> tuple[str, str]:
@@ -444,18 +437,23 @@ def tex(source: str | Path) -> Master:
     education_data = extract_education(body_text)
     award_data = extract_awards(body_text)
 
-    return Master(
-        contact=contact_info,
+    return Resume(
+        name=contact_info[0],
+        city=contact_info[1],
+        phone=contact_info[2],
+        email=contact_info[3],
+        github=contact_info[4],
+        linkedin=contact_info[5],
         summary=summary_text,
         skills=skills_data,
-        experiences=experience_data,
+        experience=experience_data,
         projects=project_data,
         education=education_data,
         awards=award_data,
     )
 
 
-def text(text: str) -> Master:
+def text(text: str) -> Resume:
     """Parse a plain-text resume into a ``Master``.
 
     Routes to ``tex`` when the text contains TeX markers. Otherwise

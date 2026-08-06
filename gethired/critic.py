@@ -11,7 +11,7 @@ from pathlib import Path
 from gethired.constants import QUANTIFY
 from gethired.models import (
     Job,
-    Master,
+Resume,
     Step,
     StepEnv,
     StepKind,

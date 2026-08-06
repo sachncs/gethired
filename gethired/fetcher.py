@@ -52,7 +52,7 @@ ANTIBOT_HEADER_MARKERS: Final[tuple[str, ...]] = (
 """Header substrings (lowercased) whose presence classifies a response as an anti-bot challenge."""
 
 
-def _classify_antibot(url: str, response_value: httpx.Response) -> AntiBotError | None:
+def classify_antibot(url: str, response_value: httpx.Response) -> AntiBotError | None:
     """Return an ``AntiBotError`` if the response looks like a WAF/anti-bot block.
 
     None when the response is not an anti-bot block — caller treats it as a regular
@@ -128,7 +128,7 @@ class Fetcher:
                     follow_redirects=True,
                 ) as client:
                     response_value = client.get(url)
-                    antibot = _classify_antibot(url, response_value)
+                    antibot = classify_antibot(url, response_value)
                     if antibot is not None:
                         logger.warning(
                             "anti-bot challenge detected; not retrying",

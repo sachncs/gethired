@@ -11,7 +11,7 @@ from collections import Counter
 from statistics import mean, pstdev
 from typing import Final
 
-from gethired.models import Bullet, Master, Voice
+from gethired.models import Bullet, Voice
 
 OPENING_VERB_RE: Final[re.Pattern[str]] = re.compile(r"\b([A-Z][a-z]+)\b")
 
@@ -59,7 +59,7 @@ def build(master: Master) -> Voice:
         A ``Voice`` describing length, verbs, punctuation, sentence count.
     """
     all_bullets: list[Bullet] = []
-    for experience in master.experiences:
+    for experience in master.experience:
         all_bullets.extend(experience.bullets)
     for project in master.projects:
         all_bullets.extend(project.bullets)

@@ -24,12 +24,12 @@ from gethired.constants import CONSENT, CONSENT_DAYS, CONSENT_PATH
 __all__ = ["current", "require", "reset", "set_path"]
 
 # Module-level mutable container avoids the PLW0603 'global' warning.
-_consent_path_override: list[str | None] = [None]
+consent_path_override: list[str | None] = [None]
 
 
-def _consent_path() -> str:
+def consent_path() -> str:
     """Return the active consent file path (override or default)."""
-    override = _consent_path_override[0]
+    override = consent_path_override[0]
     if override is not None:
         return override
     return CONSENT_PATH
@@ -40,12 +40,12 @@ def set_path(path: str) -> None:
 
     Pass ``None`` to restore the default.
     """
-    _consent_path_override[0] = path
+    consent_path_override[0] = path
 
 
 def current() -> bool:
     """Return True if a valid, unexpired consent record exists on disk."""
-    consent_file = Path(_consent_path()).expanduser()
+    consent_file = Path(consent_path()).expanduser()
     if not consent_file.exists():
         return False
     try:
@@ -60,14 +60,14 @@ def current() -> bool:
 
 def record() -> None:
     """Persist a fresh consent timestamp to disk."""
-    consent_file = Path(_consent_path()).expanduser()
+    consent_file = Path(consent_path()).expanduser()
     consent_file.parent.mkdir(parents=True, exist_ok=True)
     consent_file.write_text(json.dumps({"timestamp": datetime.now(UTC).isoformat()}))
 
 
 def reset() -> None:
     """Remove any persisted consent record (used by tests)."""
-    consent_file = Path(_consent_path()).expanduser()
+    consent_file = Path(consent_path()).expanduser()
     if consent_file.exists():
         consent_file.unlink()
 

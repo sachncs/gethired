@@ -17,7 +17,7 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-    Master,
+Resume,
     Project,
     Reason,
     Skills,
@@ -38,17 +38,11 @@ from gethired.serialize import (
 def _sample_master() -> Master:
     """Build a minimal but realistic Master for round-trip tests."""
     return Master(
-        contact=Contact(
-            name="Test User",
-            city="Test City",
-            phone="+1-555-0100",
-            email="test@example.com",
-            github_url=None,
-            linkedin_url=None,
+        contact=Resume(name="Test User", city="Test City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None,
         ),
         summary="A short summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),
-        experiences=(
+        experience=(
             Experience(
                 role="Engineer",
                 company="Acme",
@@ -114,7 +108,7 @@ def test_coerce_tailored_from_dict_preserves_run_result() -> None:
     snap = snapshot(master)
     raw = json.loads(render_json(snap))
     tailored = from_tailored_dict(raw)
-    assert tailored.contact.name == "Test User"
+    assert tailored.name == "Test User"
     assert tailored.run_result is not None
     assert tailored.run_result.run.id == snap.run_result.run.id
 

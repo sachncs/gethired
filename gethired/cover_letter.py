@@ -12,7 +12,7 @@ from dataclasses import dataclass
 from gethired.description import Analysis
 from gethired.models import (
     CoverLetter,
-    Master,
+Resume,
     Paragraph,
     Voice,
 )
@@ -45,12 +45,12 @@ def compose(
     Returns:
         ``Letter`` containing the letter and a one-sentence rationale.
     """
-    name = sender_name or master.contact.name
+    name = sender_name or master.name
     salutation = f"Dear {recipient or 'Hiring Team'},"
     keyword_blob = ", ".join(analysis.must_have[:3]) or "your domain"
     opening_verb = voice.opening_verbs[0] if voice.opening_verbs else "Built"
-    top_role = master.experiences[0].role if master.experiences else "engineer"
-    top_company = master.experiences[0].company if master.experiences else "a previous team"
+    top_role = master.experience[0].role if master.experience else "engineer"
+    top_company = master.experience[0].company if master.experience else "a previous team"
     opening = (
         f"I am excited to apply for the {analysis.role} role. "
         f"With a track record spanning {top_role} at {top_company}, "

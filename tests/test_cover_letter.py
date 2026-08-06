@@ -24,11 +24,11 @@ def _sample_analysis() -> Analysis:
     )
 
 
-def test_tailor_cover_letter_returns_structured_letter(master_resume) -> None:
+def test_tailor_cover_letter_returns_structured_letter(resume) -> None:
     """compose returns a CoverLetter with opening, body, closing."""
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
-    result = compose(master_resume, analysis, voice)
+    voice = build_profile(resume)
+    result = compose(resume, analysis, voice)
     assert result.letter.salutation.startswith("Dear ")
     assert len(result.letter.paragraphs) == 3
     assert result.letter.paragraphs[0].opening is True
@@ -36,7 +36,7 @@ def test_tailor_cover_letter_returns_structured_letter(master_resume) -> None:
     assert "Senior ML Engineer" in result.letter.paragraphs[0].text
 
 
-def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
+def test_tailor_cover_letter_mirrors_keywords(resume) -> None:
     """The cover letter opening must include a real keyword from the analysis.
 
     The 'or' in the original assertion allowed one keyword OR the other,
@@ -46,8 +46,8 @@ def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
     (not as a substring of another word).
     """
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
-    result = compose(master_resume, analysis, voice)
+    voice = build_profile(resume)
+    result = compose(resume, analysis, voice)
     opening = result.letter.paragraphs[0].text.lower()
     # Use word boundaries so 'python' doesn't match 'pythonic'
     has_python = bool(re.search(r"\bpython\b", opening))
@@ -57,20 +57,20 @@ def test_tailor_cover_letter_mirrors_keywords(master_resume) -> None:
     )
 
 
-def test_render_cover_letter_markdown_includes_salutation(master_resume) -> None:
+def test_render_cover_letter_markdown_includes_salutation(resume) -> None:
     """markdown emits salutation, paragraphs, signoff."""
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
-    result = compose(master_resume, analysis, voice)
+    voice = build_profile(resume)
+    result = compose(resume, analysis, voice)
     md = markdown(result.letter)
     assert "Dear " in md
     assert "Sincerely" in md
     assert result.letter.sender_name in md
 
 
-def test_tailor_cover_letter_honours_recipient(master_resume) -> None:
+def test_tailor_cover_letter_honours_recipient(resume) -> None:
     """Passing recipient overrides the default 'Hiring Team' salutation."""
     analysis = _sample_analysis()
-    voice = build_profile(master_resume)
-    result = compose(master_resume, analysis, voice, recipient="Hiring Manager")
+    voice = build_profile(resume)
+    result = compose(resume, analysis, voice, recipient="Hiring Manager")
     assert "Hiring Manager" in result.letter.salutation

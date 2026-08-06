@@ -14,7 +14,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from gethired.models import Master, Tailored
+from gethired.models import Resume, Tailored
 from gethired.normalize import (
     ngrams,
     numbers,
@@ -369,7 +369,7 @@ def code_task_completion(
     spans = _read_spans(trace_path, kind="agent")
     has_tailor_span = any(s["name"] == "tailor.run" for s in spans)
     summary_present = bool(tailored.summary and tailored.summary.strip())
-    experiences_present = bool(tailored.experiences)
+    experiences_present = bool(tailored.experience)
     passed = has_tailor_span and summary_present and experiences_present
     detail = (
         "tailor.run span present, summary + experiences populated"

@@ -10,7 +10,7 @@ from gethired.models import (
     Bullet,
     Experience,
     Job,
-    Master,
+Resume,
     Outcome,
     Run,
     RunResult,
@@ -46,7 +46,7 @@ def _make_tailored(master: Master) -> Tailored:
         contact=master.contact,
         summary=master.summary,
         skills=master.skills,
-        experiences=master.experiences,
+        experience=master.experience,
         projects=master.projects,
         education=master.education,
         awards=master.awards,
@@ -58,25 +58,25 @@ def _make_tailored(master: Master) -> Tailored:
     )
 
 
-def test_grounding_passes_for_identity_transform(master_resume) -> None:
+def test_grounding_passes_for_identity_transform(resume) -> None:
     """An identity-transform tailored resume produces zero grounding violations.
 
     When every skill, number, and company in the tailored resume comes
     directly from the master, grounding() must return an empty tuple.
     """
-    tailored = _make_tailored(master_resume)
-    violations = grounding(tailored, master_resume)
+    tailored = _make_tailored(resume)
+    violations = grounding(tailored, resume)
     assert violations == (), f"identity transform must not produce violations, got {violations}"
 
 
-def test_grounding_detects_invented_skill(master_resume) -> None:
+def test_grounding_detects_invented_skill(resume) -> None:
     """Grounding flags a skill that does not appear anywhere in the master.
 
     Verifies the data safety property: no fabricated skills can pass
     grounding. The violation path must point to the tailored.skills
     category and the detail must name the invented skill.
     """
-    tailored = _make_tailored(master_resume)
+    tailored = _make_tailored(resume)
     fake = Tailored(
         contact=tailored.contact,
         summary=tailored.summary,
@@ -85,7 +85,7 @@ def test_grounding_detects_invented_skill(master_resume) -> None:
                 "Programming Languages": ("Python", "QuantumScript"),
             }
         ),
-        experiences=tailored.experiences,
+        experience=tailored.experience,
         projects=tailored.projects,
         education=tailored.education,
         awards=tailored.awards,
@@ -95,7 +95,7 @@ def test_grounding_detects_invented_skill(master_resume) -> None:
         jobs=(),
         run_result=tailored.run_result,
     )
-    violations = grounding(fake, master_resume)
+    violations = grounding(fake, resume)
     skill_violations = [v for v in violations if v.detail.startswith("Skill 'QuantumScript'")]
     assert skill_violations, (
         f"grounding() did not flag the fabricated skill 'QuantumScript'; "
@@ -107,44 +107,44 @@ def test_grounding_detects_invented_skill(master_resume) -> None:
     )
 
 
-def test_grounding_detects_invented_number(master_resume) -> None:
+def test_grounding_detects_invented_number(resume) -> None:
     """Grounding flags a numeric claim that does not appear in the master.
 
     The invented number 99999999 is not present in any master bullet, so
     grounding() must produce a violation naming the specific number.
     """
-    tailored = _make_tailored(master_resume)
+    tailored = _make_tailored(resume)
     fake = Tailored(
-        contact=master_resume.contact,
-        summary=master_resume.summary + " Achieved 99999999% growth.",
-        skills=master_resume.skills,
-        experiences=master_resume.experiences,
-        projects=master_resume.projects,
-        education=master_resume.education,
-        awards=master_resume.awards,
+        contact=resume.contact,
+        summary=resume.summary + " Achieved 99999999% growth.",
+        skills=resume.skills,
+        experience=resume.experience,
+        projects=resume.projects,
+        education=resume.education,
+        awards=resume.awards,
         dropped=(),
         rationale="",
         grounding=(),
         jobs=(),
         run_result=tailored.run_result,
     )
-    violations = grounding(fake, master_resume)
+    violations = grounding(fake, resume)
     number_violations = [v for v in violations if "99999999" in v.detail]
     assert number_violations, (
         f"grounding() did not flag the fabricated number 99999999; got violations: {violations}"
     )
 
 
-def test_style_detects_banned_word(master_resume) -> None:
-    tailored = _make_tailored(master_resume)
+def test_style_detects_banned_word(resume) -> None:
+    tailored = _make_tailored(resume)
     fake = Tailored(
-        contact=master_resume.contact,
+        contact=resume.contact,
         summary="Leveraged Python to deliver comprehensive solutions.",
-        skills=master_resume.skills,
-        experiences=master_resume.experiences,
-        projects=master_resume.projects,
-        education=master_resume.education,
-        awards=master_resume.awards,
+        skills=resume.skills,
+        experience=resume.experience,
+        projects=resume.projects,
+        education=resume.education,
+        awards=resume.awards,
         dropped=(),
         rationale="",
         grounding=(),
@@ -155,8 +155,8 @@ def test_style_detects_banned_word(master_resume) -> None:
     assert any("leverage" in v.detail.lower() for v in violations)
 
 
-def test_plagiarism_passes_for_identity_transform(master_resume) -> None:
-    tailored = _make_tailored(master_resume)
+def test_plagiarism_passes_for_identity_transform(resume) -> None:
+    tailored = _make_tailored(resume)
     jd = Job(
         url="https://example.com/jd",
         title="ML Engineer",
@@ -171,7 +171,7 @@ def test_plagiarism_passes_for_identity_transform(master_resume) -> None:
     assert violations == ()
 
 
-def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
+def test_plagiarism_detects_5gram_overlap(resume) -> None:
     """JD and tailored share a 5-gram → violation."""
     shared_phrase = "designed and deployed isolated ai platforms"
     jd_text = f"Requirements include {shared_phrase} for enterprise customers in fintech."
@@ -185,12 +185,12 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
         nice_to_have_keywords=(),
         content_hash="abc",
     )
-    tailored = _make_tailored(master_resume)
+    tailored = _make_tailored(resume)
     fake = Tailored(
-        contact=master_resume.contact,
-        summary=master_resume.summary,
-        skills=master_resume.skills,
-        experiences=tailored.experiences
+        contact=resume.contact,
+        summary=resume.summary,
+        skills=resume.skills,
+        experience=tailored.experience
         + (
             Experience(
                 role="Engineer",
@@ -200,9 +200,9 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
                 bullets=(Bullet(text=f"Worked on {shared_phrase} for enterprise customers."),),
             ),
         ),
-        projects=master_resume.projects,
-        education=master_resume.education,
-        awards=master_resume.awards,
+        projects=resume.projects,
+        education=resume.education,
+        awards=resume.awards,
         dropped=(),
         rationale="",
         grounding=(),
@@ -217,7 +217,7 @@ def test_plagiarism_detects_5gram_overlap(master_resume) -> None:
     )
 
 
-def test_ats_check_produces_full_report(master_resume) -> None:
+def test_ats_check_produces_full_report(resume) -> None:
     """ats() evaluates all 12 gates with valid status values and tier annotations.
 
     Verifies the data process: every gate must produce a result, the result
@@ -225,7 +225,7 @@ def test_ats_check_produces_full_report(master_resume) -> None:
     set. Without a PDF, 4 PDF-dependent gates should be SKIP and the rest
     should evaluate against the test inputs.
     """
-    tailored = _make_tailored(master_resume)
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     report = ats(tailored, t, None, t2, ())
@@ -252,8 +252,8 @@ def test_ats_check_produces_full_report(master_resume) -> None:
     assert pdf_gates.issubset(skipped), f"expected {pdf_gates - skipped} to be SKIP without a PDF"
 
 
-def test_ats_section_headings_pass_for_master(master_resume) -> None:
-    tailored = _make_tailored(master_resume)
+def test_ats_section_headings_pass_for_master(resume) -> None:
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     report = ats(tailored, t, None, t2, ())
@@ -261,8 +261,8 @@ def test_ats_section_headings_pass_for_master(master_resume) -> None:
     assert section_gate.passed
 
 
-def test_pdf_gates_skip_when_no_pdf(master_resume) -> None:
-    tailored = _make_tailored(master_resume)
+def test_pdf_gates_skip_when_no_pdf(resume) -> None:
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     report = ats(tailored, t, None, t2, ())
@@ -277,8 +277,8 @@ def test_pdf_gates_skip_when_no_pdf(master_resume) -> None:
     assert set(report.skipped_gates) == pdf_gates
 
 
-def test_pdf_gates_fail_when_pdf_path_missing(master_resume, tmp_path: Path) -> None:
-    tailored = _make_tailored(master_resume)
+def test_pdf_gates_fail_when_pdf_path_missing(resume, tmp_path: Path) -> None:
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     missing_pdf = tmp_path / "missing.pdf"
@@ -298,8 +298,8 @@ def test_gate_tiers_partition_all_gates() -> None:
     assert hard & advisory == set()
 
 
-def test_hard_gate_failure_is_blocking(master_resume) -> None:
-    tailored = _make_tailored(master_resume)
+def test_hard_gate_failure_is_blocking(resume) -> None:
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     tex_with_layout = t + r"\begin{multicols}{2}"
@@ -309,8 +309,8 @@ def test_hard_gate_failure_is_blocking(master_resume) -> None:
     assert AtsGate.NO_TABLES_FOR_LAYOUT.tier is GateTier.HARD
 
 
-def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
-    tailored = _make_tailored(master_resume)
+def test_advisory_gate_failure_is_not_blocking(resume) -> None:
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     jd = Job(
@@ -329,8 +329,8 @@ def test_advisory_gate_failure_is_not_blocking(master_resume) -> None:
     assert report.hard_failed_gates == ()
 
 
-def test_length_gate_passes_for_single_page_pdf(master_resume, tmp_path) -> None:
-    tailored = _make_tailored(master_resume)
+def test_length_gate_passes_for_single_page_pdf(resume, tmp_path) -> None:
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     pdf_path = tmp_path / "one_page.pdf"
@@ -341,8 +341,8 @@ def test_length_gate_passes_for_single_page_pdf(master_resume, tmp_path) -> None
     assert "1 page(s)" in result.detail
 
 
-def test_length_gate_fails_for_multi_page_pdf(master_resume, tmp_path) -> None:
-    tailored = _make_tailored(master_resume)
+def test_length_gate_fails_for_multi_page_pdf(resume, tmp_path) -> None:
+    tailored = _make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     pdf_path = tmp_path / "two_pages.pdf"

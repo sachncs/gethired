@@ -29,7 +29,7 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-    Master,
+Resume,
     Outcome,
     Project,
     Reason,
@@ -100,7 +100,7 @@ def from_master_dict(raw: dict[str, Any]) -> Master:
         contact=contact_info,
         summary=raw["summary"],
         skills=skills_data,
-        experiences=experience_data,
+        experience=experience_data,
         projects=project_data,
         education=education_data,
         awards=award_data,
@@ -112,12 +112,12 @@ def _contact_from(raw: dict[str, Any]) -> Contact:
     return Contact(**raw["contact"])
 
 
-def _skills_from(raw: dict[str, Any]) -> Skills:
+def skills_from(raw: dict[str, Any]) -> Skills:
     """Reconstruct the Skills dataclass from the serialised categories."""
     return Skills(categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()})
 
 
-def _experiences_from(raw: dict[str, Any]) -> tuple[Experience, ...]:
+def experiences_from(raw: dict[str, Any]) -> tuple[Experience, ...]:
     """Reconstruct Experience entries from the serialised list."""
     return tuple(
         Experience(
@@ -131,7 +131,7 @@ def _experiences_from(raw: dict[str, Any]) -> tuple[Experience, ...]:
     )
 
 
-def _projects_from(raw: dict[str, Any]) -> tuple[Project, ...]:
+def projects_from(raw: dict[str, Any]) -> tuple[Project, ...]:
     """Reconstruct Project entries from the serialised list."""
     return tuple(
         Project(
@@ -143,7 +143,7 @@ def _projects_from(raw: dict[str, Any]) -> tuple[Project, ...]:
     )
 
 
-def _grounding_from(raw: dict[str, Any]) -> tuple[Citation, ...]:
+def grounding_from(raw: dict[str, Any]) -> tuple[Citation, ...]:
     """Reconstruct Citation entries from the serialised list."""
     return tuple(Citation(**citation) for citation in raw.get("grounding", []))
 
@@ -158,7 +158,7 @@ def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
         contact=_contact_from(raw),
         summary=raw["summary"],
         skills=_skills_from(raw),
-        experiences=_experiences_from(raw),
+        experience=_experiences_from(raw),
         projects=_projects_from(raw),
         education=tuple(Education(**edu) for edu in raw["education"]),
         awards=tuple(Award(**award) for award in raw["awards"]),
@@ -217,7 +217,7 @@ def snapshot(
         contact=master.contact,
         summary=master.summary,
         skills=master.skills,
-        experiences=master.experiences,
+        experience=master.experience,
         projects=master.projects,
         education=master.education,
         awards=master.awards,
@@ -229,8 +229,8 @@ def snapshot(
             run=Run(
                 id=str(uuid4()),
                 started_at=now(),
-                master_hash=master.content_hash(),
-                jd_urls_hash="",
+                resume_hash=master.content_hash(),
+                jd_hash="",
                 model=snap.model,
                 draft_model=snap.draft_model,
             ),

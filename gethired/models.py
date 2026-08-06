@@ -227,10 +227,10 @@ class Master:
         """Render the resume as Markdown for human inspection."""
         lines: list[str] = [f"# {self.contact.name}", ""]
         contact_bits = [self.contact.city, self.contact.phone, self.contact.email]
-        if self.contact.github_url:
-            contact_bits.append(self.contact.github_url)
-        if self.contact.linkedin_url:
-            contact_bits.append(self.contact.linkedin_url)
+        if self.contact.github:
+            contact_bits.append(self.contact.github)
+        if self.contact.linkedin:
+            contact_bits.append(self.contact.linkedin)
         lines.append(" · ".join(bit for bit in contact_bits if bit))
         lines.append("")
         lines.append("## Summary")

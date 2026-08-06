@@ -63,11 +63,11 @@ WORD_RE: Final[re.Pattern[str]] = re.compile(r"[A-Za-z][A-Za-z0-9+#.-]*")
 WHITESPACE_RE: Final[re.Pattern[str]] = re.compile(r"\s+")
 
 
-_SUFFIX_MULTIPLIER = {"k": 1_000, "m": 1_000_000, "b": 1_000_000_000}
-_BIG_NUMBERS = frozenset({100, 1000, 1000000, 1000000000})
+SUFFIX_MULTIPLIER = {"k": 1_000, "m": 1_000_000, "b": 1_000_000_000}
+BIG_NUMBERS = frozenset({100, 1000, 1000000, 1000000000})
 
 
-def _extract_numeric_patterns(text: str) -> set[int]:
+def extract_numeric_patterns(text: str) -> set[int]:
     """Extract integers from the explicit numeric-patterns (``10000``, ``$5000``, ``5%``)."""
     found: set[int] = set()
     for pattern in NUMBER_PATTERNS:
@@ -80,7 +80,7 @@ def _extract_numeric_patterns(text: str) -> set[int]:
     return found
 
 
-def _extract_suffix_multipliers(text: str) -> set[int]:
+def extract_suffix_multipliers(text: str) -> set[int]:
     """Extract integers from suffix-multiplied forms (``10K``, ``5M``, ``2B``)."""
     found: set[int] = set()
     pattern = re.compile(r"\b(\d+(?:\.\d+)?)\s*([kKmMbB])\b")
@@ -91,7 +91,7 @@ def _extract_suffix_multipliers(text: str) -> set[int]:
     return found
 
 
-def _parse_word_phrase(tokens: list[str]) -> int:
+def parse_word_phrase(tokens: list[str]) -> int:
     """Convert a list of English number-word tokens to their integer sum."""
     value = 0
     current = 0
@@ -110,7 +110,7 @@ def _parse_word_phrase(tokens: list[str]) -> int:
     return value
 
 
-def _extract_word_numbers(text: str) -> set[int]:
+def extract_word_numbers(text: str) -> set[int]:
     """Extract integers from English number-word phrases (``ten thousand``)."""
     word_pattern_text = (
         r"\b((?:zero|one|two|three|four|five|six|seven|eight|nine|ten|"

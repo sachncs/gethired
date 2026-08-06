@@ -87,7 +87,7 @@ def analyze(description: Job) -> Analysis:
     )
 
 
-def _union_skills(analyses: tuple[Analysis, ...]) -> list[str]:
+def union_skills(analyses: tuple[Analysis, ...]) -> list[str]:
     """Union of must-have skills across all JDs (preserves first-seen order)."""
     seen: set[str] = set()
     result: list[str] = []
@@ -99,7 +99,7 @@ def _union_skills(analyses: tuple[Analysis, ...]) -> list[str]:
     return result
 
 
-def _intersect_skills(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
+def intersect_skills(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
     """Nice-to-have skills common to all JDs (intersection)."""
     if not analyses:
         return ()
@@ -110,7 +110,7 @@ def _intersect_skills(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
     return tuple(skill for skill, count in counts.items() if count == len(analyses))
 
 
-def _merged_keywords(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
+def merged_keywords(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
     """Deduplicated union of must-haves (first) then nice-to-haves (after)."""
     must_have = _union_skills(analyses)
     seen: set[str] = set(must_have)
@@ -123,7 +123,7 @@ def _merged_keywords(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
     return tuple(must_have + extras)
 
 
-def _union_responsibilities(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
+def union_responsibilities(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
     """Union of responsibility sentences across all JDs (preserves first-seen order)."""
     seen: set[str] = set()
     result: list[str] = []

@@ -168,6 +168,6 @@ def test_extract_contact_returns_none_for_optional_socials() -> None:
         + r"\small Austin $\cdot$ 5555550100 $\cdot$ jane@example.com\n"
     )
     contact = extract_contact(body)
-    assert contact.github_url is None
-    assert contact.linkedin_url is None
+    assert contact.github is None
+    assert contact.linkedin is None
     assert contact.email == "jane@example.com"

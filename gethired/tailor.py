@@ -34,7 +34,7 @@ from gethired.fetcher import Fetcher
 from gethired.merger import safe_merge
 from gethired.models import (
     Job,
-    Master,
+Resume,
     Outcome,
     Report,
     Run,
@@ -84,7 +84,7 @@ class Tailor:
 
     def __init__(
         self,
-        resume: Master | str | Path,
+        resume: Resume | str | Path,
         job_description: Job | str | tuple[Job | str, ...],
         debug: bool = False,
         model: str | None = None,
@@ -97,14 +97,14 @@ class Tailor:
         """Construct the orchestrator.
 
         Args:
-            resume: Master resume or path to ``.tex`` file.
+            resume: Resume or path to ``.tex`` file.
             job_description: One or more job descriptions (or URL strings).
             debug: Enable verbose loguru output.
             model: LLM identifier (e.g. ``"MiniMax-M3"``). Read from ``MODEL`` env var if ``None``.
             model_instance: Pre-constructed model instance for dependency injection
                 (typically ``TestModel`` in tests).
             draft_model: Optional cheap model identifier for preflight drafts.
-            data_dir: Directory for master.json and JD cache.
+            data_dir: Directory for resume.json and JD cache.
             tailored_dir: Directory for tailored run outputs.
             produce_cover_letter: When True, the run also emits ``cover_letter.md``.
 
@@ -130,8 +130,8 @@ class Tailor:
         self.data_dir = Path(data_dir)
         self.tailored_dir = Path(tailored_dir)
         self.cache_dir = Path(data_dir) / "jd_cache"
-        self.master_json = Path(data_dir) / "master.json"
-        self.cached_master: Master | None = None
+        self.master_json = Path(data_dir) / "resume.json"
+        self.cached_resume: Resume | None = None
         self.logger = logger("tailor", debug=debug)
 
     # ------------------------------------------------------------------
@@ -143,23 +143,23 @@ class Tailor:
         run = Run(
             id=str(new_uuid()),
             started_at=now(),
-            master_hash="",
-            jd_urls_hash="",
+            resume_hash="",
+            jd_hash="",
             model=self.model,
             draft_model=self.draft_model,
         )
         t = tracer(run.id, self.tailored_dir)
         token = current_tracer.set(t)
         try:
-            return self.__run_pipeline(t, run)
+            return self.__run(t, run)
         finally:
             t.close()
             current_tracer.reset(token)
 
-    def __run_pipeline(self, t: Tracer, run: Run) -> Tailored:
+    def __run(self, t: Tracer, run: Run) -> Tailored:
         """Inner pipeline implementation; called with an active t."""
         with t.span("tailor.run", "agent", run_id=run.id):
-            master = self.__load_master()
+            master = self.__load_resume()
             jds = self.__load_jds()
             profile = build_profile(master)
             if jds:
@@ -171,14 +171,14 @@ class Tailor:
             else:
                 analysis = None
 
-        # Refresh the run with hashes once master/jds are loaded.
-        master_hash = master.content_hash() if master else ""
+        # Refresh the run with hashes once resume/jds are loaded.
+        resume_hash = master.content_hash() if master else ""
         jd_hash = hash_urls(jds)
         run = Run(
             id=run.id,
             started_at=run.started_at,
-            master_hash=master_hash,
-            jd_urls_hash=jd_hash,
+            resume_hash=resume_hash,
+            jd_hash=jd_hash,
             model=self.model,
             draft_model=self.draft_model,
         )
@@ -265,7 +265,7 @@ class Tailor:
         Returns:
             A dict containing token estimates, gate expectations, and metadata.
         """
-        master = self.__load_master()
+        master = self.__load_resume()
         jds = self.__load_jds()
         profile = build_profile(master)
         if jds:
@@ -277,7 +277,7 @@ class Tailor:
         else:
             analysis = None
 
-        bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
+        bullets = sum(len(exp.bullets) for exp in master.experience) + sum(
             len(p.bullets) for p in master.projects
         )
         tokens_estimate = TOKENS_BASE + bullets * TOKENS_BULLET
@@ -301,7 +301,7 @@ class Tailor:
             gates, JD keyword coverage, voice drift risk, and any must-have
             keywords missing from the master.
         """
-        master = self.__load_master()
+        master = self.__load_resume()
         jds = self.__load_jds()
         profile = build_profile(master)
         if jds:
@@ -312,7 +312,7 @@ class Tailor:
             )
         else:
             analysis = None
-        bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(
+        bullets = sum(len(exp.bullets) for exp in master.experience) + sum(
             len(p.bullets) for p in master.projects
         )
         tokens_estimate = TOKENS_BASE + bullets * TOKENS_BULLET
@@ -393,22 +393,29 @@ class Tailor:
     # Internals
     # ------------------------------------------------------------------
 
-    def __load_master(self) -> Master:
-        if isinstance(self.resume_input, Master):
+    def __load_resume(self) -> Resume:
+        if isinstance(self.resume_input, Resume):
             return self.resume_input
         if self.master_json.exists():
             return load_master(self.master_json)
-        master = parse_tex(Path(self.resume_input))
+        resume = parse_tex(Path(self.resume_input))
         self.master_json.parent.mkdir(parents=True, exist_ok=True)
-        self.master_json.write_text(render_json(snapshot(master)))
-        return master
+        self.master_json.write_text(render_json(snapshot(resume)))
+        return resume
 
     @property
-    def master(self) -> Master:
-        """The parsed master resume (read-only). Loads on first access."""
-        if self.cached_master is None:
-            self.cached_master = self.__load_master()
-        return self.cached_master
+    def master(self) -> Resume:
+        """The parsed resume (read-only). Deprecated alias for :attr:`resume`."""
+        if self.cached_resume is None:
+            self.cached_resume = self.__load_resume()
+        return self.cached_resume
+
+    @property
+    def resume(self) -> Resume:
+        """The parsed resume (read-only). Loads on first access."""
+        if self.cached_resume is None:
+            self.cached_resume = self.__load_resume()
+        return self.cached_resume
 
     def __load_jds(self) -> tuple[Job, ...]:
         if isinstance(self.jd_input, Job):

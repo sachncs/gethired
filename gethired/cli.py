@@ -24,7 +24,7 @@ from gethired.audit import (
 from gethired.consent import require
 from gethired.constants import (
     DATA_DIR,
-    MASTER,
+    RESUME,
     OUTPUT_DIR,
 )
 from gethired.cover_letter import (
@@ -63,7 +63,7 @@ from gethired.validator import ats
 
 DEFAULT_DATA_DIR_PATH = Path(DATA_DIR)
 DEFAULT_TAILORED_DIR_PATH = Path(OUTPUT_DIR)
-DEFAULT_MASTER_JSON_PATH = Path(MASTER)
+DEFAULT_RESUME_JSON_PATH = Path(RESUME)
 
 # Load .env from the current working directory (and the package root as a
 # fallback). Existing process env vars win so users can override on the command
@@ -87,7 +87,7 @@ def ensure_consent(force_prompt: bool = False) -> None:
 @app.command()
 def ingest(
     tex_path: Path = typer.Argument(..., exists=True, readable=True),
-    out: Path = typer.Option(DEFAULT_MASTER_JSON_PATH, "--out", "-o"),
+    out: Path = typer.Option(DEFAULT_RESUME_JSON_PATH, "--out", "-o"),
 ) -> None:
     """Parse master resume into data/master.json."""
     configure()
@@ -125,10 +125,10 @@ def show_cmd(
     """Show master.json or a cached JD."""
     configure()
     if what == "master":
-        if not DEFAULT_MASTER_JSON_PATH.exists():
-            typer.echo(f"master.json not found at {DEFAULT_MASTER_JSON_PATH}", err=True)
+        if not DEFAULT_RESUME_JSON_PATH.exists():
+            typer.echo(f"master.json not found at {DEFAULT_RESUME_JSON_PATH}", err=True)
             raise typer.Exit(code=1)
-        typer.echo(DEFAULT_MASTER_JSON_PATH.read_text())
+        typer.echo(DEFAULT_RESUME_JSON_PATH.read_text())
     elif what == "jd":
         if url is None:
             typer.echo("--url required for jd", err=True)
@@ -144,7 +144,7 @@ def show_cmd(
         raise typer.Exit(code=1)
 
 
-def _common_paste_args(
+def common_paste_args(
     pasted_jd: str | None,
     no_tty_prompt: bool,
 ) -> tuple[str | None, bool]:
@@ -152,7 +152,7 @@ def _common_paste_args(
     return pasted_jd, no_tty_prompt
 
 
-def _resolve_jds(
+def resolve_jds(
     urls: list[str] | None,
     pasted_jd: str | None,
     no_tty_prompt: bool,
@@ -168,14 +168,14 @@ def _resolve_jds(
         typer.echo("error: pass either <urls> or --pasted-jd, not both", err=True)
         raise typer.Exit(code=2)
     if pasted_jd is not None:
-        return (_load_pasted_jd(pasted_jd),)
+        return (load_pasted_jd(pasted_jd),)
     if not urls:
         typer.echo("error: at least one <url> or --pasted-jd is required", err=True)
         raise typer.Exit(code=2)
     try:
         return fetch_all_jds(urls)
     except AntiBotError as exc:
-        jd = _antibot_recover(exc, no_tty_prompt=no_tty_prompt)
+        jd = antibot_recover(exc, no_tty_prompt=no_tty_prompt)
         if jd is None:
             raise typer.Exit(code=2) from exc
         return (jd,)
@@ -201,7 +201,7 @@ def plan(
     """Estimate cost without running the agent."""
     configure()
     ensure_consent()
-    jds = _resolve_jds(urls, pasted_jd, no_tty_prompt)
+    jds = resolve_jds(urls, pasted_jd, no_tty_prompt)
     tailor = Tailor(resume=resume, job_description=jds, model=model)
     plan_data = tailor.plan()
     typer.echo(json.dumps(plan_data, indent=2))
@@ -229,7 +229,7 @@ def run(
     """Run the full tailoring pipeline. Accepts multiple URLs."""
     configure(debug=debug)
     ensure_consent()
-    jds = _resolve_jds(urls, pasted_jd, no_tty_prompt)
+    jds = resolve_jds(urls, pasted_jd, no_tty_prompt)
     tailor = Tailor(
         resume=resume, job_description=jds, model=model, debug=debug, tailored_dir=out_dir
     )
@@ -273,7 +273,7 @@ def cover(
     """
     configure(debug=debug)
     ensure_consent()
-    jds = _resolve_jds(urls, pasted_jd, no_tty_prompt)
+    jds = resolve_jds(urls, pasted_jd, no_tty_prompt)
     tailor = Tailor(
         resume=resume,
         job_description=jds,
@@ -292,7 +292,7 @@ def cover(
     ) as exc:
         typer.echo(f"Tailoring failed: {exc}", err=True)
         raise typer.Exit(code=1)
-    written = _write_cover_letters(
+    written = write_cover_letters(
         tailored=tailored,
         resume=resume,
         model=model,
@@ -324,7 +324,7 @@ def preflight(
     """Dry-run preflight: estimate cost and gate outcomes without invoking the LLM."""
     configure()
     ensure_consent()
-    jds = _resolve_jds(urls, pasted_jd, no_tty_prompt)
+    jds = resolve_jds(urls, pasted_jd, no_tty_prompt)
     tailor = Tailor(resume=resume, job_description=jds, model=model, debug=False)
     report = tailor.preflight()
     typer.echo("Preflight report")
@@ -446,12 +446,12 @@ def diff(
 # ---------------------------------------------------------------------------
 
 
-_SLUG_RE: re.Pattern[str] = re.compile(r"[^a-z0-9]+")
+SLUG_RE: re.Pattern[str] = re.compile(r"[^a-z0-9]+")
 
 
 def slugify(value: str) -> str:
     """Lower-case, strip non-alphanumerics, collapse runs into single hyphens."""
-    slug = _SLUG_RE.sub("-", value.lower()).strip("-")
+    slug = SLUG_RE.sub("-", value.lower()).strip("-")
     return slug or "job"
 
 
@@ -466,18 +466,18 @@ def fetch_all_jds(urls: list[str]) -> tuple[Job, ...]:
     return tuple(retriever.retrieve(url) for url in urls)
 
 
-def _load_pasted_jd(path: str) -> Job:
+def load_pasted_jd(path: str) -> Job:
     """Build a ``Job`` from a file path (``-`` reads stdin).
 
     The URL is set to ``pasted://<path>`` so it round-trips through cache
     invalidation by content hash rather than by URL.
     """
     if path == "-":
-        return _job_from_text(sys.stdin.read(), source="stdin")
-    return _job_from_text(Path(path).read_text(), source=path)
+        return job_from_text(sys.stdin.read(), source="stdin")
+    return job_from_text(Path(path).read_text(), source=path)
 
 
-def _job_from_text(text: str, *, source: str) -> Job:
+def job_from_text(text: str, *, source: str) -> Job:
     """Build a ``Job`` from already-read text (used by both file load and TTY paste).
 
     Runs the fetcher's keyword extractor over the text so must-haves and
@@ -499,14 +499,14 @@ def _job_from_text(text: str, *, source: str) -> Job:
     )
 
 
-def _stdin_is_tty() -> bool:
+def stdin_is_tty() -> bool:
     try:
         return sys.stdin.isatty()
     except ValueError:
         return False
 
 
-def _inline_paste_prompt() -> str:
+def inline_paste_prompt() -> str:
     """Read the JD text from stdin with an inline banner.
 
     Prints a banner to stderr so stdout stays usable for piping; reads stdin
@@ -520,7 +520,7 @@ def _inline_paste_prompt() -> str:
     return sys.stdin.read()
 
 
-def _antibot_recover(exc: AntiBotError, *, no_tty_prompt: bool) -> Job | None:
+def antibot_recover(exc: AntiBotError, *, no_tty_prompt: bool) -> Job | None:
     """Recover from an :class:`AntiBotError` by either prompting or printing recovery.
 
     Returns:
@@ -528,7 +528,7 @@ def _antibot_recover(exc: AntiBotError, *, no_tty_prompt: bool) -> Job | None:
         ``None`` when the CLI is non-interactive (or ``--no-tty-prompt`` is set)
         and we printed the recovery command for a manual re-run.
     """
-    if no_tty_prompt or not _stdin_is_tty():
+    if no_tty_prompt or not stdin_is_tty():
         typer.echo(
             f"error: anti-bot challenge on {exc.url} (HTTP {exc.status}, markers: "
             f"{', '.join(exc.markers)})",
@@ -541,14 +541,14 @@ def _antibot_recover(exc: AntiBotError, *, no_tty_prompt: bool) -> Job | None:
         typer.echo("  gethired run --pasted-jd -            < jd.txt", err=True)
         typer.echo("  gethired run --pasted-jd jd.txt", err=True)
         return None
-    text = _inline_paste_prompt()
+    text = inline_paste_prompt()
     if not text.strip():
         typer.echo("error: empty paste; aborting", err=True)
         return None
-    return _job_from_text(text, source="stdin")
+    return job_from_text(text, source="stdin")
 
 
-def _write_cover_letters(
+def write_cover_letters(
     *,
     tailored,
     resume: Path,
@@ -565,13 +565,13 @@ def _write_cover_letters(
     """
     run_dir = out_dir / tailored.run.id
     run_dir.mkdir(parents=True, exist_ok=True)
-    jds = _jobs_for_tailored(tailored)
-    analysis = _merged_analysis_for_tailored(tailored)
-    voice = build_profile(_master_for_tailored(tailored))
+    jds = jobs_for_tailored(tailored)
+    analysis = merged_analysis_for_tailored(tailored)
+    voice = build_profile(resume_for_tailored(tailored))
     written: list[tuple[str, Path]] = []
     if len(jds) <= 1:
         cover_result = compose_cover_letter(
-            master=_master_for_tailored(tailored), analysis=analysis, voice=voice
+            master=resume_for_tailored(tailored), analysis=analysis, voice=voice
         )
         path = run_dir / "cover_letter.md"
         path.write_text(render_cover_markdown(cover_result.letter))
@@ -581,7 +581,7 @@ def _write_cover_letters(
     for idx, jd in enumerate(jds, start=1):
         per_jd = overlay_for_jd(analysis, jd)
         cover_result = compose_cover_letter(
-            master=_master_for_tailored(tailored), analysis=per_jd, voice=voice
+            master=resume_for_tailored(tailored), analysis=per_jd, voice=voice
         )
         slug_source = jd.company or jd.title or jd.url
         slug = slugify(slug_source)[:40]
@@ -591,7 +591,7 @@ def _write_cover_letters(
     return written
 
 
-def _master_for_tailored(tailored):
+def resume_for_tailored(tailored):
     """Return the ``Master`` attached to a ``Tailored`` by the orchestrator."""
     master_obj = tailored.master
     if master_obj is None:
@@ -599,12 +599,12 @@ def _master_for_tailored(tailored):
     return master_obj
 
 
-def _jobs_for_tailored(tailored) -> tuple[Job, ...]:
+def jobs_for_tailored(tailored) -> tuple[Job, ...]:
     """Return the JD tuple attached to a ``Tailored`` by the orchestrator."""
     return tailored.jds  # type: ignore[no-any-return]
 
 
-def _merged_analysis_for_tailored(tailored):
+def merged_analysis_for_tailored(tailored):
     """Return the merged analysis attached to a ``Tailored`` by the orchestrator."""
     analysis = tailored.analysis
     if analysis is None:

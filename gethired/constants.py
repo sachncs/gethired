@@ -44,7 +44,7 @@ TIMESTAMP: str = "%Y-%m-%dT%H:%M:%S.%fZ"
 """ISO-8601 UTC timestamp format with millisecond precision."""
 
 DATA_DIR: str = "data"
-"""Default directory for master.json and JD cache."""
+"""Default directory for resume.json and JD cache."""
 
 OUTPUT_DIR: str = "tailored"
 """Default directory for tailored run outputs."""
@@ -52,8 +52,8 @@ OUTPUT_DIR: str = "tailored"
 CACHE_DIR: str = "data/jd_cache"
 """Default subdirectory for cached JDs."""
 
-MASTER: str = "data/master.json"
-"""Default path for the master JSON snapshot."""
+RESUME: str = "data/resume.json"
+"""Default path for the resume JSON snapshot."""
 
 TECTONIC: str = "tectonic"
 """Binary name for the tectonic LaTeX engine (preferred)."""

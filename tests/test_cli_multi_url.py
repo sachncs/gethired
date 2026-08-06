@@ -15,7 +15,7 @@ from gethired.exceptions import AntiBotError
 from gethired.models import (
     Contact,
     Job,
-    Master,
+Resume,
     Outcome,
     Report,
     Run,
@@ -305,7 +305,7 @@ def test_cli_run_exits_2_on_antibot_non_tty(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, resume_tex_path: Path
 ) -> None:
     """Anti-bot on a non-TTY CLI prints the recovery command and exits 2."""
-    monkeypatch.setattr(cli_module, "_stdin_is_tty", lambda: False)
+    monkeypatch.setattr(cli_module, "stdin_is_tty", lambda: False)
     monkeypatch.setattr(
         cli_module,
         "fetch_all_jds",
@@ -328,8 +328,8 @@ def test_cli_run_antibot_tty_invokes_inline_prompt(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, resume_tex_path: Path
 ) -> None:
     """Anti-bot on a TTY CLI runs the inline paste prompt and continues with the pasted JD."""
-    monkeypatch.setattr(cli_module, "_stdin_is_tty", lambda: True)
-    monkeypatch.setattr(cli_module, "_inline_paste_prompt", lambda: "Pasted JD body\n")
+    monkeypatch.setattr(cli_module, "stdin_is_tty", lambda: True)
+    monkeypatch.setattr(cli_module, "inline_paste_prompt", lambda: "Pasted JD body\n")
     monkeypatch.setattr(
         cli_module,
         "fetch_all_jds",
@@ -366,11 +366,11 @@ def test_cli_no_tty_prompt_flag_overrides_isatty(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, resume_tex_path: Path
 ) -> None:
     """``--no-tty-prompt`` short-circuits the inline paste even on a TTY."""
-    monkeypatch.setattr(cli_module, "_stdin_is_tty", lambda: True)
+    monkeypatch.setattr(cli_module, "stdin_is_tty", lambda: True)
     def _must_not_be_called() -> None:
         raise AssertionError("must not be called")
 
-    monkeypatch.setattr(cli_module, "_inline_paste_prompt", _must_not_be_called)
+    monkeypatch.setattr(cli_module, "inline_paste_prompt", _must_not_be_called)
     monkeypatch.setattr(
         cli_module,
         "fetch_all_jds",
@@ -404,17 +404,11 @@ def test_cli_no_tty_prompt_flag_overrides_isatty(
 def _make_master():
     """Build a minimal Master for cover-letter tests."""
     return Master(
-        contact=Contact(
-            name="Jane Doe",
-            city="NYC",
-            phone="555",
-            email="j@e.com",
-            github_url=None,
-            linkedin_url=None,
+        contact=Resume(name="Jane Doe", city="NYC", phone="555", email="j@e.com", github=None, linkedin=None,
         ),
         summary="Senior engineer with ML focus.",
         skills=Skills(categories={"Languages": ("python",)}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),
@@ -454,7 +448,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
                 contact=master.contact,
                 summary="",
                 skills=Skills(categories={}),
-                experiences=(),
+                experience=(),
                 projects=(),
                 education=(),
                 awards=(),
@@ -569,7 +563,7 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
                 contact=master.contact,
                 summary="",
                 skills=Skills(categories={}),
-                experiences=(),
+                experience=(),
                 projects=(),
                 education=(),
                 awards=(),

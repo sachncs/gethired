@@ -37,7 +37,7 @@ from gethired.models import (
     Bullet,
     Citation,
     Experience,
-    Master,
+Resume,
     Project,
     Reason,
     Skills,
@@ -264,7 +264,7 @@ class Writer:
             contact=tailored.contact,
             summary=tailored.summary,
             skills=tailored.skills,
-            experiences=tailored.experiences,
+            experience=tailored.experience,
             projects=tailored.projects,
             education=tailored.education,
             awards=tailored.awards,
@@ -301,7 +301,7 @@ class Writer:
             )
             with span_cm as span:
                 lowered = role_or_company.lower()
-                for exp in master.experiences:
+                for exp in master.experience:
                     if lowered in exp.role.lower() or lowered in exp.company.lower():
                         result = asdict(exp)
                         if span is not None:
@@ -498,7 +498,7 @@ def from_tools(result: Any) -> tuple[Step, ...]:
 def enumerate_bullet_paths(master: Master) -> list[str]:
     """Return every experience and project bullet path in the master, in order."""
     paths: list[str] = []
-    for i, exp in enumerate(master.experiences):
+    for i, exp in enumerate(master.experience):
         for j in range(len(exp.bullets)):
             paths.append(f"experiences[{i}].bullets[{j}]")
     for i, proj in enumerate(master.projects):
@@ -515,7 +515,7 @@ def lookup_bullet_text(master: Master, master_path: str) -> str | None:
             idx_str, rest = tail.split("].bullets[", 1)
             idx = int(idx_str)
             b_idx = int(rest.rstrip("]"))
-            return master.experiences[idx].bullets[b_idx].text
+            return master.experience[idx].bullets[b_idx].text
         if master_path.startswith("projects["):
             tail = master_path[len("projects[") :]
             idx_str, rest = tail.split("].bullets[", 1)
@@ -527,7 +527,7 @@ def lookup_bullet_text(master: Master, master_path: str) -> str | None:
     return None
 
 
-def _is_test_model(model: object | None) -> bool:
+def is_test_model(model: object | None) -> bool:
     """True when ``model`` is Pydantic AI's ``TestModel`` (skip LLM fallback paths)."""
     name = getattr(model, "model_name", None)
     return name == "test"
@@ -645,7 +645,7 @@ def rewrite(
     return rewritten, grounding
 
 
-def _apply_experiences(
+def apply_experiences(
     master: Master,
     output: WriterOutput,
     dropped: frozenset[str],
@@ -653,7 +653,7 @@ def _apply_experiences(
     """Apply the writer's bullet rewrites to the master's experiences."""
     new_experiences: list[Experience] = []
     new_grounding: list[Citation] = []
-    for idx, exp in enumerate(master.experiences):
+    for idx, exp in enumerate(master.experience):
         if f"experiences[{idx}]" in dropped:
             continue
         rewritten_bullets, bullet_grounding = rewrite(
@@ -675,7 +675,7 @@ def _apply_experiences(
     return tuple(new_experiences), new_grounding
 
 
-def _apply_projects(
+def apply_projects(
     master: Master,
     output: WriterOutput,
     dropped: frozenset[str],
@@ -703,7 +703,7 @@ def _apply_projects(
     return tuple(new_projects), new_grounding
 
 
-def _drop_reasons(output: WriterOutput) -> tuple[Reason, ...]:
+def drop_reasons(output: WriterOutput) -> tuple[Reason, ...]:
     """Convert each dropped master path into a Reason tuple."""
     return tuple(
         Reason(
@@ -734,7 +734,7 @@ def apply(
         contact=master.contact,
         summary=output.summary,
         skills=reorder(master.skills, analysis.keywords),
-        experiences=experiences,
+        experience=experiences,
         projects=projects,
         education=master.education,
         awards=master.awards,

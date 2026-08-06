@@ -26,7 +26,7 @@ from gethired.description import Analysis, analyze
 from gethired.fetcher import CacheEntry
 from gethired.models import (
     Job,
-    Master,
+Resume,
     Outcome,
     Run,
     RunResult,
@@ -607,7 +607,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     text = (
         tailored.summary
         + "\n"
-        + "\n".join(b.text for e in tailored.experiences for b in e.bullets)
+        + "\n".join(b.text for e in tailored.experience for b in e.bullets)
         + "\n"
         + "\n".join(b.text for p in tailored.projects for b in p.bullets)
     )
@@ -632,7 +632,7 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         contact=master.contact,
         summary=tailored_dict["summary"],
         skills=master.skills,
-        experiences=master.experiences,
+        experience=master.experience,
         projects=master.projects,
         education=master.education,
         awards=master.awards,
@@ -738,7 +738,7 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
     text = (
         tailored.summary
         + "\n"
-        + "\n".join(b.text for e in tailored.experiences for b in e.bullets)
+        + "\n".join(b.text for e in tailored.experience for b in e.bullets)
     )
     return (
         {

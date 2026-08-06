@@ -24,7 +24,7 @@ from evals.harness import (
     load_suite,
     load_task,
 )
-from gethired.models import Contact, Master, Skills
+from gethired.models import Resume, Skills
 
 # ---------------------------------------------------------------------------
 # Grader tests
@@ -45,13 +45,13 @@ def test_code_equal_fails_on_mismatch() -> None:
 
 def test_code_field_present_on_dataclass() -> None:
     """``_resolve_path`` supports dotted paths on dataclasses."""
-    contact = Contact(
+    contact = Resume(
         name="Placeholder Name",
         city="Test City",
         phone="5555550100",
         email="placeholder@example.com",
-        github_url=None,
-        linkedin_url=None,
+        github=None,
+        linkedin=None,
     )
     result = code_field_present("test", resume=contact, path="name")
     assert result.passed
@@ -71,26 +71,26 @@ def test_code_field_present_missing_returns_false() -> None:
 
 
 def test_code_field_length_correct_count() -> None:
-    contact = Contact(
+    contact = Resume(
         name="A",
         city="X",
         phone="0",
         email="a@b.c",
-        github_url=None,
-        linkedin_url=None,
+        github=None,
+        linkedin=None,
     )
     result = code_field_length("test", resume=contact, path="name", expected=1)
     assert result.passed
 
 
 def test_code_field_length_wrong_count() -> None:
-    contact = Contact(
+    contact = Resume(
         name="AB",
         city="X",
         phone="0",
         email="a@b.c",
-        github_url=None,
-        linkedin_url=None,
+        github=None,
+        linkedin=None,
     )
     result = code_field_length("test", resume=contact, path="name", expected=1)
     assert not result.passed
@@ -146,17 +146,17 @@ def test_code_no_jd_plagiarism_detects_5gram() -> None:
 
 def test_code_numbers_in_master_no_invention() -> None:
     master = Master(
-        contact=Contact(
+        contact=Resume(
             name="A",
             city="X",
             phone="0",
             email="a@b.c",
-            github_url=None,
-            linkedin_url=None,
+            github=None,
+            linkedin=None,
         ),
         summary="Engineer",
         skills=Skills(categories={}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),
@@ -169,17 +169,17 @@ def test_code_numbers_in_master_no_invention() -> None:
 
 def test_code_numbers_in_master_passes_when_present() -> None:
     master = Master(
-        contact=Contact(
+        contact=Resume(
             name="A",
             city="X",
             phone="0",
             email="a@b.c",
-            github_url=None,
-            linkedin_url=None,
+            github=None,
+            linkedin=None,
         ),
         summary="Built 10000 requests",
         skills=Skills(categories={}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),
@@ -190,17 +190,17 @@ def test_code_numbers_in_master_passes_when_present() -> None:
 
 def test_code_json_round_trip() -> None:
     master = Master(
-        contact=Contact(
+        contact=Resume(
             name="A",
             city="X",
             phone="0",
             email="a@b.c",
-            github_url=None,
-            linkedin_url=None,
+            github=None,
+            linkedin=None,
         ),
         summary="Engineer",
         skills=Skills(categories={"Programming": ("Python",)}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),

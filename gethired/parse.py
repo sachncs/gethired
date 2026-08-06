@@ -22,7 +22,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from pathlib import Path
 
-from gethired.models import Master
+from gethired.models import Resume
 from gethired.parser import (
     image as _image,
 )
@@ -43,7 +43,7 @@ _EXTENSION_PARSERS: dict[str, Callable[..., Master]] = {
     ".tex": _tex,
     ".pdf": _pdf,
 }
-_IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".tiff", ".bmp"})
+IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".tiff", ".bmp"})
 
 
 def dispatch_path(path: Path) -> Master:

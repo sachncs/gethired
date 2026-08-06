@@ -55,7 +55,7 @@ def _realistic_test_model(jds: tuple[Job, ...]) -> TestModel:
     return TestModel(custom_output_args=payload)
 
 
-def test_tailor_accepts_multiple_job_descriptions(master_resume) -> None:
+def test_tailor_accepts_multiple_job_descriptions(resume) -> None:
     """Tailor accepts a tuple of Job values and produces a single Tailored.
 
     Verifies the multi-JD data path: a single run produces a run-id,
@@ -63,14 +63,14 @@ def test_tailor_accepts_multiple_job_descriptions(master_resume) -> None:
     includes a TAILOR step.
     """
     tailor = Tailor(
-        resume=master_resume,
+        resume=resume,
         job_description=(SAMPLE_JD_A, SAMPLE_JD_B),
         model="test",
         model_instance=TestModel(),
     )
     result = tailor.run()
     # Contact must round-trip from master
-    assert result.contact.email == master_resume.contact.email
+    assert result.contact.email == resume.email
     # The run must have a UUID-shaped run-id
     assert len(result.run.id) == 36
     # The writer's Step trail must include the TAILOR step
@@ -101,7 +101,7 @@ def test_tailor_with_multiple_jds_uses_llm_merge(monkeypatch: pytest.MonkeyPatch
 
 
 def test_tailor_safe_merge_used_in_pipeline(
-    monkeypatch: pytest.MonkeyPatch, master_resume, tmp_path
+    monkeypatch: pytest.MonkeyPatch, resume, tmp_path
 ) -> None:
     """The Tailor pipeline routes through ``safe_merge`` (LLM + fallback)."""
     captured: list[tuple[Job, ...]] = []
@@ -112,7 +112,7 @@ def test_tailor_safe_merge_used_in_pipeline(
 
     monkeypatch.setattr("gethired.tailor.safe_merge", spy_safe_merge)
     tailor = Tailor(
-        resume=master_resume,
+        resume=resume,
         job_description=(SAMPLE_JD_A, SAMPLE_JD_B),
         model="test",
         model_instance=TestModel(),
@@ -123,14 +123,14 @@ def test_tailor_safe_merge_used_in_pipeline(
     assert captured[0] == (SAMPLE_JD_A, SAMPLE_JD_B)
 
 
-def test_tailor_run_with_multiple_jds_persists_artifacts(master_resume, tmp_path) -> None:
+def test_tailor_run_with_multiple_jds_persists_artifacts(resume, tmp_path) -> None:
     """Multi-JD run produces a single run-dir with all expected files.
 
     Verifies the on-disk data process: parsing, JD input, run-id
     generation, and artefact persistence.
     """
     tailor = Tailor(
-        resume=master_resume,
+        resume=resume,
         job_description=(SAMPLE_JD_A, SAMPLE_JD_B),
         model="test",
         model_instance=TestModel(),

@@ -49,7 +49,7 @@ if TYPE_CHECKING:
         Citation,
         Contact,
         Job,
-        Master,
+Resume,
         Tailored,
     )
     from gethired.parse import parse

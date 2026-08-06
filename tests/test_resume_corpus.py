@@ -56,14 +56,14 @@ SAMPLE_JD = Job(
 def test_corpus_fixture_parses_to_populated_resume(fixture_path: Path) -> None:
     resume = tex(fixture_path)
 
-    assert resume.contact.name, "contact.name must be non-empty"
-    assert resume.contact.city, "contact.city must be non-empty"
-    assert resume.contact.phone, "contact.phone must be non-empty"
-    assert resume.contact.email, "contact.email must be non-empty"
+    assert resume.name, "contact.name must be non-empty"
+    assert resume.city, "contact.city must be non-empty"
+    assert resume.phone, "contact.phone must be non-empty"
+    assert resume.email, "contact.email must be non-empty"
     assert resume.summary, "summary must be non-empty"
     assert resume.skills.categories, "skills must contain at least one category"
-    assert resume.experiences, "at least one experience is required"
-    for experience in resume.experiences:
+    assert resume.experience, "at least one experience is required"
+    for experience in resume.experience:
         assert experience.role, "experience role must be non-empty"
         assert experience.company, "experience company must be non-empty"
         assert experience.start_date, "experience start_date must be non-empty"
@@ -104,8 +104,8 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
     result = tailor.run()
 
     # 1. The contact must round-trip exactly
-    assert result.contact.name == master.contact.name
-    assert result.contact.email == master.contact.email
+    assert result.contact.name == master.name
+    assert result.contact.email == master.email
     # 2. The Step trail must include the core kinds
     job_kinds = {j.type.value for j in result.jobs}
     expected_kinds = {
@@ -124,7 +124,7 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
 
 
     txt = render_text(result)
-    assert master.contact.name in txt, "rendered text must contain master name"
+    assert master.name in txt, "rendered text must contain master name"
     # 5. The TeX source must contain standard section headings
 
 

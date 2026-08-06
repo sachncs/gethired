@@ -19,7 +19,7 @@ from gethired.models import (
     GateStatus,
     GateTier,
     Job,
-    Master,
+Resume,
     Tailored,
 )
 from gethired.normalize import (
@@ -153,8 +153,8 @@ def grounding(
             )
         )
 
-    master_companies = {exp.company.lower() for exp in master.experiences}
-    for exp in tailored.experiences:
+    master_companies = {exp.company.lower() for exp in master.experience}
+    for exp in tailored.experience:
         if exp.company.lower() not in master_companies and master_companies:
             violations.append(
                 GroundingFault(
@@ -168,7 +168,7 @@ def grounding(
 
 def flatten(tailored: Tailored) -> str:
     parts = [tailored.summary]
-    for exp in tailored.experiences:
+    for exp in tailored.experience:
         parts.append(f"{exp.role} {exp.company} {exp.start_date} {exp.end_date}")
         parts.extend(b.text for b in exp.bullets)
     for project in tailored.projects:
@@ -185,7 +185,7 @@ def flatten(tailored: Tailored) -> str:
 # ---------------------------------------------------------------------------
 
 
-def _banned_word_violations(full_text: str) -> list[StyleFault]:
+def banned_word_violations(full_text: str) -> list[StyleFault]:
     """Return violations for banned words (exact and stem-matched)."""
     violations: list[StyleFault] = []
     for word in BANNED:
@@ -215,7 +215,7 @@ def _banned_word_violations(full_text: str) -> list[StyleFault]:
     return violations
 
 
-def _construction_violations(full_text: str) -> list[StyleFault]:
+def construction_violations(full_text: str) -> list[StyleFault]:
     """Return violations for banned construction phrases."""
     return [
         StyleFault(path="tailored", detail=f"Banned construction {construction!r}")
@@ -224,12 +224,12 @@ def _construction_violations(full_text: str) -> list[StyleFault]:
     ]
 
 
-def _quantification_violations(
+def quantification_violations(
     tailored: Tailored, threshold_ratio: float
 ) -> list[StyleFault]:
     """Return violations for experiences whose bullets are not quantified enough."""
     violations: list[StyleFault] = []
-    for experience in tailored.experiences:
+    for experience in tailored.experience:
         if not experience.bullets:
             continue
         quantified = sum(1 for bullet in experience.bullets if numbers(bullet.text))
@@ -247,7 +247,7 @@ def _quantification_violations(
     return violations
 
 
-def _summary_violations(tailored: Tailored) -> list[StyleFault]:
+def summary_violations(tailored: Tailored) -> list[StyleFault]:
     """Return a violation when the summary does not start with an action verb."""
     if tailored.summary and not verb(tailored.summary.split(maxsplit=1)[0]):
         return [
@@ -270,7 +270,7 @@ def style(
     full_text = flatten(tailored).lower()
     violations.extend(_banned_word_violations(full_text))
     violations.extend(_construction_violations(full_text))
-    for experience in tailored.experiences:
+    for experience in tailored.experience:
         violations.extend(parallelism(experience.role, experience.bullets))
     violations.extend(_quantification_violations(tailored, threshold_ratio))
     violations.extend(_summary_violations(tailored))
@@ -568,7 +568,7 @@ def gate_keywords(tailored: Tailored, jds: tuple[Job, ...]) -> AtsResult:
 
 def gate_quantify(tailored: Tailored, threshold: float) -> AtsResult:
     all_bullets: list[Bullet] = []
-    for exp in tailored.experiences:
+    for exp in tailored.experience:
         all_bullets.extend(exp.bullets)
     for project in tailored.projects:
         all_bullets.extend(project.bullets)
@@ -591,7 +591,7 @@ def gate_quantify(tailored: Tailored, threshold: float) -> AtsResult:
 
 def gate_verbs(tailored: Tailored) -> AtsResult:
     bad: list[str] = []
-    for exp in tailored.experiences:
+    for exp in tailored.experience:
         for bullet in exp.bullets:
             first_word = bullet.text.split(maxsplit=1)[0].lower().rstrip(".,;:")
             if first_word and not verb(first_word):

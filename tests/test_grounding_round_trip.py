@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from gethired.models import Citation, Job, Master, Tailored
+from gethired.models import Citation, Job, Tailored
 from gethired.tailor import Tailor
 from gethired.validator import grounding
 
@@ -26,14 +26,14 @@ SAMPLE_JD = Job(
 )
 
 
-def test_grounding_citation_round_trip_passes(master_resume: Master) -> None:
+def test_grounding_citation_round_trip_passes(resume: Master) -> None:
     """Every verbatim span in a Citation must appear in the master.
 
     The GroundedCitation dataclass promises that each tailored bullet
     cites a verbatim span from the master. Grounding() verifies this.
     Construct a Citation with a real master span and assert the round-trip.
     """
-    master_span = master_resume.experiences[0].bullets[0].text
+    master_span = resume.experience[0].bullets[0].text
     citation = Citation(
         tailored_path="experiences[0].bullets[0]",
         master_path="experiences[0].bullets[0]",
@@ -41,26 +41,26 @@ def test_grounding_citation_round_trip_passes(master_resume: Master) -> None:
         job_id="writer",
     )
     tailored = Tailored(
-        contact=master_resume.contact,
-        summary=master_resume.summary,
-        skills=master_resume.skills,
-        experiences=master_resume.experiences,
-        projects=master_resume.projects,
-        education=master_resume.education,
-        awards=master_resume.awards,
+        contact=resume.contact,
+        summary=resume.summary,
+        skills=resume.skills,
+        experience=resume.experience,
+        projects=resume.projects,
+        education=resume.education,
+        awards=resume.awards,
         dropped=(),
         rationale="test",
         grounding=(citation,),
         jobs=(),
     )
-    violations = grounding(tailored, master_resume)
+    violations = grounding(tailored, resume)
     # The real master span should produce zero violations
     assert not violations, (
         f"grounding() flagged a real citation; expected no violations, got {violations}"
     )
 
 
-def test_grounding_citation_with_fabricated_span_fails(master_resume: Master) -> None:
+def test_grounding_citation_with_fabricated_span_fails(resume: Master) -> None:
     """A Citation whose verbatim_span is NOT in the master must fail grounding.
 
     This is the failure mode that catches a writer bug: a Citation was
@@ -75,33 +75,33 @@ def test_grounding_citation_with_fabricated_span_fails(master_resume: Master) ->
         job_id="writer",
     )
     tailored = Tailored(
-        contact=master_resume.contact,
-        summary=master_resume.summary,
-        skills=master_resume.skills,
-        experiences=master_resume.experiences,
-        projects=master_resume.projects,
-        education=master_resume.education,
-        awards=master_resume.awards,
+        contact=resume.contact,
+        summary=resume.summary,
+        skills=resume.skills,
+        experience=resume.experience,
+        projects=resume.projects,
+        education=resume.education,
+        awards=resume.awards,
         dropped=(),
         rationale="test",
         grounding=(citation,),
         jobs=(),
     )
-    violations = grounding(tailored, master_resume)
+    violations = grounding(tailored, resume)
     assert violations, "grounding() did not flag a fabricated citation span"
     assert any(fabricated_span in v.detail for v in violations), (
         f"grounding() violations do not name the fabricated span: {violations}"
     )
 
 
-def test_grounding_citation_partial_span_still_passes(master_resume: Master) -> None:
+def test_grounding_citation_partial_span_still_passes(resume: Master) -> None:
     """A Citation whose span is a substring of a master bullet is valid.
 
     Real writers may emit a span that is a contiguous substring of a
     master bullet. Grounding() must accept this as long as the substring
     is present in the master text.
     """
-    full_bullet = master_resume.experiences[0].bullets[0].text
+    full_bullet = resume.experience[0].bullets[0].text
     # Take the first 30 characters as the citation span
     if len(full_bullet) < 30:
         pytest.skip("master bullet is too short to substring")
@@ -113,23 +113,23 @@ def test_grounding_citation_partial_span_still_passes(master_resume: Master) -> 
         job_id="writer",
     )
     tailored = Tailored(
-        contact=master_resume.contact,
-        summary=master_resume.summary,
-        skills=master_resume.skills,
-        experiences=master_resume.experiences,
-        projects=master_resume.projects,
-        education=master_resume.education,
-        awards=master_resume.awards,
+        contact=resume.contact,
+        summary=resume.summary,
+        skills=resume.skills,
+        experience=resume.experience,
+        projects=resume.projects,
+        education=resume.education,
+        awards=resume.awards,
         dropped=(),
         rationale="test",
         grounding=(citation,),
         jobs=(),
     )
-    violations = grounding(tailored, master_resume)
+    violations = grounding(tailored, resume)
     assert not violations, f"grounding() should accept a substring span, got {violations}"
 
 
-def test_tailor_pipeline_emits_real_grounding_citations(master_resume: Master) -> None:
+def test_tailor_pipeline_emits_real_grounding_citations(resume: Master) -> None:
     """The full Tailor pipeline produces a TailoredResume that passes grounding.
 
     This is the end-to-end data process test: parse the master, run the
@@ -138,7 +138,7 @@ def test_tailor_pipeline_emits_real_grounding_citations(master_resume: Master) -
     TestModel doesn't emit citations, but the structure must be valid.
     """
     tailor = Tailor(
-        resume=master_resume,
+        resume=resume,
         job_description=SAMPLE_JD,
         model="test",
         model_instance=TestModel(),
@@ -148,7 +148,7 @@ def test_tailor_pipeline_emits_real_grounding_citations(master_resume: Master) -
     assert isinstance(result, Tailored)
     # Grounding must return a tuple (possibly empty) - the validator must
     # handle empty grounding gracefully
-    violations = grounding(result, master_resume)
+    violations = grounding(result, resume)
     assert isinstance(violations, tuple)
     # If citations were emitted, they must all check out
     if result.grounding:

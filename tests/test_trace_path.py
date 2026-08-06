@@ -122,7 +122,7 @@ def test_tailor_runner_surfaces_trace_path(tmp_path: Path, monkeypatch: pytest.M
                 contact=Contact("x", "x", "x", "x", None, None),
                 summary="x",
                 skills=Skills(categories={}),
-                experiences=(),
+                experience=(),
                 projects=(),
                 education=(),
                 awards=(),

@@ -194,7 +194,7 @@ def test_code_task_completion_requires_tailor_span(tmp_path: Path) -> None:
         contact=contact,
         summary="Engineer.",
         skills=Skills(categories={}),
-        experiences=(
+        experience=(
             Experience(role="x", company="y", start_date="2020", end_date="2024", bullets=()),
         ),
         projects=(),
@@ -218,7 +218,7 @@ def test_code_task_completion_fails_when_summary_blank(tmp_path: Path) -> None:
         contact=contact,
         summary="",
         skills=Skills(categories={}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),
@@ -240,7 +240,7 @@ def test_code_task_completion_fails_when_experiences_empty(tmp_path: Path) -> No
         contact=contact,
         summary="Engineer.",
         skills=Skills(categories={}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),

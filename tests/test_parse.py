@@ -11,22 +11,22 @@ from pathlib import Path
 import pytest
 
 from gethired import parse
-from gethired.models import Master
+from gethired.models import Resume
 
 
 def test_parse_tex_file_returns_master(tmp_path: Path, resume_tex_path: Path) -> None:
     """parse() with a .tex file returns a Master."""
     master = parse(resume_tex_path)
     assert isinstance(master, Master)
-    assert master.contact.name == "Placeholder Name"
-    assert master.contact.email == "placeholder@example.com"
+    assert master.name == "Placeholder Name"
+    assert master.email == "placeholder@example.com"
 
 
 def test_parse_tex_string_returns_master(resume_tex_text: str) -> None:
     """parse() with raw TeX text (no file) returns a Master."""
     master = parse(resume_tex_text)
     assert isinstance(master, Master)
-    assert master.contact.name == "Placeholder Name"
+    assert master.name == "Placeholder Name"
 
 
 def test_parse_unknown_extension_falls_back_to_tex(
@@ -42,7 +42,7 @@ def test_parse_unknown_extension_falls_back_to_tex(
     weird_path.write_text(resume_tex_text)
     master = parse(weird_path)
     assert isinstance(master, Master)
-    assert master.contact.name == "Placeholder Name"
+    assert master.name == "Placeholder Name"
 
 
 def test_parse_returns_master_with_populated_fields(resume_tex_path: Path) -> None:
@@ -52,21 +52,21 @@ def test_parse_returns_master_with_populated_fields(resume_tex_path: Path) -> No
     expected structure.
     """
     master = parse(resume_tex_path)
-    assert master.contact.name
-    assert master.contact.email
-    assert master.contact.phone
-    assert master.contact.city
+    assert master.name
+    assert master.email
+    assert master.phone
+    assert master.city
     assert master.summary
     assert master.skills.categories
-    assert master.experiences
+    assert master.experience
     assert master.education
 
 
 def test_parse_round_trip_preserves_experiences(resume_tex_path: Path) -> None:
     """parse() preserves the master's experience structure (count, dates, bullets)."""
     master = parse(resume_tex_path)
-    assert len(master.experiences) >= 1
-    first = master.experiences[0]
+    assert len(master.experience) >= 1
+    first = master.experience[0]
     assert first.role
     assert first.company
     assert first.start_date

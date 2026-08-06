@@ -14,7 +14,7 @@ from unittest import mock
 import pytest
 
 from gethired.exceptions import TailorError
-from gethired.models import Contact, Master, Skills
+from gethired.models import Resume, Skills
 from gethired.serialize import render_json, snapshot
 from gethired.tailor import Tailor
 
@@ -22,17 +22,17 @@ from gethired.tailor import Tailor
 def _sample_master_json() -> str:
     """Build a serialised Tailored (master snapshot) for testing."""
     master = Master(
-        contact=Contact(
+        contact=Resume(
             name="Test",
             city="City",
             phone="+1-555-0100",
             email="test@example.com",
-            github_url=None,
-            linkedin_url=None,
+            github=None,
+            linkedin=None,
         ),
         summary="Summary.",
         skills=Skills(categories={"Languages": ("Python",)}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),
@@ -55,7 +55,7 @@ def test_finalize_re_renders_tailored_json(tmp_path: Path) -> None:
     source.write_text(_sample_master_json())
     tailor = _make_tailor_with_test_model()
     tailored = tailor.finalize(source)
-    assert tailored.contact.name == "Test"
+    assert tailored.name == "Test"
     assert (source.parent / "tailored.tex").exists()
     assert (source.parent / "tailored.txt").exists()
     assert (source.parent / "tailored.json").exists()

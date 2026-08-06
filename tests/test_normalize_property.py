@@ -15,7 +15,7 @@ from gethired.models import (
     Bullet,
     Contact,
     Experience,
-    Master,
+Resume,
     Skills,
 )
 from gethired.normalize import (
@@ -98,31 +98,25 @@ def test_strip_latex_commands_does_not_raise(text: str) -> None:
 def _make_master(name_suffix: str) -> Master:
     """Return a deterministic Master for content-hash tests."""
     return Master(
-        contact=Contact(
-            name=f"Test {name_suffix}",
-            city="Test City",
-            phone="+1-555-0100",
-            email=f"test.{name_suffix}@example.com",
-            github_url=None,
-            linkedin_url=None,
+        contact=Resume(name=f"Test {name_suffix}", city="Test City", phone="+1-555-0100", email=f"test.{name_suffix}@example.com", github=None, linkedin=None,
         ),
         summary="Summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),
-        experiences=(),
+        experience=(),
         projects=(),
         education=(),
         awards=(),
     )
 
 
-def test_master_resume_content_hash_is_deterministic() -> None:
+def test_resume_content_hash_is_deterministic() -> None:
     """Two MasterResumes with the same fields produce the same content hash."""
     a = _make_master("a")
     b = _make_master("a")
     assert a.content_hash() == b.content_hash()
 
 
-def test_master_resume_content_hash_changes_with_input() -> None:
+def test_resume_content_hash_changes_with_input() -> None:
     """Different master fields produce different content hashes."""
     a = _make_master("a")
     b = _make_master("b")

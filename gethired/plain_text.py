@@ -21,7 +21,7 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-    Master,
+Resume,
     Project,
     Skills,
 )
@@ -121,7 +121,7 @@ def parse_plain_text(text: str) -> Master:
         contact=contact_info,
         summary=summary_text,
         skills=skills_data,
-        experiences=experience_data,
+        experience=experience_data,
         projects=project_data,
         education=education_data,
         awards=award_data,
@@ -180,13 +180,7 @@ def extract_contact(text: str, header_block: str) -> Contact:
 
     require_contact(name, city, phone, email)
 
-    return Contact(
-        name=name,
-        city=city,
-        phone=phone,
-        email=email,
-        github_url=github_url,
-        linkedin_url=linkedin_url,
+    return Resume(name=name, city=city, phone=phone, email=email, github=github_url, linkedin=linkedin_url,
     )
 
 

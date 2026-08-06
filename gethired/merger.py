@@ -80,7 +80,7 @@ MERGER_INSTRUCTIONS: tuple[str, ...] = (
 """System instructions for the merger agent."""
 
 
-def _build_prompt(jds: tuple[Job, ...]) -> str:
+def build_prompt(jds: tuple[Job, ...]) -> str:
     blocks: list[str] = []
     for idx, jd in enumerate(jds, start=1):
         blocks.append(
@@ -94,13 +94,13 @@ def _build_prompt(jds: tuple[Job, ...]) -> str:
     return "JOB DESCRIPTIONS TO MERGE:\n\n" + "\n\n---\n\n".join(blocks)
 
 
-def _resolve_model_obj(model: str | None, model_instance: object | None) -> Any:
+def resolve_model_obj(model: str | None, model_instance: object | None) -> Any:
     if model_instance is not None:
         return model_instance
     return resolve_model(model).model
 
 
-def _is_test_model(model_instance: object | None) -> bool:
+def is_test_model(model_instance: object | None) -> bool:
     """Return True when the injected model is a Pydantic AI ``TestModel``.
 
     ``TestModel`` returns the same default value for every field, which would
