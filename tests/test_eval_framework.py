@@ -146,14 +146,7 @@ def test_code_no_jd_plagiarism_detects_5gram() -> None:
 
 def test_code_numbers_in_master_no_invention() -> None:
     master = Resume(
-        contact=Resume(
-            name="A",
-            city="X",
-            phone="0",
-            email="a@b.c",
-            github=None,
-            linkedin=None,
-        ),
+        name="A", city="X", phone="0", email="a@b.c", github=None, linkedin=None,
         summary="Engineer",
         skills=Skills(categories={}),
         experience=(),
@@ -169,14 +162,7 @@ def test_code_numbers_in_master_no_invention() -> None:
 
 def test_code_numbers_in_master_passes_when_present() -> None:
     master = Resume(
-        contact=Resume(
-            name="A",
-            city="X",
-            phone="0",
-            email="a@b.c",
-            github=None,
-            linkedin=None,
-        ),
+        name="A", city="X", phone="0", email="a@b.c", github=None, linkedin=None,
         summary="Built 10000 requests",
         skills=Skills(categories={}),
         experience=(),
@@ -190,14 +176,7 @@ def test_code_numbers_in_master_passes_when_present() -> None:
 
 def test_code_json_round_trip() -> None:
     master = Resume(
-        contact=Resume(
-            name="A",
-            city="X",
-            phone="0",
-            email="a@b.c",
-            github=None,
-            linkedin=None,
-        ),
+        name="A", city="X", phone="0", email="a@b.c", github=None, linkedin=None,
         summary="Engineer",
         skills=Skills(categories={"Programming": ("Python",)}),
         experience=(),

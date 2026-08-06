@@ -140,7 +140,7 @@ def merge_job_descriptions(
     if not jds:
         raise ValueError("at least one Job is required")
     try:
-        model_obj = _resolve_model_obj(model, model_instance)
+        model_obj = resolve_model_obj(model, model_instance)
         agent: Agent[None, MergeResult] = Agent(
             model_obj,
             output_type=MergeResult,

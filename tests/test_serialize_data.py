@@ -36,8 +36,7 @@ from gethired.serialize import (
 
 
 def _sample_master() -> Master:
-    return Master(
-        contact=Resume(name="Jane Doe", city="Austin", phone="555-0100", email="jane@example.com", github=None, linkedin=None,
+    return Resume(Resume(name="Jane Doe", city="Austin", phone="555-0100", email="jane@example.com", github=None, linkedin=None,
         ),
         summary="Engineer.",
         skills=Skills(categories={"Languages": ("Python",)}),

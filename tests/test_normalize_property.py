@@ -97,8 +97,7 @@ def test_strip_latex_commands_does_not_raise(text: str) -> None:
 
 def _make_master(name_suffix: str) -> Master:
     """Return a deterministic Master for content-hash tests."""
-    return Master(
-        contact=Resume(name=f"Test {name_suffix}", city="Test City", phone="+1-555-0100", email=f"test.{name_suffix}@example.com", github=None, linkedin=None,
+    return Resume(Resume(name=f"Test {name_suffix}", city="Test City", phone="+1-555-0100", email=f"test.{name_suffix}@example.com", github=None, linkedin=None,
         ),
         summary="Summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),

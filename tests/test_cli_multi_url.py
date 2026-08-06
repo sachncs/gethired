@@ -403,8 +403,7 @@ def test_cli_no_tty_prompt_flag_overrides_isatty(
 
 def _make_master():
     """Build a minimal Master for cover-letter tests."""
-    return Master(
-        contact=Resume(name="Jane Doe", city="NYC", phone="555", email="j@e.com", github=None, linkedin=None,
+    return Resume(Resume(name="Jane Doe", city="NYC", phone="555", email="j@e.com", github=None, linkedin=None,
         ),
         summary="Senior engineer with ML focus.",
         skills=Skills(categories={"Languages": ("python",)}),

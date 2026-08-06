@@ -37,8 +37,7 @@ from gethired.serialize import (
 
 def _sample_master() -> Master:
     """Build a minimal but realistic Master for round-trip tests."""
-    return Master(
-        contact=Resume(name="Test User", city="Test City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None,
+    return Resume(Resume(name="Test User", city="Test City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None,
         ),
         summary="A short summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),

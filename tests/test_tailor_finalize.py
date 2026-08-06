@@ -22,14 +22,7 @@ from gethired.tailor import Tailor
 def _sample_master_json() -> str:
     """Build a serialised Tailored (master snapshot) for testing."""
     master = Resume(
-        contact=Resume(
-            name="Test",
-            city="City",
-            phone="+1-555-0100",
-            email="test@example.com",
-            github=None,
-            linkedin=None,
-        ),
+        name="Test", city="City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None,
         summary="Summary.",
         skills=Skills(categories={"Languages": ("Python",)}),
         experience=(),
