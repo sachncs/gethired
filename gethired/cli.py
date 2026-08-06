@@ -40,7 +40,9 @@ from gethired.exceptions import (
     StyleError)
 from gethired.fetcher import Fetcher, from_text
 from gethired.models import (
-    Job)
+    Job,
+    Resume,
+)
 from gethired.observability import configure
 from gethired.parser import parse_tex as parse_tex_func
 from gethired.profiler import build as build_profile

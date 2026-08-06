@@ -15,7 +15,7 @@ from typing import Any
 
 from gethired.critic import Critic
 from gethired.exceptions import TailorError
-from gethired.models import Resume, Tailored
+from gethired.models import (Resume, Skills, Tailored,)
 from gethired.serialize import from_master_dict, from_tailored_dict
 from gethired.validator import (
     grounding,
@@ -103,16 +103,16 @@ def audit(run_dir: Path) -> AuditReport:
         tailored=tailored,
         master=master,
         jds=(),
-        tex_source=_read_optional(paths["tex"]),
-        txt_source=_read_optional(paths["txt"]),
+        tex_source=read_optional(paths["tex"]),
+        txt_source=read_optional(paths["txt"]),
         pdf_path=paths["pdf"] if paths["pdf"].exists() else None)
     run_id = (
         tailored.run_result.run.id if tailored.run_result is not None else run_dir.name
     )
     return AuditReport(
         run_id=run_id,
-        grounding_violations=_stringify_violations(grounding_violations),
-        style_violations=_stringify_violations(style_violations),
+        grounding_violations=stringify_violations(grounding_violations),
+        style_violations=stringify_violations(style_violations),
         plagiarism_violations=tuple(f"{v.ngram}" for v in plagiarism_violations),
         ats_passed=not ats_report.hard_failed_gates,
         ats_failed_gates=tuple(g.value for g in ats_report.hard_failed_gates),

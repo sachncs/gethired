@@ -16,7 +16,9 @@ from gethired import serialize as serialize_module
 from gethired.models import (
     Run,
     RunResult,
-    Tailored)
+    Tailored,
+    Resume,
+)
 from gethired.validator import AtsReport
 
 TEMPLATES: Final[Path] = Path(__file__).parent / "templates"
@@ -216,26 +218,26 @@ def report(
     lines: list[str] = [
         f"# gethired run `{run.id}`",
         "",
-        *_run_description(run),
+        *run_description(run),
         "",
-        *_result_description(run_result),
+        *result_description(run_result),
         "",
-        *_job_trail(run_result),
+        *job_trail(run_result),
         "",
     ]
-    websearch = _websearch_audit(run_result)
+    websearch = websearch_audit(run_result)
     if websearch:
         lines.extend(websearch)
         lines.append("")
     if ats_report is not None:
-        lines.extend(_ats_results(ats_report))
+        lines.extend(ats_results(ats_report))
         lines.append("")
-    lines.extend(_reasoning_trace(run_result))
+    lines.extend(reasoning_trace(run_result))
     lines.append("")
     lines.append("## Keyword Coverage")
     lines.append("(See Job Trail above for per-step keyword usage.)")
     lines.append("")
-    summary = _summary(tailored)
+    summary = render_summary(tailored)
     if summary:
         lines.extend(summary)
         lines.append("")

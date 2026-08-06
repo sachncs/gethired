@@ -15,7 +15,9 @@ Resume,
     Run,
     RunResult,
     Skills,
-    Tailored)
+    Tailored,
+    Resume,
+)
 from gethired.renderer import tex, text
 from gethired.validator import (
     AtsGate,
@@ -28,7 +30,7 @@ from gethired.validator import (
     style)
 
 
-def _make_tailored(master: Resume) -> Tailored:
+def make_tailored(master: Resume) -> Tailored:
     """Build a tailored resume that's an identity transform of master."""
     run_result = RunResult(
         run=Run("test-id", "2026-08-02T00:00:00.000Z", "x", "y", "model", None),
@@ -60,7 +62,7 @@ def test_grounding_passes_for_identity_transform(resume) -> None:
     When every skill, number, and company in the tailored resume comes
     directly from the master, grounding() must return an empty tuple.
     """
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     violations = grounding(tailored, resume)
     assert violations == (), f"identity transform must not produce violations, got {violations}"
 
@@ -72,7 +74,7 @@ def test_grounding_detects_invented_skill(resume) -> None:
     grounding. The violation path must point to the tailored.skills
     category and the detail must name the invented skill.
     """
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     fake = Tailored(
         name=tailored.name,email=tailored.email,city=tailored.city,phone=tailored.phone,github=tailored.github,linkedin=tailored.linkedin,
         summary=tailored.summary,
@@ -108,7 +110,7 @@ def test_grounding_detects_invented_number(resume) -> None:
     The invented number 99999999 is not present in any master bullet, so
     grounding() must produce a violation naming the specific number.
     """
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     fake = Tailored(
         name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary + " Achieved 99999999% growth.",
@@ -130,7 +132,7 @@ def test_grounding_detects_invented_number(resume) -> None:
 
 
 def test_style_detects_banned_word(resume) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     fake = Tailored(
         name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary="Leveraged Python to deliver comprehensive solutions.",
@@ -149,7 +151,7 @@ def test_style_detects_banned_word(resume) -> None:
 
 
 def test_plagiarism_passes_for_identity_transform(resume) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     jd = Job(
         url="https://example.com/jd",
         title="ML Engineer",
@@ -176,7 +178,7 @@ def test_plagiarism_detects_5gram_overlap(resume) -> None:
         must_have_keywords=(),
         nice_to_have_keywords=(),
         content_hash="abc")
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     fake = Tailored(
         name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
@@ -213,7 +215,7 @@ def test_ats_check_produces_full_report(resume) -> None:
     set. Without a PDF, 4 PDF-dependent gates should be SKIP and the rest
     should evaluate against the test inputs.
     """
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     report = ats(tailored, t, None, t2, ())
@@ -241,7 +243,7 @@ def test_ats_check_produces_full_report(resume) -> None:
 
 
 def test_ats_section_headings_pass_for_master(resume) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     report = ats(tailored, t, None, t2, ())
@@ -250,7 +252,7 @@ def test_ats_section_headings_pass_for_master(resume) -> None:
 
 
 def test_pdf_gates_skip_when_no_pdf(resume) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     report = ats(tailored, t, None, t2, ())
@@ -266,7 +268,7 @@ def test_pdf_gates_skip_when_no_pdf(resume) -> None:
 
 
 def test_pdf_gates_fail_when_pdf_path_missing(resume, tmp_path: Path) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     missing_pdf = tmp_path / "missing.pdf"
@@ -287,7 +289,7 @@ def test_gate_tiers_partition_all_gates() -> None:
 
 
 def test_hard_gate_failure_is_blocking(resume) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     tex_with_layout = t + r"\begin{multicols}{2}"
@@ -298,7 +300,7 @@ def test_hard_gate_failure_is_blocking(resume) -> None:
 
 
 def test_advisory_gate_failure_is_not_blocking(resume) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     jd = Job(
@@ -317,11 +319,11 @@ def test_advisory_gate_failure_is_not_blocking(resume) -> None:
 
 
 def test_length_gate_passes_for_single_page_pdf(resume, tmp_path) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     pdf_path = tmp_path / "one_page.pdf"
-    _write_pdf(pdf_path, pages=1)
+    write_pdf(pdf_path, pages=1)
     report = ats(tailored, t, pdf_path, t2, ())
     result = next(r for r in report.results if r.gate == AtsGate.LENGTH_WITHIN_LIMIT)
     assert result.status is GateStatus.PASS
@@ -329,18 +331,18 @@ def test_length_gate_passes_for_single_page_pdf(resume, tmp_path) -> None:
 
 
 def test_length_gate_fails_for_multi_page_pdf(resume, tmp_path) -> None:
-    tailored = _make_tailored(resume)
+    tailored = make_tailored(resume)
     t = tex(tailored)
     t2 = text(tailored)
     pdf_path = tmp_path / "two_pages.pdf"
-    _write_pdf(pdf_path, pages=2)
+    write_pdf(pdf_path, pages=2)
     report = ats(tailored, t, pdf_path, t2, ())
     result = next(r for r in report.results if r.gate == AtsGate.LENGTH_WITHIN_LIMIT)
     assert result.status is GateStatus.FAIL
     assert AtsGate.LENGTH_WITHIN_LIMIT in report.hard_failed_gates
 
 
-def _write_pdf(path: Path, pages: int) -> None:
+def write_pdf(path: Path, pages: int) -> None:
     """Create a minimal blank PDF with ``pages`` pages."""
     document = pymupdf.open()
     for _ in range(pages):
@@ -369,7 +371,7 @@ def test_pdf_artefact_status_fails_when_path_set_but_missing(tmp_path: Path) -> 
 def test_pdf_artefact_status_returns_none_when_pdf_exists(tmp_path: Path) -> None:
     """An existing PDF returns None so the caller runs the real gate logic."""
     pdf_path = tmp_path / "exists.pdf"
-    _write_pdf(pdf_path, pages=1)
+    write_pdf(pdf_path, pages=1)
     assert pdf_guard(pdf_path, AtsGate.PDF_COMPILES) is None
 
 

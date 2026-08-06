@@ -30,7 +30,9 @@ Resume,
     Outcome,
     Run,
     RunResult,
-    Tailored)
+    Tailored,
+    Resume,
+)
 from gethired.parser import parse_tex as tex
 from gethired.profiler import build as build_profile
 from gethired.tailor import Tailor, load_master

@@ -20,7 +20,9 @@ from gethired.models import (
 Resume,
     Project,
     Reason,
-    Skills)
+    Skills,
+    Resume,
+)
 from gethired.serialize import (
     MasterSnapshot,
     as_dict,

@@ -32,7 +32,9 @@ from gethired.models import (
     Experience,
 Resume,
     Project,
-    Skills)
+    Skills,
+    Resume,
+)
 from gethired.plain_text import parse_plain_text as plain
 from gethired.provider import resolve_model
 from gethired.text_util import (
@@ -57,7 +59,7 @@ __all__ = [
     "find_balanced_args",
     "find_macro_invocations",
     "extract_contact",
-    "extract_summary",
+    "extract_render_summary",
     "extract_skills",
     "extract_bullets",
     "next_subheading_or_project",
@@ -193,7 +195,7 @@ def extract_contact(body: str) -> tuple[str, str, str, str, str | None, str | No
     return (name, city, phone, email, github_url, linkedin_url)
 
 
-def extract_summary(body: str) -> str:
+def extract_render_summary(body: str) -> str:
     match = re.search(
         r"\\section\{Summary\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
@@ -415,7 +417,7 @@ def tex(source: str | Path) -> Resume:
         raise ParseError("Could not locate \\begin{document} ... \\end{document} body")
 
     contact_info = extract_contact(body_text)
-    summary_text = extract_summary(body_text)
+    summary_text = extract_render_summary(body_text)
     skills_data = extract_skills(body_text)
     experience_data = extract_experiences(body_text)
     project_data = extract_projects(body_text)
@@ -590,7 +592,7 @@ __all__ = [
     "find_balanced_args",
     "find_macro_invocations",
     "extract_contact",
-    "extract_summary",
+    "extract_render_summary",
     "extract_skills",
     "extract_bullets",
     "next_subheading_or_project",

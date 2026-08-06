@@ -22,7 +22,7 @@ from evals.harness import (
     EvalHarness,
     load_suite,
     load_task)
-from gethired.models import Resume, Skills
+from gethired.models import (Resume, Skills, Tailored,)
 
 # ---------------------------------------------------------------------------
 # Grader tests

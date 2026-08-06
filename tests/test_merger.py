@@ -41,7 +41,7 @@ SAMPLE_JD_B = Job(
     content_hash="b")
 
 
-def _custom_test_model(jds: tuple[Job, ...]) -> TestModel:
+def custom_test_model(jds: tuple[Job, ...]) -> TestModel:
     """Build a TestModel that returns a MergeResult reflecting the programmatic consolidation.
 
     Lets us exercise the LLM merger code path without calling a real LLM:
@@ -62,7 +62,7 @@ def _custom_test_model(jds: tuple[Job, ...]) -> TestModel:
 
 def test_merge_two_jds_unions_must_haves_and_intersects_nice() -> None:
     """LLM merger unions must-haves across JDs and intersects nice-to-haves."""
-    test_model = _custom_test_model((SAMPLE_JD_A, SAMPLE_JD_B))
+    test_model = custom_test_model((SAMPLE_JD_A, SAMPLE_JD_B))
     merged = merge_job_descriptions(
         (SAMPLE_JD_A, SAMPLE_JD_B), model_instance=test_model
     )
@@ -76,7 +76,7 @@ def test_merge_two_jds_unions_must_haves_and_intersects_nice() -> None:
 
 def test_merge_single_jd_invokes_llm_with_one_input() -> None:
     """Single-JD path also runs the LLM merger (always-merge policy)."""
-    test_model = _custom_test_model((SAMPLE_JD_A))
+    test_model = custom_test_model((SAMPLE_JD_A))
     merged = merge_job_descriptions((SAMPLE_JD_A), model_instance=test_model)
     assert isinstance(merged.role, str) and merged.role
     assert "python" in merged.must_have
@@ -84,7 +84,7 @@ def test_merge_single_jd_invokes_llm_with_one_input() -> None:
 
 def test_merge_picks_highest_seniority() -> None:
     """Seniority comes back as the highest across JDs (programmatic consolidator picks staff)."""
-    test_model = _custom_test_model((SAMPLE_JD_A, SAMPLE_JD_B))
+    test_model = custom_test_model((SAMPLE_JD_A, SAMPLE_JD_B))
     merged = merge_job_descriptions(
         (SAMPLE_JD_A, SAMPLE_JD_B), model_instance=test_model
     )
@@ -128,7 +128,7 @@ def test_safe_merge_falls_back_to_consolidate_on_merge_failure(
     assert "aws" in merged.must_have
 
 
-def test_safe_merge_short_circuits_when_model_instance_is_test_model() -> None:
+def test_safe_merge_short_circuits_when_model_instanceis_test_model() -> None:
     """``safe_merge`` short-circuits to programmatic consolidate when given a TestModel.
 
     Pydantic AI ``TestModel`` returns deterministic garbage; bypassing it keeps

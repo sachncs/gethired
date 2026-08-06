@@ -13,10 +13,12 @@ from evals.harness import GraderSpec, TaskDefinition, resolve_args, tailor_runne
 from gethired.models import (
     Contact,
     Skills,
-    Tailored)
+    Tailored,
+    Resume,
+)
 
 
-def _build_task(graders: list[GraderSpec], **overrides: Any) -> TaskDefinition:
+def build_task(graders: list[GraderSpec], **overrides: Any) -> TaskDefinition:
     """Helper to assemble a TaskDefinition with sensible defaults."""
     base: dict[str, Any] = {
         "id": "test-task",
@@ -40,7 +42,7 @@ def test_resolve_args_recognises_trace_path_placeholder(tmp_path: Path) -> None:
     """resolve_args maps the literal ``$trace_path`` to output['trace_path']."""
     spec_args = {"trace_path": "$trace_path", "name": "x"}
     output = {"trace_path": str(tmp_path / "trace.jsonl")}
-    task = _build_task([])
+    task = build_task([])
     resolved = resolve_args(spec_args, output, task)
     assert resolved == {"trace_path": str(tmp_path / "trace.jsonl")}
 
@@ -49,7 +51,7 @@ def test_resolve_args_strips_name_placeholder() -> None:
     """The reserved ``name`` key never reaches the grader call."""
     spec_args = {"name": "display-label", "text": "$text"}
     output = {"text": "hello"}
-    task = _build_task([])
+    task = build_task([])
     resolved = resolve_args(spec_args, output, task)
     assert "name" not in resolved
     assert resolved == {"text": "hello"}
@@ -59,7 +61,7 @@ def test_resolve_args_passes_lit_through_unchanged() -> None:
     """Non-string and non-prefixed values are passed through verbatim."""
     spec_args = {"max_tool_calls": 6, "expected_tools": ["skills"], "name": "x"}
     output: dict[str, Any] = {"trace_path": "ignored"}
-    task = _build_task([])
+    task = build_task([])
     resolved = resolve_args(spec_args, output, task)
     assert resolved["max_tool_calls"] == 6
     assert resolved["expected_tools"] == ["skills"]
@@ -69,7 +71,7 @@ def test_resolve_args_returns_none_for_unknown_placeholder() -> None:
     """Unknown placeholders resolve to None (fail-fast via grader)."""
     spec_args = {"trace_path": "$does_not_exist"}
     output: dict[str, Any] = {"trace_path": "real/path"}
-    task = _build_task([])
+    task = build_task([])
     resolved = resolve_args(spec_args, output, task)
     assert resolved["trace_path"] is None
 
@@ -152,7 +154,7 @@ def test_tailor_runner_surfaces_trace_path(tmp_path: Path, monkeypatch: pytest.M
         + "\n"
     )
 
-    task = _build_task(
+    task = build_task(
         [],
         input={
             "__master__": None,

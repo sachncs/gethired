@@ -120,7 +120,7 @@ def test_fetch_uses_jd_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
 
     monkeypatch.setattr(
         "gethired.fetcher.Fetcher.retrieve",
-        lambda _self, url: _fake_jd(url))
+        lambda _self, url: fake_jd(url))
 
     result = runner.invoke(
         app,
@@ -157,7 +157,7 @@ def test_cli_loads_dotenv_at_import(
     )
 
 
-def _fake_jd(url: str) -> Job:
+def fake_jd(url: str) -> Job:
     return Job(
         url=url,
         title="Engineer",

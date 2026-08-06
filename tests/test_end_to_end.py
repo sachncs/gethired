@@ -26,7 +26,9 @@ from gethired.models import (
     StepMeta,
     StepStatus,
     Tailored,
-    job_validate)
+    job_validate,
+    Resume,
+)
 from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
 from gethired.renderer import tex, text
@@ -254,7 +256,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                     rationale="ok",
                     model="test",
                     tool_name=None,
-                    metadata=StepMeta()))
+                    metadata=Meta()))
             return Tailored(
                 name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
                 summary="",
@@ -281,10 +283,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                     total_output_tokens=0,
                     retry_attempts=0,
                     final_outcome=Outcome.SUCCESS,
-                    jobs=steps),
-                master=master,
-                jds=(SAMPLE_JD, jd_b),
-                analysis=analysis)
+                    jobs=steps),)
 
     mp = pytest.MonkeyPatch()
     try:

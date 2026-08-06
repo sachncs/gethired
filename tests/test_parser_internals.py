@@ -15,7 +15,7 @@ from gethired.parser import (
     extract_bullets,
     extract_contact,
     extract_skills,
-    extract_summary,
+    extract_render_summary,
     find_balanced_args,
     find_macro_invocations,
     strip_comments)
@@ -91,14 +91,14 @@ def test_find_macro_invocations_returns_empty_when_no_macro() -> None:
 
 
 def test_extract_summary_returns_section_text() -> None:
-    """extract_summary returns the text under \\section{Summary}."""
+    """extract_render_summary returns the text under \\section{Summary}."""
     body = (
         "\\section{Summary}\n"
         "Machine learning engineer.\n"
         "\\section{Experience}\n"
         "Other text.\n"
     )
-    assert "Machine learning engineer" in extract_summary(body)
+    assert "Machine learning engineer" in extract_render_summary(body)
 
 
 def test_extract_skills_groups_by_category() -> None:

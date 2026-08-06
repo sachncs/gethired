@@ -23,7 +23,9 @@ from gethired.models import (
     Experience,
 Resume,
     Project,
-    Skills)
+    Skills,
+    Resume,
+)
 from gethired.text_util import (
     EMAIL_RE,
     GITHUB_BARE_RE,

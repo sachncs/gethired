@@ -48,7 +48,7 @@ def dispatch_path(path: Path) -> Resume:
     suffix = path.suffix.lower()
     if suffix in EXTENSION_PARSERS:
         return EXTENSION_PARSERS[suffix](path)
-    if suffix in _IMAGE_EXTENSIONS:
+    if suffix in IMAGE_EXTENSIONS:
         return _image(path)
     # Unknown extension: peek at the content to decide between TeX and plain text
     content = path.read_text()

@@ -100,7 +100,7 @@ def parse_word_phrase(tokens: list[str]) -> int:
             continue
         matched_any = True
         n = NUMBER_WORDS[token]
-        if n in _BIG_NUMBERS:
+        if n in BIG_NUMBERS:
             current = max(current, 1) * n if current else n
         else:
             current += n
@@ -125,7 +125,7 @@ def extract_word_numbers(text: str) -> set[int]:
     found: set[int] = set()
     for match in word_pattern.finditer(text.lower()):
         tokens = [t for t in re.split(r"[\s-]+", match.group(1)) if t]
-        value = _parse_word_phrase(tokens)
+        value = parse_word_phrase(tokens)
         if value:
             found.add(value)
     return found

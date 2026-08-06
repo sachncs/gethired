@@ -14,7 +14,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-from gethired.models import Resume, Tailored
+from gethired.models import (
+    Resume,
+    Tailored,
+)
 from gethired.normalize import (
     ngrams,
     numbers,

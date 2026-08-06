@@ -791,7 +791,7 @@ __all__ = [
     "GateTier",
     "Job",
     "JobData",
-    "Resume",  # deprecated alias for Resume, removed in commit 1.22
+    "Resume",  # deprecated alias for Master, removed in commit 1.22
     "Project",
     "Resume",
     "Run",

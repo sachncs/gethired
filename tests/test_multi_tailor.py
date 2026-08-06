@@ -38,7 +38,7 @@ SAMPLE_JD_B = Job(
     content_hash="b")
 
 
-def _realistic_test_model(jds: tuple[Job, ...]) -> TestModel:
+def realistic_test_model(jds: tuple[Job, ...]) -> TestModel:
     """TestModel that returns the programmatic consolidation as its LLM output."""
     consolidated = consolidate(jds)
     payload = MergeResult(
@@ -81,7 +81,7 @@ def test_tailor_with_multiple_jds_uses_llm_merge(monkeypatch: pytest.MonkeyPatch
     ``safe_merge`` so the test asserts that contract via the public merger
     API rather than the internal pipeline.
     """
-    realistic_model = _realistic_test_model((SAMPLE_JD_A, SAMPLE_JD_B))
+    realistic_model = realistic_test_model((SAMPLE_JD_A, SAMPLE_JD_B))
     monkeypatch.setattr(
         "gethired.tailor.safe_merge",
         lambda jds, **_kw: merge_job_descriptions(jds, model_instance=realistic_model))

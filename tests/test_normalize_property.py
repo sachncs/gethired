@@ -16,7 +16,9 @@ from gethired.models import (
     Contact,
     Experience,
 Resume,
-    Skills)
+    Skills,
+    Resume,
+)
 from gethired.normalize import (
     flatten,
     ngrams,

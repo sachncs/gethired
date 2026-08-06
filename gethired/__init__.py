@@ -48,7 +48,9 @@ if TYPE_CHECKING:
         Contact,
         Job,
 Resume,
-        Tailored)
+        Tailored,
+    Resume,
+)
     from gethired.parse import parse
     from gethired.tailor import Tailor
     from gethired.version import __version__

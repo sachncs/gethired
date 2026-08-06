@@ -98,14 +98,14 @@ class Fetcher:
         """
         log = logger("fetch_jd")
         url_hash = hashlib.sha256(url.encode()).hexdigest()[:16]
-        cached = self.__load_cache(url_hash)
-        if cached is not None and self.__is_cache_fresh(cached):
+        cached = self._load_cache(url_hash)
+        if cached is not None and self._is_cache_fresh(cached):
             log.info("fetch cache hit", url=url, url_hash=url_hash)
             return self.__parse(cached.raw_html, url, cached.content_hash)
 
-        raw_html = self.__fetch_with_retry(url, log)
+        raw_html = self._fetch_with_retry(url, log)
         content_hash = hashlib.sha256(raw_html.encode()).hexdigest()
-        self.__save_cache(
+        self._save_cache(
             CacheEntry(
                 url=url,
                 url_hash=url_hash,
@@ -115,7 +115,7 @@ class Fetcher:
         )
         return self.__parse(raw_html, url, content_hash)
 
-    def __fetch_with_retry(self, url: str, logger: Logger) -> str:
+    def _fetch_with_retry(self, url: str, logger: Logger) -> str:
         last_exc: Exception | None = None
         for attempt in range(1, self.max_attempts + 1):
             try:
@@ -149,11 +149,11 @@ class Fetcher:
                     time.sleep(backoff_seconds)
         raise FetchError(f"Failed to fetch {url} after {self.max_attempts} attempts: {last_exc}")
 
-    def __cache_path(self, url_hash: str) -> Path:
+    def _cache_path(self, url_hash: str) -> Path:
         return self.cache_dir / f"{url_hash}.json"
 
-    def __load_cache(self, url_hash: str) -> CacheEntry | None:
-        path = self.__cache_path(url_hash)
+    def _load_cache(self, url_hash: str) -> CacheEntry | None:
+        path = self._cache_path(url_hash)
         if not path.exists():
             return None
         try:
@@ -167,11 +167,11 @@ class Fetcher:
         except (json.JSONDecodeError, KeyError):
             return None
 
-    def __save_cache(self, entry: CacheEntry) -> None:
-        path = self.__cache_path(entry.url_hash)
+    def _save_cache(self, entry: CacheEntry) -> None:
+        path = self._cache_path(entry.url_hash)
         path.write_text(json.dumps(asdict(entry), indent=2))
 
-    def __is_cache_fresh(self, entry: CacheEntry) -> bool:
+    def _is_cache_fresh(self, entry: CacheEntry) -> bool:
         try:
             fetched_at = datetime.fromisoformat(entry.fetched_at)
         except ValueError:

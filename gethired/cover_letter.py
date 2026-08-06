@@ -14,7 +14,9 @@ from gethired.models import (
     CoverLetter,
 Resume,
     Paragraph,
-    Voice)
+    Voice,
+    Resume,
+)
 
 
 @dataclass(frozen=True, slots=True)

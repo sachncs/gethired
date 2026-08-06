@@ -16,7 +16,9 @@ Resume,
     StepEnv,
     StepKind,
     Tailored,
-    job_validate)
+    job_validate,
+    Resume,
+)
 from gethired.observability import logger
 from gethired.validator import (
     AtsReport,

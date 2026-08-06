@@ -22,7 +22,7 @@ runner = CliRunner()
 
 
 @pytest.fixture(autouse=True)
-def _no_consent(monkeypatch: pytest.MonkeyPatch) -> None:
+def no_consent(monkeypatch: pytest.MonkeyPatch) -> None:
     """Bypass the consent prompt for every CLI test."""
     monkeypatch.setattr(cli_module, "ensure_consent", lambda: None)
 

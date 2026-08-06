@@ -38,7 +38,9 @@ Resume,
     RunResult,
     Step,
     StepKind,
-    Tailored)
+    Tailored,
+    Resume,
+)
 from gethired.observability import configure, logger, now
 from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
@@ -224,11 +226,7 @@ class Tailor:
 
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
 
-        final = replace(
-            tailored_with_jobs,
-            master=master,
-            jds=jds,
-            analysis=analysis)
+        final = tailored_with_jobs
 
         if self.produce_cover_letter and analysis is not None:
             cover_result = compose(master=master, analysis=analysis, voice=profile)

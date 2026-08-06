@@ -20,7 +20,9 @@ Resume,
     StepKind,
     StepMeta,
     StepStatus,
-    Tailored)
+    Tailored,
+    Resume,
+)
 from gethired.serialize import (
     as_dict,
     from_bullets,

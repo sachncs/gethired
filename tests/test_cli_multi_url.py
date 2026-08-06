@@ -448,10 +448,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
                     total_output_tokens=0,
                     retry_attempts=0,
                     final_outcome=Outcome.SUCCESS,
-                    jobs=steps),
-                master=master,
-                jds=(jd),
-                analysis=analysis)
+                    jobs=steps))
 
     monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: (jd))
     monkeypatch.setattr(cli_module, "Tailor", FakeTailor)
@@ -554,10 +551,7 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
                     total_output_tokens=0,
                     retry_attempts=0,
                     final_outcome=Outcome.SUCCESS,
-                    jobs=steps),
-                master=master,
-                jds=tuple(jds),
-                analysis=analysis)
+                    jobs=steps))
 
     monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: tuple(jds))
     monkeypatch.setattr(cli_module, "Tailor", FakeTailor)

@@ -44,7 +44,9 @@ Resume,
     Tailored,
     Voice,
     job_lookup,
-    job_tailor)
+    job_tailor,
+    Resume,
+)
 from gethired.observability import logger
 from gethired.provider import resolve_model
 from gethired.rubric import ANTI_AI, BANNED, GROUNDING
@@ -423,7 +425,7 @@ def voice_prompt(voice: Voice) -> str:
 
 def prompt(master: Resume, analysis: Analysis) -> str:
     master_md = master.to_markdown()
-    jd_summary = (
+    jd_render_summary = (
         f"Target role: {analysis.role}\n"
         f"Seniority: {analysis.seniority}\n"
         f"Must-have skills: {', '.join(analysis.must_have)}\n"
@@ -434,7 +436,7 @@ def prompt(master: Resume, analysis: Analysis) -> str:
     return (
         f"Here is the master resume (single source of truth):\n\n"
         f"{master_md}\n\n"
-        f"Here is the structured JD analysis:\n\n{jd_summary}\n\n"
+        f"Here is the structured JD analysis:\n\n{jd_render_summary}\n\n"
         f"REQUIRED: rephrase EVERY bullet in the resume. The master has "
         f"{len(paths)} bullets across experiences and projects. Every path "
         f"below MUST appear as a key in your tailored_bullets output:\n"

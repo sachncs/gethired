@@ -37,7 +37,9 @@ Resume,
     StepStatus,
     Tailored,
     Voice,
-    job)
+    job,
+    Resume,
+)
 
 
 def test_all_models_are_frozen() -> None:

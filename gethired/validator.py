@@ -20,7 +20,9 @@ from gethired.models import (
     GateTier,
     Job,
 Resume,
-    Tailored)
+    Tailored,
+    Resume,
+)
 from gethired.normalize import (
     flatten as normalize_flatten)
 from gethired.normalize import (
@@ -254,12 +256,12 @@ def style(
     """Check for banned words, parallelism, length variance, and quantification."""
     violations: list[StyleFault] = []
     full_text = flatten(tailored).lower()
-    violations.extend(_banned_word_violations(full_text))
-    violations.extend(_construction_violations(full_text))
+    violations.extend(banned_word_violations(full_text))
+    violations.extend(construction_violations(full_text))
     for experience in tailored.experience:
         violations.extend(parallelism(experience.role, experience.bullets))
-    violations.extend(_quantification_violations(tailored, threshold_ratio))
-    violations.extend(_summary_violations(tailored))
+    violations.extend(quantification_violations(tailored, threshold_ratio))
+    violations.extend(summary_violations(tailored))
     return tuple(violations)
 
 

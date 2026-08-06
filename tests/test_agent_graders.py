@@ -18,17 +18,19 @@ from gethired.models import (
     Contact,
     Experience,
     Skills,
-    Tailored)
+    Tailored,
+    Resume,
+)
 
 
-def _write_trace(path: Path, spans: list[dict]) -> None:
+def write_trace(path: Path, spans: list[dict]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with path.open("w") as f:
         for span in spans:
             f.write(json.dumps(span) + "\n")
 
 
-def _tool_span(name: str, attributes: dict | None = None) -> dict:
+def tool_span(name: str, attributes: dict | None = None) -> dict:
     return {
         "name": name,
         "kind": "tool",
@@ -41,7 +43,7 @@ def _tool_span(name: str, attributes: dict | None = None) -> dict:
     }
 
 
-def _agent_span(name: str) -> dict:
+def agent_span(name: str) -> dict:
     return {
         "name": name,
         "kind": "agent",
@@ -75,12 +77,12 @@ def test_writer_tool_names_includes_all_seven_tools() -> None:
 def test_code_tool_correctness_passes_when_expected_subset(tmp_path: Path) -> None:
     """ToolCorrectness: agent's tools cover the expected set."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(
+    write_trace(
         trace,
         [
-            _tool_span("skills", {}),
-            _tool_span("education", {}),
-            _tool_span("jd", {}),
+            tool_span("skills", {}),
+            tool_span("education", {}),
+            tool_span("jd", {}),
         ])
     result = code_tool_correctness("t", str(trace), expected_tools=("skills", "jd"))
     assert result.passed is True
@@ -90,7 +92,7 @@ def test_code_tool_correctness_passes_when_expected_subset(tmp_path: Path) -> No
 def test_code_tool_correctness_fails_when_missing(tmp_path: Path) -> None:
     """ToolCorrectness: missing expected tool is a fail."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_tool_span("skills", {})])
+    write_trace(trace, [tool_span("skills", {})])
     result = code_tool_correctness("t", str(trace), expected_tools=("skills", "education"))
     assert result.passed is False
     assert "education" in result.detail
@@ -105,11 +107,11 @@ def test_code_tool_correctness_handles_missing_trace(tmp_path: Path) -> None:
 def test_code_argument_correctness_passes_with_attributes(tmp_path: Path) -> None:
     """ArgumentCorrectness: tools with attributes are well-formed."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(
+    write_trace(
         trace,
         [
-            _tool_span("experience", {"role_or_company": "acme"}),
-            _tool_span("skills", {}),
+            tool_span("experience", {"role_or_company": "acme"}),
+            tool_span("skills", {}),
         ])
     result = code_argument_correctness("a", str(trace))
     assert result.passed is True
@@ -119,14 +121,14 @@ def test_code_argument_correctness_fails_on_empty_attributes(tmp_path: Path) -> 
     """ArgumentCorrectness: a tool span with no attributes is suspicious."""
     trace = tmp_path / "trace.jsonl"
     # Patch the lookup span to have empty attributes
-    span = _tool_span("experience", {})
-    _write_trace(trace, [span])
+    span = tool_span("experience", {})
+    write_trace(trace, [span])
     code_argument_correctness("a", str(trace))
     # skills with no args is legitimate (returns full skills); the lookup
     # span with no args would be a fail, but here we only have skills
     # which is acceptable. Test with a lookup span instead.
     trace2 = tmp_path / "trace2.jsonl"
-    _write_trace(trace2, [_tool_span("project", {})])
+    write_trace(trace2, [tool_span("project", {})])
     result2 = code_argument_correctness("a", str(trace2))
     assert result2.passed is False
     assert "project" in result2.detail
@@ -135,11 +137,11 @@ def test_code_argument_correctness_fails_on_empty_attributes(tmp_path: Path) -> 
 def test_code_plan_adherence_flags_repeats(tmp_path: Path) -> None:
     """PlanAdherence: calling the same tool twice with the same args is a fail."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(
+    write_trace(
         trace,
         [
-            _tool_span("experience", {"role_or_company": "acme"}),
-            _tool_span("experience", {"role_or_company": "acme"}),
+            tool_span("experience", {"role_or_company": "acme"}),
+            tool_span("experience", {"role_or_company": "acme"}),
         ])
     result = code_plan_adherence("p", str(trace))
     assert result.passed is False
@@ -149,7 +151,7 @@ def test_code_plan_adherence_flags_repeats(tmp_path: Path) -> None:
 def test_code_plan_quality_validates_first_tool(tmp_path: Path) -> None:
     """PlanQuality: agent's first tool should be a survey tool."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_tool_span("skills", {}), _tool_span("education", {})])
+    write_trace(trace, [tool_span("skills", {}), tool_span("education", {})])
     result = code_plan_quality("q", str(trace), expected_first_tool="skills")
     assert result.passed is True
 
@@ -157,7 +159,7 @@ def test_code_plan_quality_validates_first_tool(tmp_path: Path) -> None:
 def test_code_plan_quality_fails_when_first_tool_is_deep_dive(tmp_path: Path) -> None:
     """PlanQuality: jumping straight to a deep-lookup tool is a fail."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_tool_span("experience", {"role_or_company": "acme"})])
+    write_trace(trace, [tool_span("experience", {"role_or_company": "acme"})])
     result = code_plan_quality("q", str(trace), expected_first_tool="skills")
     assert result.passed is False
 
@@ -165,7 +167,7 @@ def test_code_plan_quality_fails_when_first_tool_is_deep_dive(tmp_path: Path) ->
 def test_code_step_efficiency_counts_tool_calls(tmp_path: Path) -> None:
     """StepEfficiency: agent is over-budget if it makes too many tool calls."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_tool_span(f"tool_{i}", {}) for i in range(8)])
+    write_trace(trace, [tool_span(f"tool_{i}", {}) for i in range(8)])
     result = code_step_efficiency("s", str(trace), max_tool_calls=3)
     assert result.passed is False
     assert result.score < 1.0
@@ -174,7 +176,7 @@ def test_code_step_efficiency_counts_tool_calls(tmp_path: Path) -> None:
 def test_code_step_efficiency_passes_within_budget(tmp_path: Path) -> None:
     """StepEfficiency: within-budget run is a pass with score 1.0."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_tool_span("skills", {}), _tool_span("education", {})])
+    write_trace(trace, [tool_span("skills", {}), tool_span("education", {})])
     result = code_step_efficiency("s", str(trace), max_tool_calls=6)
     assert result.passed is True
     assert result.score == 1.0
@@ -183,7 +185,7 @@ def test_code_step_efficiency_passes_within_budget(tmp_path: Path) -> None:
 def test_code_task_completion_requires_tailor_span(tmp_path: Path) -> None:
     """TaskCompletion: tailor.run span + summary + experiences required."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_agent_span("tailor.run")])
+    write_trace(trace, [agent_span("tailor.run")])
     contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
@@ -205,7 +207,7 @@ def test_code_task_completion_requires_tailor_span(tmp_path: Path) -> None:
 def test_code_task_completion_fails_when_summary_blank(tmp_path: Path) -> None:
     """TaskCompletion: blank summary is a structural failure."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_agent_span("tailor.run")])
+    write_trace(trace, [agent_span("tailor.run")])
     contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
@@ -226,7 +228,7 @@ def test_code_task_completion_fails_when_summary_blank(tmp_path: Path) -> None:
 def test_code_task_completion_fails_when_experiences_empty(tmp_path: Path) -> None:
     """TaskCompletion: missing experiences is a structural failure."""
     trace = tmp_path / "trace.jsonl"
-    _write_trace(trace, [_agent_span("tailor.run")])
+    write_trace(trace, [agent_span("tailor.run")])
     contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,

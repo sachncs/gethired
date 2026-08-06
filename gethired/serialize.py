@@ -40,7 +40,9 @@ Resume,
     StepKind,
     StepMeta,
     StepStatus,
-    Tailored)
+    Tailored,
+    Resume,
+)
 from gethired.observability import now
 
 __all__ = [

@@ -14,7 +14,7 @@ from unittest import mock
 import pytest
 
 from gethired.exceptions import TailorError
-from gethired.models import Resume, Skills
+from gethired.models import (Resume, Skills, Tailored,)
 from gethired.serialize import render_json, snapshot
 from gethired.tailor import Tailor
 
@@ -32,7 +32,7 @@ def _sample_resume_json() -> str:
     return render_json(snapshot(master))
 
 
-def _make_tailor_with_test_model() -> Tailor:
+def make_tailor_with_test_model() -> Tailor:
     """Construct a Tailor instance that bypasses the MODEL requirement."""
     return Tailor(
         resume="ignored",
@@ -44,7 +44,7 @@ def test_finalize_re_renders_tailored_json(tmp_path: Path) -> None:
     """``finalize`` parses an edited ``tailored.json`` and re-renders artefacts."""
     source = tmp_path / "source.json"
     source.write_text(_sample_resume_json())
-    tailor = _make_tailor_with_test_model()
+    tailor = make_tailor_with_test_model()
     tailored = tailor.finalize(source)
     assert tailored.name == "Test"
     assert (source.parent / "tailored.tex").exists()
@@ -78,7 +78,7 @@ def test_finalize_rejects_json_without_run_result(tmp_path: Path) -> None:
             }
         )
     )
-    tailor = _make_tailor_with_test_model()
+    tailor = make_tailor_with_test_model()
     with pytest.raises(TailorError, match="missing run_result"):
         tailor.finalize(source)
 
@@ -92,7 +92,7 @@ def test_diff_returns_unified_diff(tmp_path: Path) -> None:
     (run_a / "match_report.md").write_text("# run a\n\nfirst line\n")
     (run_b / "match_report.md").write_text("# run b\n\nsecond line\n")
 
-    tailor = _make_tailor_with_test_model()
+    tailor = make_tailor_with_test_model()
     tailor.tailored_dir = tmp_path  # type: ignore[assignment]
     diff_text = tailor.diff(other_run_id="a")
     assert "--- a" in diff_text
