@@ -177,7 +177,7 @@ def extract_contact(text: str, header_block: str) -> Contact:
 
     require_contact(name, city, phone, email)
 
-    return Resume(name=name, city=city, phone=phone, email=email, github=github_url, linkedin=linkedin_url, summary=summary, skills=skills, experience=experience, projects=projects, education=education, awards=awards)
+    return Resume(name=name, city=city, phone=phone, email=email, github=github_url, linkedin=linkedin_url, summary="", skills=Skills(categories={}), experience=(), projects=(), education=(), awards=())
 
 
 def extract_name(text: str) -> str:

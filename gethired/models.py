@@ -211,7 +211,7 @@ class Skills:
 
 
 @dataclass(frozen=True, slots=True)
-class Master:
+class Resume:
     """Canonical resume model. Single source of truth for tailoring."""
 
     contact: Contact

@@ -394,7 +394,7 @@ class Tailor:
 
     def __load_jds(self) -> tuple[Job, ...]:
         if isinstance(self.jd_input, Job):
-            return (self.jd_input)
+            return (self.jd_input,)
         if isinstance(self.jd_input, tuple):
             if all(isinstance(j, Job) for j in self.jd_input):
                 jds_input = tuple(j for j in self.jd_input if isinstance(j, Job))
