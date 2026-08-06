@@ -241,12 +241,14 @@ class Writer:
         )
         all_jobs = tool_jobs + (
             job_tailor(
-                outputs=("tailored_resume"),
+                outputs=("tailored_resume",),
                 rationale=(
                     f"LLM produced {len(writer_output.tailored_bullets)} rewritten bullets; "
                     f"rationale: {writer_output.rationale[:RATIONALE_CHARS]}"
                 ),
-                envelope=StepEnv(model=str(model_name) if model_name else "model")))
+                envelope=StepEnv(model=str(model_name) if model_name else "model"),
+            ),
+        )
         tailored = Tailored(
             name=tailored.name,
             email=tailored.email,
