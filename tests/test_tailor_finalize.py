@@ -21,7 +21,7 @@ from gethired.tailor import Tailor
 
 def _sample_master_json() -> str:
     """Build a serialised Tailored (master snapshot) for testing."""
-    master = Master(
+    master = Resume(
         contact=Resume(
             name="Test",
             city="City",

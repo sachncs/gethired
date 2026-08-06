@@ -49,7 +49,7 @@ def sentence_counts(bullets: tuple[Bullet, ...]) -> tuple[int, int]:
     return (min(counts), max(counts))
 
 
-def build(master: Master) -> Voice:
+def build(master: Resume) -> Voice:
     """Compute a voice profile from the master resume's bullets.
 
     Args:

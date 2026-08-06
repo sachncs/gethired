@@ -26,7 +26,7 @@ SAMPLE_JD = Job(
 )
 
 
-def test_grounding_citation_round_trip_passes(resume: Master) -> None:
+def test_grounding_citation_round_trip_passes(resume: Resume) -> None:
     """Every verbatim span in a Citation must appear in the master.
 
     The GroundedCitation dataclass promises that each tailored bullet
@@ -60,7 +60,7 @@ def test_grounding_citation_round_trip_passes(resume: Master) -> None:
     )
 
 
-def test_grounding_citation_with_fabricated_span_fails(resume: Master) -> None:
+def test_grounding_citation_with_fabricated_span_fails(resume: Resume) -> None:
     """A Citation whose verbatim_span is NOT in the master must fail grounding.
 
     This is the failure mode that catches a writer bug: a Citation was
@@ -94,7 +94,7 @@ def test_grounding_citation_with_fabricated_span_fails(resume: Master) -> None:
     )
 
 
-def test_grounding_citation_partial_span_still_passes(resume: Master) -> None:
+def test_grounding_citation_partial_span_still_passes(resume: Resume) -> None:
     """A Citation whose span is a substring of a master bullet is valid.
 
     Real writers may emit a span that is a contiguous substring of a
@@ -129,7 +129,7 @@ def test_grounding_citation_partial_span_still_passes(resume: Master) -> None:
     assert not violations, f"grounding() should accept a substring span, got {violations}"
 
 
-def test_tailor_pipeline_emits_real_grounding_citations(resume: Master) -> None:
+def test_tailor_pipeline_emits_real_grounding_citations(resume: Resume) -> None:
     """The full Tailor pipeline produces a TailoredResume that passes grounding.
 
     This is the end-to-end data process test: parse the master, run the

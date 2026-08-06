@@ -38,7 +38,7 @@ class Critic:
     def evaluate(
         self,
         tailored: Tailored,
-        master: Master,
+        master: Resume,
         jds: tuple[Job, ...],
         tex_source: str,
         txt_source: str,

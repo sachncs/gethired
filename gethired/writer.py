@@ -73,7 +73,7 @@ class WriterDeps:
 
     def __init__(
         self,
-        master: Master,
+        master: Resume,
         analysis: Analysis,
         voice: Voice,
         previous_violations: tuple[str, ...] = (),
@@ -140,7 +140,7 @@ class Writer:
 
     def tailor(
         self,
-        master: Master,
+        master: Resume,
         analysis: Analysis,
         voice: Voice,
         previous_violations: tuple[str, ...] = (),
@@ -174,7 +174,7 @@ class Writer:
 
     def __llm_tailor(
         self,
-        master: Master,
+        master: Resume,
         analysis: Analysis,
         voice: Voice,
         previous_violations: tuple[str, ...],
@@ -434,7 +434,7 @@ def voice_prompt(voice: Voice) -> str:
     )
 
 
-def prompt(master: Master, analysis: Analysis) -> str:
+def prompt(master: Resume, analysis: Analysis) -> str:
     master_md = master.to_markdown()
     jd_summary = (
         f"Target role: {analysis.role}\n"
@@ -500,7 +500,7 @@ def from_tools(result: Any) -> tuple[Step, ...]:
 # ---------------------------------------------------------------------------
 
 
-def enumerate_bullet_paths(master: Master) -> list[str]:
+def enumerate_bullet_paths(master: Resume) -> list[str]:
     """Return every experience and project bullet path in the master, in order."""
     paths: list[str] = []
     for i, exp in enumerate(master.experience):
@@ -512,7 +512,7 @@ def enumerate_bullet_paths(master: Master) -> list[str]:
     return paths
 
 
-def lookup_bullet_text(master: Master, master_path: str) -> str | None:
+def lookup_bullet_text(master: Resume, master_path: str) -> str | None:
     """Return the original bullet text at ``master_path`` (or None if not found)."""
     try:
         if master_path.startswith("experiences["):
@@ -584,7 +584,7 @@ def rephrase_missing_bullets(
     """
     if not missing:
         return {}
-    if _is_test_model(model_instance):
+    if is_test_model(model_instance):
         return {path: [text] for path, text in missing}
     try:
         bullets_block = "\n".join(f"- {path}: {text}" for path, text in missing)
@@ -651,7 +651,7 @@ def rewrite(
 
 
 def apply_experiences(
-    master: Master,
+    master: Resume,
     output: WriterOutput,
     dropped: frozenset[str],
 ) -> tuple[tuple[Experience, ...], list[Citation]]:
@@ -681,7 +681,7 @@ def apply_experiences(
 
 
 def apply_projects(
-    master: Master,
+    master: Resume,
     output: WriterOutput,
     dropped: frozenset[str],
 ) -> tuple[tuple[Project, ...], list[Citation]]:
@@ -720,7 +720,7 @@ def drop_reasons(output: WriterOutput) -> tuple[Reason, ...]:
 
 
 def apply(
-    master: Master,
+    master: Resume,
     output: WriterOutput,
     analysis: Analysis,
 ) -> Tailored:

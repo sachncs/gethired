@@ -110,7 +110,7 @@ class AtsReport:
 
 def grounding(
     tailored: Tailored,
-    master: Master,
+    master: Resume,
 ) -> tuple[GroundingFault, ...]:
     """Verify every concrete claim in the tailored resume traces back to master.
 

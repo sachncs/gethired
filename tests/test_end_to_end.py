@@ -286,7 +286,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                     run=Run(
                         id="run-multi-cover",
                         started_at="now",
-                        master_hash="",
+                        resume_hash="",
                         jd_urls_hash="",
                         model="test",
                         draft_model=None,

@@ -94,7 +94,7 @@ def audit(run_dir: Path) -> AuditReport:
         TailorError: When ``run_dir`` does not contain the required inputs.
     """
     paths = audit_paths(run_dir)
-    tailored, master = _audit_load(paths["tailored"], paths["master"])
+    tailored, master = audit_load(paths["tailored"], paths["master"])
 
     grounding_violations = grounding(tailored, master)
     style_violations = style(tailored)

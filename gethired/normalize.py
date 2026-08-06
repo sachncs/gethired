@@ -139,7 +139,7 @@ def numbers(text: str) -> set[int]:
     ``5%``, ``5.5``, and ``ten thousand``.
     """
     found: set[int] = set()
-    found |= _extract_numeric_patterns(text)
+    found |= extract_numeric_patterns(text)
     found |= _extract_suffix_multipliers(text)
     found |= _extract_word_numbers(text)
     return found

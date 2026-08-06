@@ -44,7 +44,7 @@ def code_equal(name: str, actual: object, expected: object) -> GraderResult:
 
 
 def code_field_present(
-    name: str, resume: Master | Tailored, path: str
+    name: str, resume: Resume | Tailored, path: str
 ) -> GraderResult:
     """Assert that a dotted path on the resume resolves to a truthy value."""
     value = resolve_path(resume, path)
@@ -54,7 +54,7 @@ def code_field_present(
 
 
 def code_field_length(
-    name: str, resume: Master | Tailored, path: str, expected: int
+    name: str, resume: Resume | Tailored, path: str, expected: int
 ) -> GraderResult:
     """Assert that a list path has the expected length."""
     value = resolve_path(resume, path)
@@ -139,7 +139,7 @@ def code_no_jd_plagiarism(
 
 
 def code_numbers_in_master(
-    name: str, tailored_text: str, master: Master
+    name: str, tailored_text: str, master: Resume
 ) -> GraderResult:
     """Assert that any number in the tailored text is also in the master."""
     tailored_numbers = numbers(tailored_text)

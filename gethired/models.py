@@ -537,7 +537,7 @@ class Run:
         return RunView(
             id=self.id,
             started_at=self.started_at,
-            master_hash=self.master_hash,
+            resume_hash=self.master_hash,
             jd_urls_hash=self.jd_urls_hash,
             model=self.model,
             draft_model=self.draft_model,

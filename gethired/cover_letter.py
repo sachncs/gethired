@@ -27,7 +27,7 @@ class Letter:
 
 
 def compose(
-    master: Master,
+    master: Resume,
     analysis: Analysis,
     voice: Voice,
     sender_name: str | None = None,

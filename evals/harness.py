@@ -272,7 +272,7 @@ class EvalHarness:
         self,
         task: TaskDefinition,
         trial_index: int,
-        shared_master: Master | None = None,
+        shared_master: Resume | None = None,
     ) -> TrialRecord:
         """Run the task once, grade the output, record the trial."""
         started = now()
@@ -421,13 +421,13 @@ def resolve_args(
     spec_args: dict[str, Any],
     output: dict[str, Any],
     task: TaskDefinition,
-    shared_master: Master | None = None,
+    shared_master: Resume | None = None,
 ) -> dict[str, Any]:
     """Resolve special argument placeholders against the output.
 
     Supported placeholders:
         ``$output``       → the entire output dict
-        ``$master``       → the parsed Master from the shared cache
+        ``$master``       → the parsed Resume from the shared cache
         ``$tailored``     → the Tailored if present
         ``$text``         → the tailored text (summary + bullets joined)
         ``$jd_text``      → the Job full text
@@ -459,7 +459,7 @@ def resolve_args(
     return resolved
 
 
-def load_shared_master() -> Master | None:
+def load_shared_master() -> Resume | None:
     """Load the canonical master.json (or dispatch the canonical sample.tex).
 
     The master is loaded once per eval run and shared across tasks so that
@@ -479,11 +479,11 @@ def load_shared_master() -> Master | None:
 # ---------------------------------------------------------------------------
 
 
-def inject_master(task: TaskDefinition, master: Master) -> TaskDefinition:
+def inject_master(task: TaskDefinition, master: Resume) -> TaskDefinition:
     """Return a copy of ``task`` with the shared master injected.
 
     Replaces the ``__load_master__`` sentinel so downstream runners
-    receive the cached ``Master`` object.
+    receive the cached ``Resume`` object.
     """
     new_input = dict(task.input)
     if new_input.get("__master__") == "__load_master__":

@@ -76,7 +76,7 @@ def test_all_models_are_frozen() -> None:
             sentence_count_per_bullet=(0, 0),
         ),
         Reason: Reason(item_id="x", reason="x"),
-        Citation: Citation(tailored_path="x", master_path="x", verbatim_span="x", job_id="x"),
+        Citation: Citation(path="x", source_path="x", span="x", step_id="x"),
         Step: Step(
             id="x",
             type=StepKind.FETCH,
@@ -104,12 +104,12 @@ def test_all_models_are_frozen() -> None:
             metadata={"url": None},
         ),
         StepMeta: StepMeta(url="x"),
-        Source: Source(master_path="x", verbatim_span="x", master_hash="x"),
+        Source: Source(source_path="x", span="x", resume_hash="x"),
         # WebSearch was deleted; old test removed
         Run: Run(
             id="x",
             started_at="x",
-            master_hash="x",
+            resume_hash="x",
             jd_urls_hash="x",
             model="x",
             draft_model=None,
@@ -117,7 +117,7 @@ def test_all_models_are_frozen() -> None:
         RunView: RunView(
             id="x",
             started_at="x",
-            master_hash="x",
+            resume_hash="x",
             jd_urls_hash="x",
             model="x",
             draft_model=None,
@@ -202,7 +202,7 @@ def test_run_id_is_uuid_format() -> None:
     run = Run(
         id="0192c8b3-5e0e-7def-9012-abcdef012345",
         started_at="2026-08-02T00:00:00.000Z",
-        master_hash="x",
+        resume_hash="x",
         jd_urls_hash="y",
         model="anthropic:claude-sonnet-4-5",
         draft_model=None,

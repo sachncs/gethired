@@ -30,7 +30,7 @@ from gethired.validator import (
 )
 
 
-def _make_tailored(master: Master) -> Tailored:
+def _make_tailored(master: Resume) -> Tailored:
     """Build a tailored resume that's an identity transform of master."""
     run_result = RunResult(
         run=Run("test-id", "2026-08-02T00:00:00.000Z", "x", "y", "model", None),

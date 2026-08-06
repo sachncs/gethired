@@ -460,7 +460,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
                     run=Run(
                         id="rid1",
                         started_at="now",
-                        master_hash="",
+                        resume_hash="",
                         jd_urls_hash="",
                         model="test",
                         draft_model=None,
@@ -575,7 +575,7 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
                     run=Run(
                         id="rid3",
                         started_at="now",
-                        master_hash="",
+                        resume_hash="",
                         jd_urls_hash="",
                         model="test",
                         draft_model=None,

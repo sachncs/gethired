@@ -112,7 +112,7 @@ def intersect_skills(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
 
 def merged_keywords(analyses: tuple[Analysis, ...]) -> tuple[str, ...]:
     """Deduplicated union of must-haves (first) then nice-to-haves (after)."""
-    must_have = _union_skills(analyses)
+    must_have = union_skills(analyses)
     seen: set[str] = set(must_have)
     extras: list[str] = []
     for analysis in analyses:
@@ -164,7 +164,7 @@ def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
     return Analysis(
         role=descriptions[0].title or UNKNOWN_ROLE,
         seniority=top_seniority,
-        must_have=tuple(_union_skills(analyses)),
+        must_have=tuple(union_skills(analyses)),
         nice_to_have=_intersect_skills(analyses),
         keywords=_merged_keywords(analyses),
         responsibilities=_union_responsibilities(analyses),

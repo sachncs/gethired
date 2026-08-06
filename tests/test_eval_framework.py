@@ -145,7 +145,7 @@ def test_code_no_jd_plagiarism_detects_5gram() -> None:
 
 
 def test_code_numbers_in_master_no_invention() -> None:
-    master = Master(
+    master = Resume(
         contact=Resume(
             name="A",
             city="X",
@@ -168,7 +168,7 @@ def test_code_numbers_in_master_no_invention() -> None:
 
 
 def test_code_numbers_in_master_passes_when_present() -> None:
-    master = Master(
+    master = Resume(
         contact=Resume(
             name="A",
             city="X",
@@ -189,7 +189,7 @@ def test_code_numbers_in_master_passes_when_present() -> None:
 
 
 def test_code_json_round_trip() -> None:
-    master = Master(
+    master = Resume(
         contact=Resume(
             name="A",
             city="X",

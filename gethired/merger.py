@@ -185,7 +185,7 @@ def safe_merge(
     """
     if not jds:
         raise ValueError("at least one Job is required")
-    if _is_test_model(model_instance):
+    if is_test_model(model_instance):
         return consolidate(jds)
     try:
         return merge_job_descriptions(jds, model=model, model_instance=model_instance)

@@ -202,7 +202,7 @@ class MasterSnapshot:
 
 
 def snapshot(
-    master: Master,
+    master: Resume,
     *,
     snapshot: MasterSnapshot | None = None,
 ) -> Tailored:

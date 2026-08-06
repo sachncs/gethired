@@ -39,7 +39,7 @@ __all__ = ["parse"]
 
 # Map file extension to parser function. Lookup avoids the chain of
 # ``if suffix == ...: return ...`` branches in the dispatcher below.
-_EXTENSION_PARSERS: dict[str, Callable[..., Master]] = {
+EXTENSION_PARSERS: dict[str, Callable[..., Resume]] = {
     ".tex": _tex,
     ".pdf": _pdf,
 }
@@ -49,8 +49,8 @@ IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".tiff", ".bmp"})
 def dispatch_path(path: Path) -> Master:
     """Parse a master from an existing Path by inspecting its extension."""
     suffix = path.suffix.lower()
-    if suffix in _EXTENSION_PARSERS:
-        return _EXTENSION_PARSERS[suffix](path)
+    if suffix in EXTENSION_PARSERS:
+        return EXTENSION_PARSERS[suffix](path)
     if suffix in _IMAGE_EXTENSIONS:
         return _image(path)
     # Unknown extension: peek at the content to decide between TeX and plain text
