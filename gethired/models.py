@@ -159,12 +159,11 @@ class KeywordTier(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Contact:
-    name: str
-    city: str
-    phone: str
-    email: str
-    github_url: str | None
-    linkedin_url: str | None
+    """Deprecated. Fields are flattened onto ``Resume`` and ``Tailored``.
+
+    Kept as an empty class during the Unit 1 alias transition so existing
+    ``isinstance(x, Contact)`` checks keep passing. Removed in commit 1.22.
+    """
 
 
 @dataclass(frozen=True, slots=True)
@@ -273,6 +272,79 @@ class Master:
         return sha256(self.to_markdown())
 
 
+# Commit 1.1: Add Resume class as a flat field model; keep Master as a backward-compat
+# alias that delegates to Resume. This carries every Unit 1 commit so the repo
+# stays green while importers catch up. The alias is removed in commit 1.22.
+@dataclass(frozen=True, slots=True)
+class Resume:
+    """Canonical resume model. Single source of truth for tailoring."""
+
+    name: str
+    email: str
+    city: str
+    phone: str
+    github: str | None
+    linkedin: str | None
+    summary: str
+    skills: Skills
+    experience: tuple[Experience, ...]
+    projects: tuple[Project, ...]
+    education: tuple[Education, ...]
+    awards: tuple[Award, ...]
+    version: int = 1
+
+    def to_markdown(self) -> str:
+        """Render the resume as Markdown for human inspection."""
+        lines: list[str] = [f"# {self.name}", ""]
+        contact_bits = [self.city, self.phone, self.email]
+        if self.github:
+            contact_bits.append(self.github)
+        if self.linkedin:
+            contact_bits.append(self.linkedin)
+        lines.append(" · ".join(bit for bit in contact_bits if bit))
+        lines.append("")
+        lines.append("## Summary")
+        lines.append(self.summary)
+        lines.append("")
+        lines.append("## Technical Skills")
+        for category, items in self.skills.categories.items():
+            lines.append(f"- **{category}**: {', '.join(items)}")
+        lines.append("")
+        lines.append("## Experience")
+        for exp in self.experience:
+            lines.append(f"### {exp.role} — {exp.company} ({exp.start_date} — {exp.end_date})")
+            for bullet in exp.bullets:
+                lines.append(f"- {bullet.text}")
+            lines.append("")
+        lines.append("## Selected Projects")
+        for project in self.projects:
+            lines.append(f"### [{project.name}]({project.url})")
+            for bullet in project.bullets:
+                lines.append(f"- {bullet.text}")
+            lines.append("")
+        lines.append("## Education")
+        for edu in self.education:
+            bits = [edu.institution, edu.location, edu.degree, edu.major, edu.graduation]
+            if edu.gpa:
+                bits.append(f"CGPA: {edu.gpa}")
+            lines.append("- " + ", ".join(bits))
+        lines.append("")
+        if self.awards:
+            lines.append("## Awards")
+            for award in self.awards:
+                lines.append(
+                    f"- **{award.title}** ({award.organization}, {award.date}): {award.description}"
+                )
+        return "\n".join(lines)
+
+    def content_hash(self) -> str:
+        """Deterministic sha256 over the resume's text content."""
+        return sha256(self.to_markdown())
+
+
+Master = Resume  # type: ignore[misc]  # deprecated alias, removed in commit 1.22
+
+
 @dataclass(frozen=True, slots=True)
 class Voice:
     avg_bullet_length: float
@@ -320,7 +392,10 @@ class Job:
 
 @dataclass(frozen=True, slots=True)
 class StepMeta:
-    """Typed metadata attached to a Step, replacing primitive dict[str, str]."""
+    """Typed metadata attached to a Step, replacing primitive dict[str, str].
+
+    Deprecated alias for Meta. Removed in commit 1.22.
+    """
 
     url: str | None = None
     gate: AtsGate | None = None
@@ -335,6 +410,10 @@ class StepMeta:
             if value is not None:
                 result[f.name] = str(value)
         return result
+
+
+# Commit 1.5: Add Meta as the new single-word name for StepMeta.
+Meta = StepMeta
 
 
 @dataclass(frozen=True, slots=True)
@@ -561,10 +640,15 @@ class Report:
 class Tailored:
     """The tailored output plus full traceability."""
 
-    contact: Contact
+    name: str
+    email: str
+    city: str
+    phone: str
+    github: str | None
+    linkedin: str | None
     summary: str
     skills: Skills
-    experiences: tuple[Experience, ...]
+    experience: tuple[Experience, ...]
     projects: tuple[Project, ...]
     education: tuple[Education, ...]
     awards: tuple[Award, ...]
@@ -573,9 +657,6 @@ class Tailored:
     grounding: tuple[Citation, ...]
     jobs: tuple[Step, ...]
     run_result: RunResult | None = None
-    master: Master | None = None
-    jds: tuple[Job, ...] = ()
-    analysis: Analysis | None = None
 
     @property
     def run(self) -> Run:
@@ -719,13 +800,9 @@ __all__ = [
     "GateTier",
     "Job",
     "JobData",
-    "Step",
-    "StepMeta",
-    "StepStatus",
-    "StepKind",
-    "KeywordTier",
-    "Master",
+    "Master",  # deprecated alias for Resume, removed in commit 1.22
     "Project",
+    "Resume",
     "Run",
     "RunView",
     "RunFull",
@@ -733,6 +810,12 @@ __all__ = [
     "Skills",
     "SourceView",
     "Source",
+    "Step",
+    "StepMeta",  # deprecated alias for Meta, removed in Unit 1
+    "StepStatus",
+    "StepKind",
+    "KeywordTier",
+    "Meta",
     "Tailored",
     "Voice",
     "job",
