@@ -43,7 +43,7 @@ def _make_tailored(master: Master) -> Tailored:
         jobs=(),
     )
     return Tailored(
-        contact=master.contact,
+        name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=master.summary,
         skills=master.skills,
         experience=master.experience,
@@ -78,7 +78,7 @@ def test_grounding_detects_invented_skill(resume) -> None:
     """
     tailored = _make_tailored(resume)
     fake = Tailored(
-        contact=tailored.contact,
+        name=tailored.name,email=tailored.email,city=tailored.city,phone=tailored.phone,github=tailored.github,linkedin=tailored.linkedin,
         summary=tailored.summary,
         skills=Skills(
             categories={
@@ -115,7 +115,7 @@ def test_grounding_detects_invented_number(resume) -> None:
     """
     tailored = _make_tailored(resume)
     fake = Tailored(
-        contact=resume.contact,
+        name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary + " Achieved 99999999% growth.",
         skills=resume.skills,
         experience=resume.experience,
@@ -138,7 +138,7 @@ def test_grounding_detects_invented_number(resume) -> None:
 def test_style_detects_banned_word(resume) -> None:
     tailored = _make_tailored(resume)
     fake = Tailored(
-        contact=resume.contact,
+        name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary="Leveraged Python to deliver comprehensive solutions.",
         skills=resume.skills,
         experience=resume.experience,
@@ -187,7 +187,7 @@ def test_plagiarism_detects_5gram_overlap(resume) -> None:
     )
     tailored = _make_tailored(resume)
     fake = Tailored(
-        contact=resume.contact,
+        name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
         skills=resume.skills,
         experience=tailored.experience

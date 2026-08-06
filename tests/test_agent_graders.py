@@ -191,7 +191,7 @@ def test_code_task_completion_requires_tailor_span(tmp_path: Path) -> None:
     _write_trace(trace, [_agent_span("tailor.run")])
     contact = Contact("a", "b", "c", "d", None, None)
     tailored = Tailored(
-        contact=contact,
+        name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="Engineer.",
         skills=Skills(categories={}),
         experience=(
@@ -215,7 +215,7 @@ def test_code_task_completion_fails_when_summary_blank(tmp_path: Path) -> None:
     _write_trace(trace, [_agent_span("tailor.run")])
     contact = Contact("a", "b", "c", "d", None, None)
     tailored = Tailored(
-        contact=contact,
+        name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="",
         skills=Skills(categories={}),
         experience=(),
@@ -237,7 +237,7 @@ def test_code_task_completion_fails_when_experiences_empty(tmp_path: Path) -> No
     _write_trace(trace, [_agent_span("tailor.run")])
     contact = Contact("a", "b", "c", "d", None, None)
     tailored = Tailored(
-        contact=contact,
+        name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="Engineer.",
         skills=Skills(categories={}),
         experience=(),

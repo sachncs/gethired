@@ -261,7 +261,12 @@ class Writer:
             ),
         )
         tailored = Tailored(
-            contact=tailored.contact,
+            name=tailored.name,
+            email=tailored.email,
+            city=tailored.city,
+            phone=tailored.phone,
+            github=tailored.github,
+            linkedin=tailored.linkedin,
             summary=tailored.summary,
             skills=tailored.skills,
             experience=tailored.experience,
@@ -731,7 +736,7 @@ def apply(
     experiences, exp_grounding = _apply_experiences(master, output, dropped)
     projects, proj_grounding = _apply_projects(master, output, dropped)
     return Tailored(
-        contact=master.contact,
+        name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=output.summary,
         skills=reorder(master.skills, analysis.keywords),
         experience=experiences,

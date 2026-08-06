@@ -41,7 +41,7 @@ def test_grounding_citation_round_trip_passes(resume: Master) -> None:
         job_id="writer",
     )
     tailored = Tailored(
-        contact=resume.contact,
+        name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
         skills=resume.skills,
         experience=resume.experience,
@@ -75,7 +75,7 @@ def test_grounding_citation_with_fabricated_span_fails(resume: Master) -> None:
         job_id="writer",
     )
     tailored = Tailored(
-        contact=resume.contact,
+        name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
         skills=resume.skills,
         experience=resume.experience,
@@ -113,7 +113,7 @@ def test_grounding_citation_partial_span_still_passes(resume: Master) -> None:
         job_id="writer",
     )
     tailored = Tailored(
-        contact=resume.contact,
+        name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
         skills=resume.skills,
         experience=resume.experience,

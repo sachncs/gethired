@@ -79,7 +79,7 @@ def test_from_tailored_dict_handles_empty_grounding() -> None:
     """A Tailored with no grounding citations is reconstructed correctly."""
     master = _sample_master()
     tailored = Tailored(
-        contact=master.contact,
+        name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=master.summary,
         skills=master.skills,
         experience=master.experience,
@@ -101,7 +101,7 @@ def test_from_tailored_dict_handles_empty_jobs() -> None:
     """A Tailored with no jobs list is reconstructed correctly."""
     master = _sample_master()
     tailored = Tailored(
-        contact=master.contact,
+        name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=master.summary,
         skills=master.skills,
         experience=master.experience,
