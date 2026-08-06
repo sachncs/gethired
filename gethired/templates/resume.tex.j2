@@ -73,14 +73,14 @@
 {% endraw -%}
 
 \begin{center}
-    {\Huge \scshape {{ resume.contact.name | tex }}} \\ \vspace{5pt}
-    \small {{ resume.contact.city | tex }} $\cdot$ {{ resume.contact.phone | tex }} $\cdot$
-    \href{mailto:{{ resume.contact.email | tex }}}{{ resume.contact.email | tex }}
-    {%- if resume.contact.github_url %}
-    $\cdot$ \href{ {{ resume.contact.github_url | tex }} }{github.com/{{ resume.contact.github_url | replace('https://github.com/', '') | tex }} }
+    {\Huge \scshape {{ resume.name | tex }}} \\ \vspace{5pt}
+    \small {{ resume.city | tex }} $\cdot$ {{ resume.phone | tex }} $\cdot$
+    \href{mailto:{{ resume.email | tex }}}{{ resume.email | tex }}
+    {%- if resume.github_url %}
+    $\cdot$ \href{ {{ resume.github_url | tex }} }{github.com/{{ resume.github_url | replace('https://github.com/', '') | tex }} }
     {%- endif %}
-    {%- if resume.contact.linkedin_url %}
-    $\cdot$ \href{ {{ resume.contact.linkedin_url | tex }} }{linkedin.com/{{ resume.contact.linkedin_url | replace('https://www.linkedin.com/in/', '/in/') | replace('https://linkedin.com/in/', '/in/') | tex }} }
+    {%- if resume.linkedin_url %}
+    $\cdot$ \href{ {{ resume.linkedin_url | tex }} }{linkedin.com/{{ resume.linkedin_url | replace('https://www.linkedin.com/in/', '/in/') | replace('https://linkedin.com/in/', '/in/') | tex }} }
     {%- endif %}
 \end{center}
 

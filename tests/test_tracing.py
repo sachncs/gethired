@@ -10,8 +10,7 @@ from gethired.tracing import (
     Tracer,
     TraceSpan,
     span_id,
-    tracer,
-)
+    tracer)
 
 
 def test_span_id_is_hex_uuid4() -> None:
@@ -89,8 +88,7 @@ def test_trace_span_to_jsonl_is_single_line() -> None:
         started_at="2026-01-01T00:00:00Z",
         ended_at="2026-01-01T00:00:00Z",
         duration_ms=1.0,
-        attributes={"k": "v"},
-    )
+        attributes={"k": "v"})
     line = span.to_jsonl()
     assert "\n" not in line
     json.loads(line)

@@ -15,8 +15,7 @@ from gethired.constants import (
     COMPILE_TIMEOUT,
     LATEX_VAR,
     PDFLATEX,
-    TECTONIC,
-)
+    TECTONIC)
 from gethired.exceptions import CompileError
 
 
@@ -58,8 +57,7 @@ def compile_pdf(tex_source: str, output_dir: Path) -> Path | None:
         cwd=output_dir,
         check=False,
         capture_output=True,
-        timeout=COMPILE_TIMEOUT,
-    )
+        timeout=COMPILE_TIMEOUT)
     pdf_path = tex_path.with_suffix(".pdf")
     if not pdf_path.exists():
         raise CompileError(

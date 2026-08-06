@@ -32,8 +32,7 @@ from gethired.models import (
     Experience,
 Resume,
     Project,
-    Skills,
-)
+    Skills)
 from gethired.plain_text import parse_plain_text as plain
 from gethired.provider import resolve_model
 from gethired.text_util import (
@@ -45,8 +44,7 @@ from gethired.text_util import (
     LINKEDIN_RE,
     PHONE_RE,
     clean,
-    require_contact,
-)
+    require_contact)
 
 __all__ = [
     "parse",
@@ -86,8 +84,7 @@ SECTION_RE: Final[re.Pattern[str]] = re.compile(
 
 SKILL_LINE_RE: Final[re.Pattern[str]] = re.compile(
     r"\\textbf\{\s*([^}]+?):\s*\}((?:(?!\\textbf\{|\\end\{).)*)",
-    re.DOTALL,
-)
+    re.DOTALL)
 SKILL_VSPACE_RE: Final[re.Pattern[str]] = re.compile(r"\\vspace\{[^}]*\}")
 
 BRACED_GROUP_RE: Final[re.Pattern[str]] = re.compile(r"\{((?:[^{}]|\{[^{}]*\})*)\}")
@@ -97,14 +94,12 @@ RESUME_SUBHEADING_RE: Final[re.Pattern[str]] = re.compile(
     r"\{((?:[^{}]|\{[^{}]*\})*)\}"
     r"\s*\{((?:[^{}]|\{[^{}]*\})*)\}"
     r"\s*\{((?:[^{}]|\{[^{}]*\})*)\}",
-    re.DOTALL,
-)
+    re.DOTALL)
 RESUME_PROJECT_HEADING_RE: Final[re.Pattern[str]] = re.compile(
     r"\\resumeProjectHeading\s*"
     r"\{((?:[^{}]|\{[^{}]*\})*)\}"
     r"\s*\{((?:[^{}]|\{[^{}]*\})*)\}",
-    re.DOTALL,
-)
+    re.DOTALL)
 BULLET_RE: Final[re.Pattern[str]] = re.compile(r"\\resumeItem\{((?:[^{}]|\{[^}]*\})*)\}", re.DOTALL)
 
 
@@ -190,8 +185,7 @@ def extract_contact(body: str) -> tuple[str, str, str, str, str | None, str | No
 
     city_match = re.search(
         r"\\small\s+([A-Za-z](?:[A-Za-z .'-]|\\[`'^~=.][A-Za-z])*?)\s*\$\\cdot\$",
-        body,
-    )
+        body)
     city = clean(city_match.group(1)) if city_match else ""
 
     require_contact(name, city, phone, email)
@@ -203,8 +197,7 @@ def extract_summary(body: str) -> str:
     match = re.search(
         r"\\section\{Summary\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
-        re.DOTALL,
-    )
+        re.DOTALL)
     if match is None:
         return ""
     section_text = match.group(1)
@@ -218,8 +211,7 @@ def extract_skills(body: str) -> Skills:
     match = re.search(
         r"\\section\{Technical Skills\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
-        re.DOTALL,
-    )
+        re.DOTALL)
     if match is None:
         return Skills(categories={})
 
@@ -252,8 +244,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
     match = re.search(
         r"\\section\{Experience\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
-        re.DOTALL,
-    )
+        re.DOTALL)
     if match is None:
         return ()
 
@@ -282,8 +273,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
                 company=company,
                 start_date=start_date.strip(),
                 end_date=end_date.strip(),
-                bullets=section_bullets,
-            )
+                bullets=section_bullets)
         )
     return tuple(experience)
 
@@ -302,8 +292,7 @@ def extract_projects(body: str) -> tuple[Project, ...]:
     match = re.search(
         r"\\section\{Selected Projects\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
-        re.DOTALL,
-    )
+        re.DOTALL)
     if match is None:
         return ()
 
@@ -328,8 +317,7 @@ def extract_education(body: str) -> tuple[Education, ...]:
     match = re.search(
         r"\\section\{Education\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
-        re.DOTALL,
-    )
+        re.DOTALL)
     if match is None:
         return ()
 
@@ -354,8 +342,7 @@ def extract_education(body: str) -> tuple[Education, ...]:
                 graduation=clean(institution_args[2]),
                 degree=clean(degree_args[0]),
                 major=clean(degree_args[1]),
-                gpa=gpa,
-            )
+                gpa=gpa)
         )
 
     return tuple(education)
@@ -365,8 +352,7 @@ def extract_awards(body: str) -> tuple[Award, ...]:
     match = re.search(
         r"\\section\{Awards\s*(?:\\&|&|and)\s*Recognition\}(.*?)(?=\\section\{|\\end\{document\}|$)",
         body,
-        re.DOTALL,
-    )
+        re.DOTALL)
     if match is None:
         return ()
 
@@ -397,8 +383,7 @@ def extract_awards(body: str) -> tuple[Award, ...]:
                 title=title,
                 organization=organization,
                 date=date,
-                description=description,
-            )
+                description=description)
         )
     return tuple(awards)
 
@@ -449,8 +434,7 @@ def tex(source: str | Path) -> Master:
         experience=experience_data,
         projects=project_data,
         education=education_data,
-        awards=award_data,
-    )
+        awards=award_data)
 
 
 def text(text: str) -> Resume:
@@ -518,8 +502,7 @@ def image(path: Path) -> Master:
             "and skill from the resume image as plain TeX-flavored text. "
             "Preserve \\resumeSubheading and \\resumeItem structure where possible."
         ),
-        output_type=str,
-    )
+        output_type=str)
     image_bytes = path.read_bytes()
     prompt = (
         "Extract the resume text from this image. "

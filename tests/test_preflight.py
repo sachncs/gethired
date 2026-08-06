@@ -15,8 +15,7 @@ SAMPLE_JD = Job(
     keywords=("python", "kubernetes"),
     must_have_keywords=("python", "kubernetes"),
     nice_to_have_keywords=(),
-    content_hash="sample",
-)
+    content_hash="sample")
 
 
 def test_preflight_returns_report(resume) -> None:
@@ -25,8 +24,7 @@ def test_preflight_returns_report(resume) -> None:
         resume=resume,
         job_description=SAMPLE_JD,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     report = tailor.preflight()
     assert isinstance(report, Report)
     assert report.tokens_estimate > 0
@@ -40,8 +38,7 @@ def test_preflight_identifies_missing_must_haves(resume) -> None:
         resume=resume,
         job_description=SAMPLE_JD,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     report = tailor.preflight()
     coverage = report.jd_keyword_coverage
     assert "python" in coverage

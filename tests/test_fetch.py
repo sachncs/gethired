@@ -23,11 +23,10 @@ def test_fetch_returns_job() -> None:
         title="ML Engineer",
         company="Acme",
         full_text="We need Python and Kubernetes.",
-        keywords=("python",),
+        keywords=("python"),
         must_have_keywords=(),
         nice_to_have_keywords=(),
-        content_hash="abc",
-    )
+        content_hash="abc")
     with mock.patch("gethired.fetcher.Fetcher.retrieve", return_value=fake_job):
         result = fetch("https://example.com/jd")
     assert isinstance(result, Job)
@@ -46,8 +45,7 @@ def test_fetch_uses_provided_cache_dir(tmp_path: Path) -> None:
         keywords=(),
         must_have_keywords=(),
         nice_to_have_keywords=(),
-        content_hash="x",
-    )
+        content_hash="x")
     custom_cache = tmp_path / "my_cache"
     custom_cache.mkdir()
     with mock.patch("gethired.fetcher.Fetcher.retrieve", return_value=fake_job) as mock_retrieve:
@@ -67,8 +65,7 @@ def test_fetch_uses_default_cache_dir(monkeypatch: pytest.MonkeyPatch, tmp_path:
         keywords=(),
         must_have_keywords=(),
         nice_to_have_keywords=(),
-        content_hash="x",
-    )
+        content_hash="x")
     env_cache = tmp_path / "env_cache"
     monkeypatch.setenv("GETHIRED_CACHE_DIR", str(env_cache))
     with mock.patch("gethired.fetcher.Fetcher.retrieve", return_value=fake_job):

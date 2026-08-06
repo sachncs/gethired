@@ -30,16 +30,14 @@ Resume,
     Outcome,
     Run,
     RunResult,
-    Tailored,
-)
+    Tailored)
 from gethired.parser import parse_tex as tex
 from gethired.profiler import build as build_profile
 from gethired.tailor import Tailor, load_master
 from gethired.validator import (
     grounding,
     plagiarism,
-    style,
-)
+    style)
 from gethired.writer import Writer
 
 # ---------------------------------------------------------------------------
@@ -208,8 +206,7 @@ def parse_task(data: dict[str, Any]) -> TaskDefinition:
                 name=grader["name"],
                 args=grader.get("args", {}),
                 weight=float(grader.get("weight", 1.0)),
-                required=bool(grader.get("required", True)),
-            )
+                required=bool(grader.get("required", True)))
         )
     return TaskDefinition(
         id=str(task_data["id"]),
@@ -220,8 +217,7 @@ def parse_task(data: dict[str, Any]) -> TaskDefinition:
         graders=tuple(graders),
         tracked_metrics=tuple(task_data.get("tracked_metrics", ())),
         reference_solution=task_data.get("reference_solution"),
-        tags=tuple(task_data.get("tags", ())),
-    )
+        tags=tuple(task_data.get("tags", ())))
 
 
 # ---------------------------------------------------------------------------
@@ -255,8 +251,7 @@ class EvalHarness:
             suite_name=self.suite_name,
             started_at=started,
             completed_at=completed,
-            task_outcomes=tuple(outcomes),
-        )
+            task_outcomes=tuple(outcomes))
         self._write_report(result)
         return result
 
@@ -272,8 +267,7 @@ class EvalHarness:
         self,
         task: TaskDefinition,
         trial_index: int,
-        shared_master: Resume | None = None,
-    ) -> TrialRecord:
+        shared_master: Resume | None = None) -> TrialRecord:
         """Run the task once, grade the output, record the trial."""
         started = now()
         runner = REGISTRY.get(task.type, passthrough_runner)
@@ -298,8 +292,7 @@ class EvalHarness:
                         name=result.name,
                         passed=result.passed,
                         detail=result.detail,
-                        score=getattr(result, "score", 1.0 if result.passed else 0.0),
-                    )
+                        score=getattr(result, "score", 1.0 if result.passed else 0.0))
                 )
             except Exception as exc:
                 grader_results.append(
@@ -307,8 +300,7 @@ class EvalHarness:
                         name=spec.name,
                         passed=False,
                         detail=f"grader raised {type(exc).__name__}: {exc}",
-                        score=0.0,
-                    )
+                        score=0.0)
                 )
 
         return TrialRecord(
@@ -319,8 +311,7 @@ class EvalHarness:
             duration_ms=duration_ms,
             grader_results=tuple(grader_results),
             transcript={**transcript, "category": task.category},
-            metrics={},
-        )
+            metrics={})
 
     def _write_report(self, result: EvalSuiteResult) -> None:
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -366,8 +357,7 @@ class EvalHarness:
                         for o in result.task_outcomes
                     ],
                 },
-                indent=2,
-            )
+                indent=2)
         )
 
 
@@ -388,8 +378,7 @@ def aggregate_task(
             pass_rate=0.0,
             pass_at_1=0.0,
             pass_at_k=0.0,
-            avg_duration_ms=0.0,
-        )
+            avg_duration_ms=0.0)
     pass_count = sum(1 for t in trials if t.passed)
     n = len(trials)
     pass_at_1 = pass_count / n
@@ -404,8 +393,7 @@ def aggregate_task(
         pass_rate=pass_rate,
         pass_at_1=pass_at_1,
         pass_at_k=pass_at_k,
-        avg_duration_ms=avg_ms,
-    )
+        avg_duration_ms=avg_ms)
 
 
 def now() -> str:
@@ -421,8 +409,7 @@ def resolve_args(
     spec_args: dict[str, Any],
     output: dict[str, Any],
     task: TaskDefinition,
-    shared_master: Resume | None = None,
-) -> dict[str, Any]:
+    shared_master: Resume | None = None) -> dict[str, Any]:
     """Resolve special argument placeholders against the output.
 
     Supported placeholders:
@@ -497,8 +484,7 @@ def inject_master(task: TaskDefinition, master: Resume) -> TaskDefinition:
         graders=task.graders,
         tracked_metrics=task.tracked_metrics,
         reference_solution=task.reference_solution,
-        tags=task.tags,
-    )
+        tags=task.tags)
 
 
 def passthrough_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -519,8 +505,7 @@ def parser_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             "text": resume.to_markdown(),
             "__master__": resume,
         },
-        {"task_id": task.id, "tex_path": str(tex_path)},
-    )
+        {"task_id": task.id, "tex_path": str(tex_path)})
 
 
 def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -535,8 +520,7 @@ def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
         url_hash=payload["url_hash"],
         content_hash=payload["content_hash"],
         fetched_at=payload["fetched_at"],
-        raw_html=payload["raw_html"],
-    )
+        raw_html=payload["raw_html"])
 
     return (
         {
@@ -549,11 +533,9 @@ def fetcher_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]
                 keywords=(),
                 must_have_keywords=(),
                 nice_to_have_keywords=(),
-                content_hash=entry.content_hash,
-            ),
+                content_hash=entry.content_hash),
         },
-        {"task_id": task.id, "cache_path": str(cache_path)},
-    )
+        {"task_id": task.id, "cache_path": str(cache_path)})
 
 
 def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -586,8 +568,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         keywords=tuple(task.input.get("keywords", ())),
         must_have_keywords=tuple(task.input.get("must_have_keywords", ())),
         nice_to_have_keywords=tuple(task.input.get("nice_to_have_keywords", ())),
-        content_hash="eval",
-    )
+        content_hash="eval")
     analysis = Analysis(
         role=jd.title,
         seniority="senior",
@@ -595,8 +576,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         nice_to_have=jd.nice_to_have_keywords,
         keywords=jd.must_have_keywords + jd.nice_to_have_keywords[:5],
         responsibilities=(),
-        company=jd.company,
-    )
+        company=jd.company)
     voice = build_profile(master)
 
     writer = Writer(model=task.input.get("model"), model_instance=test_model)
@@ -619,8 +599,7 @@ def writer_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             "jd_text": jd.full_text,
             "jobs": [j.description() for j in jobs],
         },
-        {"task_id": task.id, "n_jobs": len(jobs)},
-    )
+        {"task_id": task.id, "n_jobs": len(jobs)})
 
 
 def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -648,9 +627,7 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             total_output_tokens=0,
             retry_attempts=0,
             final_outcome=Outcome.SUCCESS,
-            jobs=(),
-        ),
-    )
+            jobs=()))
     jd = Job(
         url="eval://synthetic",
         title="",
@@ -659,12 +636,11 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         keywords=(),
         must_have_keywords=(),
         nice_to_have_keywords=(),
-        content_hash="eval",
-    )
+        content_hash="eval")
 
     grounding_violations = grounding(tailored, master)
     style_violations = style(tailored)
-    plagiarism_violations = plagiarism(tailored, (jd,))
+    plagiarism_violations = plagiarism(tailored, (jd))
     return (
         {
             "master": master,
@@ -678,8 +654,7 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             "n_grounding_violations": len(grounding_violations),
             "n_style_violations": len(style_violations),
             "n_plagiarism_violations": len(plagiarism_violations),
-        },
-    )
+        })
 
 
 def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -692,13 +667,11 @@ def description_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, 
         keywords=(),
         must_have_keywords=(),
         nice_to_have_keywords=(),
-        content_hash="eval",
-    )
+        content_hash="eval")
     analysis = analyze(jd)
     return (
         {"text": jd.full_text, "analysis": analysis},
-        {"task_id": task.id},
-    )
+        {"task_id": task.id})
 
 
 def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]:
@@ -716,8 +689,7 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         keywords=tuple(task.input.get("keywords", ())),
         must_have_keywords=tuple(task.input.get("must_have_keywords", ())),
         nice_to_have_keywords=tuple(task.input.get("nice_to_have_keywords", ())),
-        content_hash="eval",
-    )
+        content_hash="eval")
     trace_dir = Path(
         task.input.get("trace_dir") or os.environ.get("EVAL_TRACE_DIR") or "evals/traces"
     )
@@ -731,8 +703,7 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
         job_description=jd,
         model=task.input.get("model"),
         model_instance=test_model,
-        tailored_dir=trace_dir,
-    )
+        tailored_dir=trace_dir)
     tailored = tailor.run()
 
     text = (
@@ -754,8 +725,7 @@ def tailor_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
             "n_jobs": len(tailored.jobs),
             "n_grounding": len(tailored.grounding),
             "trace_path": str(trace_path),
-        },
-    )
+        })
 
 
 REGISTRY: dict[str, Callable[[TaskDefinition], tuple[dict[str, Any], dict[str, Any]]]] = {

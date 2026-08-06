@@ -29,8 +29,7 @@ from typing import TYPE_CHECKING, Any
 warnings.filterwarnings(
     "ignore",
     message=r"builtin type .* has no __module__ attribute",
-    category=DeprecationWarning,
-)
+    category=DeprecationWarning)
 
 if TYPE_CHECKING:
     from gethired.exceptions import (
@@ -42,16 +41,14 @@ if TYPE_CHECKING:
         ParseError,
         PlagiarismError,
         StyleError,
-        TailorError,
-    )
+        TailorError)
     from gethired.fetch import fetch
     from gethired.models import (
         Citation,
         Contact,
         Job,
 Resume,
-        Tailored,
-    )
+        Tailored)
     from gethired.parse import parse
     from gethired.tailor import Tailor
     from gethired.version import __version__

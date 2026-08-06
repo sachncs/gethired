@@ -11,8 +11,7 @@ from gethired.audit import (
     AuditReport,
     audit,
     audit_json,
-    audit_markdown,
-)
+    audit_markdown)
 from gethired.exceptions import TailorError
 
 
@@ -35,8 +34,8 @@ def _sample_run_payloads() -> tuple[dict[str, object], dict[str, object]]:
         "summary": "Engineer with Python and Kubernetes experience.",
         "skills": {
             "categories": {
-                "Languages": ("python",),
-                "Cloud": ("kubernetes",),
+                "Languages": ("python"),
+                "Cloud": ("kubernetes"),
             }
         },
         "experiences": [

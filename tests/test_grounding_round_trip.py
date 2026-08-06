@@ -22,8 +22,7 @@ SAMPLE_JD = Job(
     keywords=("python", "kubernetes"),
     must_have_keywords=("python", "kubernetes"),
     nice_to_have_keywords=(),
-    content_hash="abc",
-)
+    content_hash="abc")
 
 
 def test_grounding_citation_round_trip_passes(resume: Resume) -> None:
@@ -38,8 +37,7 @@ def test_grounding_citation_round_trip_passes(resume: Resume) -> None:
         tailored_path="experiences[0].bullets[0]",
         master_path="experiences[0].bullets[0]",
         verbatim_span=master_span,
-        job_id="writer",
-    )
+        job_id="writer")
     tailored = Tailored(
         name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
@@ -50,9 +48,8 @@ def test_grounding_citation_round_trip_passes(resume: Resume) -> None:
         awards=resume.awards,
         dropped=(),
         rationale="test",
-        grounding=(citation,),
-        jobs=(),
-    )
+        grounding=(citation),
+        jobs=())
     violations = grounding(tailored, resume)
     # The real master span should produce zero violations
     assert not violations, (
@@ -72,8 +69,7 @@ def test_grounding_citation_with_fabricated_span_fails(resume: Resume) -> None:
         tailored_path="experiences[0].bullets[0]",
         master_path="experiences[0].bullets[0]",
         verbatim_span=fabricated_span,
-        job_id="writer",
-    )
+        job_id="writer")
     tailored = Tailored(
         name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
@@ -84,9 +80,8 @@ def test_grounding_citation_with_fabricated_span_fails(resume: Resume) -> None:
         awards=resume.awards,
         dropped=(),
         rationale="test",
-        grounding=(citation,),
-        jobs=(),
-    )
+        grounding=(citation),
+        jobs=())
     violations = grounding(tailored, resume)
     assert violations, "grounding() did not flag a fabricated citation span"
     assert any(fabricated_span in v.detail for v in violations), (
@@ -110,8 +105,7 @@ def test_grounding_citation_partial_span_still_passes(resume: Resume) -> None:
         tailored_path="experiences[0].bullets[0]",
         master_path="experiences[0].bullets[0]",
         verbatim_span=partial_span,
-        job_id="writer",
-    )
+        job_id="writer")
     tailored = Tailored(
         name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
         summary=resume.summary,
@@ -122,9 +116,8 @@ def test_grounding_citation_partial_span_still_passes(resume: Resume) -> None:
         awards=resume.awards,
         dropped=(),
         rationale="test",
-        grounding=(citation,),
-        jobs=(),
-    )
+        grounding=(citation),
+        jobs=())
     violations = grounding(tailored, resume)
     assert not violations, f"grounding() should accept a substring span, got {violations}"
 
@@ -141,8 +134,7 @@ def test_tailor_pipeline_emits_real_grounding_citations(resume: Resume) -> None:
         resume=resume,
         job_description=SAMPLE_JD,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     result = tailor.run()
     # The result must be a valid TailoredResume (no exceptions raised)
     assert isinstance(result, Tailored)

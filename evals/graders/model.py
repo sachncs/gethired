@@ -46,8 +46,7 @@ def model_grade(
     rubric: str,
     output: str,
     model_string: str | None = None,
-    threshold: float = 0.7,
-) -> ModelGrade:
+    threshold: float = 0.7) -> ModelGrade:
     """Run an LLM-as-judge grader against ``output`` using ``rubric``.
 
     Args:
@@ -67,8 +66,7 @@ def model_grade(
             "You grade outputs against a rubric. "
             "Reply with strict JSON only."
         ),
-        output_type=str,
-    )
+        output_type=str)
     prompt = MODEL_GRADE_PROMPT.format(rubric=rubric, output=output)
     result = asyncio.run(agent.run(prompt))
     raw = result.output.strip()
@@ -86,8 +84,7 @@ def model_grade(
         score=score,
         passed=score >= threshold,
         rationale=rationale,
-        raw_response=raw,
-    )
+        raw_response=raw)
 
 
 __all__ = ["ModelGrade", "model_grade"]

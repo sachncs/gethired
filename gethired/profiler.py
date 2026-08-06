@@ -73,8 +73,7 @@ def build(master: Resume) -> Voice:
         bullet_length_stddev=std,
         opening_verbs=opening_verbs(tuple(all_bullets)),
         punctuation_density=punctuation_density(tuple(all_bullets)),
-        sentence_count_per_bullet=sentence_counts(tuple(all_bullets)),
-    )
+        sentence_count_per_bullet=sentence_counts(tuple(all_bullets)))
 
 
 __all__ = ["build"]

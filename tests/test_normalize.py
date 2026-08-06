@@ -8,8 +8,7 @@ from gethired.normalize import (
     numbers,
     strip_latex,
     tokenize,
-    verb,
-)
+    verb)
 
 
 def test_canonicalize_numeric_handles_plain_digits() -> None:
@@ -80,7 +79,7 @@ def test_extract_ngrams_returns_correct_count() -> None:
 
 
 def test_extract_ngrams_returns_empty_for_short_input() -> None:
-    assert ngrams(("a",), 3) == ()
+    assert ngrams(("a"), 3) == ()
 
 
 def test_is_action_verb_recognises_common_verbs() -> None:

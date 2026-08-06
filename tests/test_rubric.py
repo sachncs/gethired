@@ -11,8 +11,7 @@ from gethired.rubric import (
     GROUNDING,
     PLAGIARISM,
     SECTIONS,
-    VERBS,
-)
+    VERBS)
 
 
 def test_banned_words_is_frozenset() -> None:

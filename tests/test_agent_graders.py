@@ -13,14 +13,12 @@ from evals.graders.code import (
     code_plan_quality,
     code_step_efficiency,
     code_task_completion,
-    code_tool_correctness,
-)
+    code_tool_correctness)
 from gethired.models import (
     Contact,
     Experience,
     Skills,
-    Tailored,
-)
+    Tailored)
 
 
 def _write_trace(path: Path, spans: list[dict]) -> None:
@@ -83,8 +81,7 @@ def test_code_tool_correctness_passes_when_expected_subset(tmp_path: Path) -> No
             _tool_span("skills", {}),
             _tool_span("education", {}),
             _tool_span("jd", {}),
-        ],
-    )
+        ])
     result = code_tool_correctness("t", str(trace), expected_tools=("skills", "jd"))
     assert result.passed is True
     assert result.score == 1.0
@@ -101,7 +98,7 @@ def test_code_tool_correctness_fails_when_missing(tmp_path: Path) -> None:
 
 def test_code_tool_correctness_handles_missing_trace(tmp_path: Path) -> None:
     """ToolCorrectness: missing trace file fails."""
-    result = code_tool_correctness("t", str(tmp_path / "nope.jsonl"), expected_tools=("skills",))
+    result = code_tool_correctness("t", str(tmp_path / "nope.jsonl"), expected_tools=("skills"))
     assert result.passed is False
 
 
@@ -113,8 +110,7 @@ def test_code_argument_correctness_passes_with_attributes(tmp_path: Path) -> Non
         [
             _tool_span("experience", {"role_or_company": "acme"}),
             _tool_span("skills", {}),
-        ],
-    )
+        ])
     result = code_argument_correctness("a", str(trace))
     assert result.passed is True
 
@@ -144,8 +140,7 @@ def test_code_plan_adherence_flags_repeats(tmp_path: Path) -> None:
         [
             _tool_span("experience", {"role_or_company": "acme"}),
             _tool_span("experience", {"role_or_company": "acme"}),
-        ],
-    )
+        ])
     result = code_plan_adherence("p", str(trace))
     assert result.passed is False
     assert "repeats" in result.detail.lower() or "repeated" in result.detail.lower()
@@ -189,22 +184,20 @@ def test_code_task_completion_requires_tailor_span(tmp_path: Path) -> None:
     """TaskCompletion: tailor.run span + summary + experiences required."""
     trace = tmp_path / "trace.jsonl"
     _write_trace(trace, [_agent_span("tailor.run")])
-    contact = Contact("a", "b", "c", "d", None, None)
+    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="Engineer.",
         skills=Skills(categories={}),
         experience=(
-            Experience(role="x", company="y", start_date="2020", end_date="2024", bullets=()),
-        ),
+            Experience(role="x", company="y", start_date="2020", end_date="2024", bullets=())),
         projects=(),
         education=(),
         awards=(),
         dropped=(),
         rationale="r",
         grounding=(),
-        jobs=(),
-    )
+        jobs=())
     result = code_task_completion("c", str(trace), tailored)
     assert result.passed is True
 
@@ -213,7 +206,7 @@ def test_code_task_completion_fails_when_summary_blank(tmp_path: Path) -> None:
     """TaskCompletion: blank summary is a structural failure."""
     trace = tmp_path / "trace.jsonl"
     _write_trace(trace, [_agent_span("tailor.run")])
-    contact = Contact("a", "b", "c", "d", None, None)
+    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="",
@@ -225,8 +218,7 @@ def test_code_task_completion_fails_when_summary_blank(tmp_path: Path) -> None:
         dropped=(),
         rationale="r",
         grounding=(),
-        jobs=(),
-    )
+        jobs=())
     result = code_task_completion("c", str(trace), tailored)
     assert result.passed is False
 
@@ -235,7 +227,7 @@ def test_code_task_completion_fails_when_experiences_empty(tmp_path: Path) -> No
     """TaskCompletion: missing experiences is a structural failure."""
     trace = tmp_path / "trace.jsonl"
     _write_trace(trace, [_agent_span("tailor.run")])
-    contact = Contact("a", "b", "c", "d", None, None)
+    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="Engineer.",
@@ -247,8 +239,7 @@ def test_code_task_completion_fails_when_experiences_empty(tmp_path: Path) -> No
         dropped=(),
         rationale="r",
         grounding=(),
-        jobs=(),
-    )
+        jobs=())
     result = code_task_completion("c", str(trace), tailored)
     assert result.passed is False
 
@@ -261,7 +252,6 @@ def test_all_graders_return_grader_result_instance() -> None:
         code_argument_correctness,
         code_plan_adherence,
         code_plan_quality,
-        code_step_efficiency,
-    ):
+        code_step_efficiency):
         result = grader("x", trace)
         assert isinstance(result, GraderResult)

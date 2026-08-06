@@ -11,8 +11,7 @@ from gethired.fetcher import Fetcher
 
 def test_fetch_failure_retries_with_exponential_backoff(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path,
-) -> None:
+    tmp_path) -> None:
     """Each retry attempt sleeps with exponential backoff before re-fetching."""
     sleep_calls: list[int] = []
 
@@ -23,8 +22,7 @@ def test_fetch_failure_retries_with_exponential_backoff(
     transport = httpx.MockTransport(fail_all)
     monkeypatch.setattr(
         "gethired.fetcher.httpx.Client",
-        lambda **_unused: real_client_class(transport=transport),
-    )
+        lambda **_unused: real_client_class(transport=transport))
     monkeypatch.setattr("gethired.fetcher.time.sleep", sleep_calls.append)
 
     retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
@@ -36,8 +34,7 @@ def test_fetch_failure_retries_with_exponential_backoff(
 
 def test_fetch_recovers_after_first_failure(
     monkeypatch: pytest.MonkeyPatch,
-    tmp_path,
-) -> None:
+    tmp_path) -> None:
     """A transient failure is retried and the run succeeds."""
     sleep_calls: list[int] = []
     attempts = 0
@@ -50,15 +47,13 @@ def test_fetch_recovers_after_first_failure(
         return httpx.Response(
             200,
             text="<html><body><h1>Job Title</h1></body></html>",
-            request=request,
-        )
+            request=request)
 
     transport = httpx.MockTransport(fail_once)
     real_client_class = httpx.Client
     monkeypatch.setattr(
         "gethired.fetcher.httpx.Client",
-        lambda **_unused: real_client_class(transport=transport),
-    )
+        lambda **_unused: real_client_class(transport=transport))
     monkeypatch.setattr("gethired.fetcher.time.sleep", sleep_calls.append)
 
     retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
@@ -79,15 +74,13 @@ def test_fetch_raises_antibot_on_cloudflare_challenge(
             403,
             headers={"server": "cloudflare", "cf-ray": "abc123"},
             text="<html>cf-mitigated</html>",
-            request=request,
-        )
+            request=request)
 
     transport = httpx.MockTransport(cloudflare_block)
     real_client_class = httpx.Client
     monkeypatch.setattr(
         "gethired.fetcher.httpx.Client",
-        lambda **_unused: real_client_class(transport=transport),
-    )
+        lambda **_unused: real_client_class(transport=transport))
     retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
     with pytest.raises(AntiBotError) as excinfo:
         retriever.retrieve("https://example.com/jd")
@@ -105,15 +98,13 @@ def test_fetch_raises_antibot_on_aws_waf_block(
             403,
             headers={"x-amzn-waf-action": "challenge"},
             text="blocked",
-            request=request,
-        )
+            request=request)
 
     transport = httpx.MockTransport(waf_block)
     real_client_class = httpx.Client
     monkeypatch.setattr(
         "gethired.fetcher.httpx.Client",
-        lambda **_unused: real_client_class(transport=transport),
-    )
+        lambda **_unused: real_client_class(transport=transport))
     retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
     with pytest.raises(AntiBotError) as excinfo:
         retriever.retrieve("https://example.com/jd")
@@ -133,8 +124,7 @@ def test_fetch_does_not_classify_plain_403_as_antibot(
     real_client_class = httpx.Client
     monkeypatch.setattr(
         "gethired.fetcher.httpx.Client",
-        lambda **_unused: real_client_class(transport=transport),
-    )
+        lambda **_unused: real_client_class(transport=transport))
     retriever = Fetcher(cache_dir=tmp_path, max_attempts=2)
     with pytest.raises(FetchError):
         retriever.retrieve("https://example.com/jd")

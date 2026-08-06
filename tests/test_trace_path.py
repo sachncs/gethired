@@ -13,8 +13,7 @@ from evals.harness import GraderSpec, TaskDefinition, resolve_args, tailor_runne
 from gethired.models import (
     Contact,
     Skills,
-    Tailored,
-)
+    Tailored)
 
 
 def _build_task(graders: list[GraderSpec], **overrides: Any) -> TaskDefinition:
@@ -119,7 +118,7 @@ def test_tailor_runner_surfaces_trace_path(tmp_path: Path, monkeypatch: pytest.M
 
         def run(self) -> Any:
             return Tailored(
-                contact=Contact("x", "x", "x", "x", None, None),
+                contact=Resume(name="x", city="x", phone="x", email="x", github=None, linkedin=None),
                 summary="x",
                 skills=Skills(categories={}),
                 experience=(),
@@ -129,8 +128,7 @@ def test_tailor_runner_surfaces_trace_path(tmp_path: Path, monkeypatch: pytest.M
                 dropped=(),
                 rationale="x",
                 grounding=(),
-                jobs=(),
-            )
+                jobs=())
 
     monkeypatch.setattr("evals.harness.Tailor", _Stub)
 
@@ -164,8 +162,7 @@ def test_tailor_runner_surfaces_trace_path(tmp_path: Path, monkeypatch: pytest.M
             "jd_company": "Acme",
             "must_have_keywords": ["python"],
             "trace_dir": str(trace_dir),
-        },
-    )
+        })
     output, metrics = tailor_runner(task)
     assert "trace_path" in output
     assert "trace_path" in metrics

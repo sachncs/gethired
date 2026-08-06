@@ -24,14 +24,11 @@ from pathlib import Path
 
 from gethired.models import Resume
 from gethired.parser import (
-    image as _image,
-)
+    image as _image)
 from gethired.parser import (
-    pdf as _pdf,
-)
+    pdf as _pdf)
 from gethired.parser import (
-    tex as _tex,
-)
+    tex as _tex)
 from gethired.plain_text import parse_plain_text as _plain_text
 
 __all__ = ["parse"]

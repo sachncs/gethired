@@ -6,8 +6,7 @@ import re
 
 from gethired.cover_letter import (
     compose,
-    markdown,
-)
+    markdown)
 from gethired.description import Analysis
 from gethired.profiler import build as build_profile
 
@@ -17,11 +16,10 @@ def _sample_analysis() -> Analysis:
         role="Senior ML Engineer",
         seniority="senior",
         must_have=("python", "kubernetes"),
-        nice_to_have=("pytorch",),
+        nice_to_have=("pytorch"),
         keywords=("python", "kubernetes"),
         responsibilities=("design ML platforms", "lead reviews"),
-        company="Acme",
-    )
+        company="Acme")
 
 
 def test_tailor_cover_letter_returns_structured_letter(resume) -> None:

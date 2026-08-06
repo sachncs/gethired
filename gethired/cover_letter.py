@@ -14,8 +14,7 @@ from gethired.models import (
     CoverLetter,
 Resume,
     Paragraph,
-    Voice,
-)
+    Voice)
 
 
 @dataclass(frozen=True, slots=True)
@@ -31,8 +30,7 @@ def compose(
     analysis: Analysis,
     voice: Voice,
     sender_name: str | None = None,
-    recipient: str | None = None,
-) -> Letter:
+    recipient: str | None = None) -> Letter:
     """Produce a cover letter for ``master`` against ``analysis``.
 
     Args:
@@ -71,15 +69,13 @@ def compose(
     paragraphs = (
         Paragraph(text=opening, opening=True),
         Paragraph(text=body),
-        Paragraph(text=closing, closing=True),
-    )
+        Paragraph(text=closing, closing=True))
     letter = CoverLetter(
         salutation=salutation,
         paragraphs=paragraphs,
         signoff=signoff,
         sender_name=name,
-        recipient=recipient,
-    )
+        recipient=recipient)
     rationale = (
         f"Cover letter tailored for {analysis.role}; "
         f"mirrored {len(analysis.must_have)} must-have keywords."

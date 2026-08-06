@@ -78,8 +78,7 @@ def require_contact(name: str, city: str, phone: str, email: str) -> None:
             ("name", name),
             ("city", city),
             ("phone", phone),
-            ("email", email),
-        )
+            ("email", email))
         if not value
     ]
     if missing:

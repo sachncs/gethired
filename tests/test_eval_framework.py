@@ -16,14 +16,12 @@ from evals.graders.code import (
     code_no_jd_plagiarism,
     code_numbers_in_master,
     code_text_contains,
-    code_text_not_contains,
-)
+    code_text_not_contains)
 from evals.graders.registry import GraderRegistry
 from evals.harness import (
     EvalHarness,
     load_suite,
-    load_task,
-)
+    load_task)
 from gethired.models import Resume, Skills
 
 # ---------------------------------------------------------------------------
@@ -51,8 +49,7 @@ def test_code_field_present_on_dataclass() -> None:
         phone="5555550100",
         email="placeholder@example.com",
         github=None,
-        linkedin=None,
-    )
+        linkedin=None)
     result = code_field_present("test", resume=contact, path="name")
     assert result.passed
     assert "Placeholder Name" in result.detail
@@ -77,8 +74,7 @@ def test_code_field_length_correct_count() -> None:
         phone="0",
         email="a@b.c",
         github=None,
-        linkedin=None,
-    )
+        linkedin=None)
     result = code_field_length("test", resume=contact, path="name", expected=1)
     assert result.passed
 
@@ -90,8 +86,7 @@ def test_code_field_length_wrong_count() -> None:
         phone="0",
         email="a@b.c",
         github=None,
-        linkedin=None,
-    )
+        linkedin=None)
     result = code_field_length("test", resume=contact, path="name", expected=1)
     assert not result.passed
 
@@ -132,8 +127,7 @@ def test_code_no_jd_plagiarism_no_overlap() -> None:
     result = code_no_jd_plagiarism(
         "test",
         tailored_text="Built Kubernetes platforms",
-        jd_text="Hire senior developer",
-    )
+        jd_text="Hire senior developer")
     assert result.passed
 
 
@@ -152,8 +146,7 @@ def test_code_numbers_in_master_no_invention() -> None:
         experience=(),
         projects=(),
         education=(),
-        awards=(),
-    )
+        awards=())
     tailored_text = "Built with 10000 requests"
     result = code_numbers_in_master("test", tailored_text=tailored_text, master=master)
     assert not result.passed
@@ -168,8 +161,7 @@ def test_code_numbers_in_master_passes_when_present() -> None:
         experience=(),
         projects=(),
         education=(),
-        awards=(),
-    )
+        awards=())
     result = code_numbers_in_master("test", tailored_text="Built 10000 requests", master=master)
     assert result.passed
 
@@ -178,12 +170,11 @@ def test_code_json_round_trip() -> None:
     master = Resume(
         name="A", city="X", phone="0", email="a@b.c", github=None, linkedin=None,
         summary="Engineer",
-        skills=Skills(categories={"Programming": ("Python",)}),
+        skills=Skills(categories={"Programming": ("Python")}),
         experience=(),
         projects=(),
         education=(),
-        awards=(),
-    )
+        awards=())
     result = code_json_round_trip("test", tailored=master)
     assert result.passed
 
@@ -204,8 +195,7 @@ def test_registry_contains_builtins() -> None:
         "code.no_banned_words",
         "code.no_jd_plagiarism",
         "code.numbers_in_master",
-        "code.json_round_trip",
-    ):
+        "code.json_round_trip"):
         assert name in r
 
 
@@ -314,8 +304,7 @@ task:
     harness = EvalHarness(
         suite_name="test",
         output_dir=tmp_path / "results",
-        trials_per_task=1,
-    )
+        trials_per_task=1)
     suite = load_suite(tmp_path)
     result = harness.run_suite(suite)
 

@@ -40,8 +40,7 @@ Resume,
     StepKind,
     StepMeta,
     StepStatus,
-    Tailored,
-)
+    Tailored)
 from gethired.observability import now
 
 __all__ = [
@@ -82,16 +81,14 @@ def from_master_dict(raw: dict[str, Any]) -> Resume:
             company=exp["company"],
             start_date=exp["start_date"],
             end_date=exp["end_date"],
-            bullets=from_bullets(exp["bullets"]),
-        )
+            bullets=from_bullets(exp["bullets"]))
         for exp in raw["experience"]
     )
     project_data = tuple(
         Project(
             name=project["name"],
             url=project["url"],
-            bullets=from_bullets(project["bullets"]),
-        )
+            bullets=from_bullets(project["bullets"]))
         for project in raw["projects"]
     )
     education_data = tuple(Education(**edu) for edu in raw["education"])
@@ -108,8 +105,7 @@ def from_master_dict(raw: dict[str, Any]) -> Resume:
         experience=experience_data,
         projects=project_data,
         education=education_data,
-        awards=award_data,
-    )
+        awards=award_data)
 
 
 def skills_from(raw: dict[str, Any]) -> Skills:
@@ -125,8 +121,7 @@ def experiences_from(raw: dict[str, Any]) -> tuple[Experience, ...]:
             company=exp["company"],
             start_date=exp["start_date"],
             end_date=exp["end_date"],
-            bullets=from_bullets(exp["bullets"]),
-        )
+            bullets=from_bullets(exp["bullets"]))
         for exp in raw["experiences"]
     )
 
@@ -137,8 +132,7 @@ def projects_from(raw: dict[str, Any]) -> tuple[Project, ...]:
         Project(
             name=project["name"],
             url=project["url"],
-            bullets=from_bullets(project["bullets"]),
-        )
+            bullets=from_bullets(project["bullets"]))
         for project in raw["projects"]
     )
 
@@ -172,8 +166,7 @@ def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
         rationale=raw.get("rationale", ""),
         grounding=grounding_from(raw),
         jobs=(),
-        run_result=from_run_result_dict(raw.get("run_result")),
-    )
+        run_result=from_run_result_dict(raw.get("run_result")))
 
 
 def load_resume(path: Path) -> Resume:
@@ -212,8 +205,7 @@ class MasterSnapshot:
 def snapshot(
     master: Resume,
     *,
-    snapshot: MasterSnapshot | None = None,
-) -> Tailored:
+    snapshot: MasterSnapshot | None = None) -> Tailored:
     """Wrap a master resume in a ``Tailored`` for JSON serialisation.
 
     The produced object carries the master fields verbatim and a synthetic
@@ -222,7 +214,12 @@ def snapshot(
     """
     snap = snapshot or MasterSnapshot()
     return Tailored(
-        contact=master.contact,
+        name=master.name,
+        email=master.email,
+        city=master.city,
+        phone=master.phone,
+        github=master.github,
+        linkedin=master.linkedin,
         summary=master.summary,
         skills=master.skills,
         experience=master.experience,
@@ -240,17 +237,14 @@ def snapshot(
                 resume_hash=master.content_hash(),
                 jd_hash="",
                 model=snap.model,
-                draft_model=snap.draft_model,
-            ),
+                draft_model=snap.draft_model),
             completed_at=now(),
             duration_seconds=0.0,
             total_input_tokens=0,
             total_output_tokens=0,
             retry_attempts=0,
             final_outcome=Outcome.SUCCESS,
-            jobs=(),
-        ),
-    )
+            jobs=()))
 
 
 # ---------------------------------------------------------------------------

@@ -24,12 +24,11 @@ def _sample_master_json() -> str:
     master = Resume(
         name="Test", city="City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None,
         summary="Summary.",
-        skills=Skills(categories={"Languages": ("Python",)}),
+        skills=Skills(categories={"Languages": ("Python")}),
         experience=(),
         projects=(),
         education=(),
-        awards=(),
-    )
+        awards=())
     return render_json(snapshot(master))
 
 
@@ -38,8 +37,7 @@ def _make_tailor_with_test_model() -> Tailor:
     return Tailor(
         resume="ignored",
         job_description="ignored",
-        model_instance=mock.MagicMock(),
-    )
+        model_instance=mock.MagicMock())
 
 
 def test_finalize_re_renders_tailored_json(tmp_path: Path) -> None:

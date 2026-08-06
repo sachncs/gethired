@@ -19,35 +19,28 @@ from dotenv import load_dotenv
 import gethired.audit as audit_module
 from gethired.audit import (
     audit_json,
-    audit_markdown,
-)
+    audit_markdown)
 from gethired.consent import require
 from gethired.constants import (
     DATA_DIR,
     RESUME,
-    OUTPUT_DIR,
-)
+    OUTPUT_DIR)
 from gethired.cover_letter import (
-    compose as compose_cover_letter,
-)
+    compose as compose_cover_letter)
 from gethired.cover_letter import (
-    markdown as render_cover_markdown,
-)
+    markdown as render_cover_markdown)
 from gethired.description import (
-    overlay_for_jd,
-)
+    overlay_for_jd)
 from gethired.exceptions import (
     AntiBotError,
     AtsError,
     FetchError,
     GroundingError,
     PlagiarismError,
-    StyleError,
-)
+    StyleError)
 from gethired.fetcher import Fetcher, from_text
 from gethired.models import (
-    Job,
-)
+    Job)
 from gethired.observability import configure
 from gethired.parser import parse_tex as parse_tex_func
 from gethired.profiler import build as build_profile
@@ -56,8 +49,7 @@ from gethired.renderer import text as render_text
 from gethired.serialize import (
     from_tailored_dict,
     render_json,
-    snapshot,
-)
+    snapshot)
 from gethired.tailor import Tailor
 from gethired.validator import ats
 
@@ -87,8 +79,7 @@ def ensure_consent(force_prompt: bool = False) -> None:
 @app.command()
 def ingest(
     tex_path: Path = typer.Argument(..., exists=True, readable=True),
-    out: Path = typer.Option(DEFAULT_RESUME_JSON_PATH, "--out", "-o"),
-) -> None:
+    out: Path = typer.Option(DEFAULT_RESUME_JSON_PATH, "--out", "-o")) -> None:
     """Parse master resume into data/master.json."""
     configure()
     ensure_consent()
@@ -102,8 +93,7 @@ def ingest(
 @app.command()
 def fetch(
     urls: list[str] = typer.Argument(...),
-    cache_dir: Path = typer.Option(DEFAULT_DATA_DIR_PATH / "jd_cache", "--cache"),
-) -> None:
+    cache_dir: Path = typer.Option(DEFAULT_DATA_DIR_PATH / "jd_cache", "--cache")) -> None:
     """Fetch and cache job description URLs."""
     configure()
     ensure_consent()
@@ -120,8 +110,7 @@ def fetch(
 @app.command(name="show")
 def show_cmd(
     what: str = typer.Argument(..., help="'master' or 'jd'"),
-    url: str | None = typer.Option(None, "--url"),
-) -> None:
+    url: str | None = typer.Option(None, "--url")) -> None:
     """Show master.json or a cached JD."""
     configure()
     if what == "master":
@@ -146,8 +135,7 @@ def show_cmd(
 
 def common_paste_args(
     pasted_jd: str | None,
-    no_tty_prompt: bool,
-) -> tuple[str | None, bool]:
+    no_tty_prompt: bool) -> tuple[str | None, bool]:
     """Return ``(pasted_jd, no_tty_prompt)`` — placeholder for symmetry / future use."""
     return pasted_jd, no_tty_prompt
 
@@ -155,8 +143,7 @@ def common_paste_args(
 def resolve_jds(
     urls: list[str] | None,
     pasted_jd: str | None,
-    no_tty_prompt: bool,
-) -> tuple[Job, ...]:
+    no_tty_prompt: bool) -> tuple[Job, ...]:
     """Resolve the JD tuple for a command.
 
     Either ``urls`` or ``pasted_jd`` must be supplied (not both). When
@@ -168,7 +155,7 @@ def resolve_jds(
         typer.echo("error: pass either <urls> or --pasted-jd, not both", err=True)
         raise typer.Exit(code=2)
     if pasted_jd is not None:
-        return (load_pasted_jd(pasted_jd),)
+        return (load_pasted_jd(pasted_jd))
     if not urls:
         typer.echo("error: at least one <url> or --pasted-jd is required", err=True)
         raise typer.Exit(code=2)
@@ -189,15 +176,12 @@ def plan(
     pasted_jd: str | None = typer.Option(
         None,
         "--pasted-jd",
-        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching.",
-    ),
+        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching."),
     no_tty_prompt: bool = typer.Option(
         False,
         "--no-tty-prompt",
         help=("Disable the inline paste prompt on anti-bot detection "
-            "(exit with recovery command instead)."),
-    ),
-) -> None:
+            "(exit with recovery command instead)."))) -> None:
     """Estimate cost without running the agent."""
     configure()
     ensure_consent()
@@ -217,15 +201,12 @@ def run(
     pasted_jd: str | None = typer.Option(
         None,
         "--pasted-jd",
-        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching.",
-    ),
+        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching."),
     no_tty_prompt: bool = typer.Option(
         False,
         "--no-tty-prompt",
         help=("Disable the inline paste prompt on anti-bot detection "
-            "(exit with recovery command instead)."),
-    ),
-) -> None:
+            "(exit with recovery command instead)."))) -> None:
     """Run the full tailoring pipeline. Accepts multiple URLs."""
     configure(debug=debug)
     ensure_consent()
@@ -239,8 +220,7 @@ def run(
         GroundingError,
         StyleError,
         PlagiarismError,
-        AtsError,
-    ) as exc:
+        AtsError) as exc:
         typer.echo(f"Tailoring failed: {exc}", err=True)
         raise typer.Exit(code=1)
     typer.echo(f"Run complete: {tailored.run.id}")
@@ -257,15 +237,12 @@ def cover(
     pasted_jd: str | None = typer.Option(
         None,
         "--pasted-jd",
-        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching.",
-    ),
+        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching."),
     no_tty_prompt: bool = typer.Option(
         False,
         "--no-tty-prompt",
         help=("Disable the inline paste prompt on anti-bot detection "
-            "(exit with recovery command instead)."),
-    ),
-) -> None:
+            "(exit with recovery command instead)."))) -> None:
     """Run the pipeline with cover-letter production enabled.
 
     With a single URL: writes ``cover_letter.md`` (backward-compatible).
@@ -280,16 +257,14 @@ def cover(
         model=model,
         debug=debug,
         tailored_dir=out_dir,
-        produce_cover_letter=False,
-    )
+        produce_cover_letter=False)
     try:
         tailored = tailor.run()
     except (
         GroundingError,
         StyleError,
         PlagiarismError,
-        AtsError,
-    ) as exc:
+        AtsError) as exc:
         typer.echo(f"Tailoring failed: {exc}", err=True)
         raise typer.Exit(code=1)
     written = write_cover_letters(
@@ -297,8 +272,7 @@ def cover(
         resume=resume,
         model=model,
         debug=debug,
-        out_dir=out_dir,
-    )
+        out_dir=out_dir)
     typer.echo(f"Run complete: {tailored.run.id}")
     for label, path in written:
         typer.echo(f"Cover letter ({label}): {path}")
@@ -312,15 +286,12 @@ def preflight(
     pasted_jd: str | None = typer.Option(
         None,
         "--pasted-jd",
-        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching.",
-    ),
+        help="Path to a file containing the JD text (use '-' for stdin). Skips fetching."),
     no_tty_prompt: bool = typer.Option(
         False,
         "--no-tty-prompt",
         help=("Disable the inline paste prompt on anti-bot detection "
-            "(exit with recovery command instead)."),
-    ),
-) -> None:
+            "(exit with recovery command instead)."))) -> None:
     """Dry-run preflight: estimate cost and gate outcomes without invoking the LLM."""
     configure()
     ensure_consent()
@@ -338,8 +309,7 @@ def preflight(
 
 @app.command()
 def validate(
-    target: Path = typer.Argument(..., exists=True),
-) -> None:
+    target: Path = typer.Argument(..., exists=True)) -> None:
     """Run ATS gates against a tailored.tex or tailored.json."""
     configure()
     if target.suffix == ".json":
@@ -352,8 +322,7 @@ def validate(
             tex_source=tex_source,
             pdf_path=None,
             txt_source=txt_source,
-            jds=(),
-        )
+            jds=())
     else:
         typer.echo("Provide a tailored.json (tex-only validation not yet supported)", err=True)
         raise typer.Exit(code=1)
@@ -372,8 +341,7 @@ def validate(
 
 @app.command()
 def trace(
-    run_dir: Path = typer.Argument(..., exists=True),
-) -> None:
+    run_dir: Path = typer.Argument(..., exists=True)) -> None:
     """Print the Job trail of a previous run."""
     configure()
     json_path = run_dir / "tailored.json"
@@ -392,8 +360,7 @@ def trace(
 
 @app.command(name="audit")
 def audit_cmd(
-    run_dir: Path = typer.Argument(..., exists=True),
-) -> None:
+    run_dir: Path = typer.Argument(..., exists=True)) -> None:
     """Re-run all validators against a previous run directory.
 
     Writes ``audit.json`` and ``audit.md`` into ``run_dir``. Exits non-zero
@@ -427,8 +394,7 @@ def audit_cmd(
 def diff(
     run_a: str = typer.Argument(...),
     run_b: str = typer.Argument(...),
-    out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir"),
-) -> None:
+    out_dir: Path = typer.Option(DEFAULT_TAILORED_DIR_PATH, "--out-dir")) -> None:
     """Diff two tailored runs."""
     configure()
     a = (out_dir / run_a / "match_report.md").read_text()
@@ -495,8 +461,7 @@ def job_from_text(text: str, *, source: str) -> Job:
         keywords=base.keywords,
         must_have_keywords=base.must_have_keywords,
         nice_to_have_keywords=base.nice_to_have_keywords,
-        content_hash=base.content_hash,
-    )
+        content_hash=base.content_hash)
 
 
 def stdin_is_tty() -> bool:
@@ -515,8 +480,7 @@ def inline_paste_prompt() -> str:
     typer.echo(
         "Paste the JD text below. Press Ctrl-D (Unix) or Ctrl-Z+Enter "
         "(Windows) when finished:",
-        err=True,
-    )
+        err=True)
     return sys.stdin.read()
 
 
@@ -532,12 +496,10 @@ def antibot_recover(exc: AntiBotError, *, no_tty_prompt: bool) -> Job | None:
         typer.echo(
             f"error: anti-bot challenge on {exc.url} (HTTP {exc.status}, markers: "
             f"{', '.join(exc.markers)})",
-            err=True,
-        )
+            err=True)
         typer.echo(
             "Re-run with the JD text piped via stdin or a file, e.g.:",
-            err=True,
-        )
+            err=True)
         typer.echo("  gethired run --pasted-jd -            < jd.txt", err=True)
         typer.echo("  gethired run --pasted-jd jd.txt", err=True)
         return None
@@ -554,8 +516,7 @@ def write_cover_letters(
     resume: Path,
     model: str | None,
     debug: bool,
-    out_dir: Path,
-) -> list[tuple[str, Path]]:
+    out_dir: Path) -> list[tuple[str, Path]]:
     """Write cover letter(s) for a tailored run.
 
     - N=1 → single ``cover_letter.md`` (backward-compatible).

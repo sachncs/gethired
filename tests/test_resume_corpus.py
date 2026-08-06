@@ -48,8 +48,7 @@ SAMPLE_JD = Job(
     keywords=("python", "kubernetes", "docker", "aws", "pytorch", "tensorflow"),
     must_have_keywords=("python", "kubernetes"),
     nice_to_have_keywords=("pytorch", "tensorflow"),
-    content_hash="sample",
-)
+    content_hash="sample")
 
 
 @pytest.mark.parametrize("fixture_path", corpus_paths(), ids=CORPUS_IDS)
@@ -98,8 +97,7 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     master = tailor.master
     result = tailor.run()
 

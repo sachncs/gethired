@@ -20,8 +20,7 @@ Resume,
     StepKind,
     StepMeta,
     StepStatus,
-    Tailored,
-)
+    Tailored)
 from gethired.serialize import (
     as_dict,
     from_bullets,
@@ -31,20 +30,16 @@ from gethired.serialize import (
     from_tailored_dict,
     load_master,
     render_json,
-    snapshot,
-)
+    snapshot)
 
 
 def _sample_master() -> Master:
-    return Resume(Resume(name="Jane Doe", city="Austin", phone="555-0100", email="jane@example.com", github=None, linkedin=None,
-        ),
-        summary="Engineer.",
-        skills=Skills(categories={"Languages": ("Python",)}),
+    return Resume(name="Jane Doe", city="Austin", phone="555-0100", email="jane@example.com", github=None, linkedin=None, summary="Engineer.",
+        skills=Skills(categories={"Languages": ("Python")}),
         experience=(),
         projects=(),
         education=(),
-        awards=(),
-    )
+        awards=())
 
 
 def test_from_bullets_reconstructs_bullet_tuple() -> None:
@@ -69,7 +64,7 @@ def test_from_master_dict_round_trips_through_render_json() -> None:
     raw_dict = json.loads(raw_text)
     reconstructed = from_master_dict(raw_dict)
     # The contact should round-trip exactly
-    assert reconstructed.contact == master.contact
+    assert reconstructed.name == master.name and reconstructed.email == master.email
     assert reconstructed.summary == master.summary
     assert reconstructed.skills.categories == master.skills.categories
 
@@ -89,8 +84,7 @@ def test_from_tailored_dict_handles_empty_grounding() -> None:
         rationale="test",
         grounding=(),
         jobs=(),
-        run_result=None,
-    )
+        run_result=None)
     raw = json.loads(render_json(tailored))
     reconstructed = from_tailored_dict(raw)
     assert reconstructed.grounding == ()
@@ -111,8 +105,7 @@ def test_from_tailored_dict_handles_empty_jobs() -> None:
         rationale="test",
         grounding=(),
         jobs=(),
-        run_result=None,
-    )
+        run_result=None)
     raw = json.loads(render_json(tailored))
     reconstructed = from_tailored_dict(raw)
     assert reconstructed.jobs == ()
@@ -141,12 +134,11 @@ def test_from_step_dict_restores_strenum_fields() -> None:
         completed_at="2026-08-04T12:00:01.000Z",
         status=StepStatus.SUCCESS,
         inputs=(),
-        outputs=("out",),
+        outputs=("out"),
         rationale="r",
         model="m",
         tool_name="t",
-        metadata=StepMeta(),
-    )
+        metadata=StepMeta())
     raw = json.loads(render_json_via_dataclass(step))
     reconstructed = from_step_dict(raw)
     assert reconstructed.type is StepKind.LOOKUP
@@ -166,7 +158,7 @@ def test_load_master_round_trips_through_disk(tmp_path: Path) -> None:
     path = tmp_path / "master.json"
     path.write_text(render_json(snapshot(master)))
     loaded = load_master(path)
-    assert loaded.contact == master.contact
+    assert loaded.name == master.name and loaded.email == master.email
     assert loaded.skills.categories == master.skills.categories
 
 

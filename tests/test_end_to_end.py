@@ -26,8 +26,7 @@ from gethired.models import (
     StepMeta,
     StepStatus,
     Tailored,
-    job_validate,
-)
+    job_validate)
 from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
 from gethired.renderer import tex, text
@@ -55,12 +54,10 @@ SAMPLE_JD = Job(
         "pytorch",
         "tensorflow",
         "llm",
-        "vllm",
-    ),
+        "vllm"),
     must_have_keywords=("python", "kubernetes", "docker"),
     nice_to_have_keywords=("llm", "vllm", "pytorch", "tensorflow"),
-    content_hash="sample",
-)
+    content_hash="sample")
 
 
 def test_end_to_end_pipeline_runs() -> None:
@@ -75,8 +72,7 @@ def test_end_to_end_pipeline_runs() -> None:
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     result = tailor.run()
     # Run-id must be a UUID
     assert len(result.run.id) == 36, f"run.id must be UUID-shaped, got {result.run.id!r}"
@@ -102,12 +98,11 @@ def test_end_to_end_atg_gates_all_evaluated() -> None:
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     result = tailor.run()
     t = tex(result)
     t2 = text(result)
-    report = ats(result, t, None, t2, (SAMPLE_JD,))
+    report = ats(result, t, None, t2, (SAMPLE_JD))
     assert isinstance(report, AtsReport)
     assert len(report.results) == len(list(AtsGate))
     for gate_result in report.results:
@@ -120,8 +115,7 @@ def test_end_to_end_job_trail_emitted() -> None:
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     result = tailor.run()
     job_types = {job.type for job in result.jobs}
     assert "tailor" in job_types
@@ -138,8 +132,7 @@ def test_end_to_end_section_headings_present() -> None:
         job_description=SAMPLE_JD,
         debug=False,
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     result = tailor.run()
     t = tex(result)
     assert "\\section{Summary}" in t
@@ -155,14 +148,12 @@ def test_merge_critic_jobs_replaces_all_prior_validation_jobs() -> None:
         job_validate(StepKind.VALIDATE_GROUNDING, outputs=(), rationale="first"),
         job_validate(StepKind.VALIDATE_STYLE, outputs=(), rationale="first"),
         job_validate(StepKind.VALIDATE_PLAGIARISM, outputs=(), rationale="first"),
-        job_validate(StepKind.VALIDATE_ATS, outputs=(), rationale="first"),
-    )
+        job_validate(StepKind.VALIDATE_ATS, outputs=(), rationale="first"))
     authoritative = (
         job_validate(StepKind.VALIDATE_GROUNDING, outputs=(), rationale="second"),
         job_validate(StepKind.VALIDATE_STYLE, outputs=(), rationale="second"),
         job_validate(StepKind.VALIDATE_PLAGIARISM, outputs=(), rationale="second"),
-        job_validate(StepKind.VALIDATE_ATS, outputs=(), rationale="second"),
-    )
+        job_validate(StepKind.VALIDATE_ATS, outputs=(), rationale="second"))
     merged = merge_steps(existing, authoritative)
     validate_jobs = [j for j in merged if j.type in VALIDATION]
     assert len(validate_jobs) == 4
@@ -190,8 +181,7 @@ def test_pipeline_pdf_pass_revalidates_and_recomputes_outcome(tmp_path: Path, mo
         debug=False,
         model="test",
         model_instance=TestModel(),
-        tailored_dir=tmp_path,
-    )
+        tailored_dir=tmp_path)
     result = tailor.run()
     for job_type in VALIDATION:
         matches = [job for job in result.jobs if job.type is job_type]
@@ -208,17 +198,15 @@ def test_end_to_end_multi_jd_run_persists_combined_match_report(tmp_path: Path) 
         full_text="Staff ML Engineer. Must have: Python, AWS, Kubernetes.",
         keywords=("python", "aws", "kubernetes"),
         must_have_keywords=("python", "aws"),
-        nice_to_have_keywords=("kubernetes",),
-        content_hash="b",
-    )
+        nice_to_have_keywords=("kubernetes"),
+        content_hash="b")
     tailor = Tailor(
         resume="sample.tex",
         job_description=(SAMPLE_JD, jd_b),
         debug=False,
         model="test",
         model_instance=TestModel(),
-        tailored_dir=tmp_path,
-    )
+        tailored_dir=tmp_path)
     result = tailor.run()
     run_dir = tmp_path / result.run.id
     assert (run_dir / "tailored.json").exists()
@@ -240,9 +228,8 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
         full_text="Staff Backend Engineer. You will lead API design.",
         keywords=("python", "aws"),
         must_have_keywords=("python", "aws"),
-        nice_to_have_keywords=("kubernetes",),
-        content_hash="b",
-    )
+        nice_to_have_keywords=("kubernetes"),
+        content_hash="b")
     master = parse_tex("sample.tex")
     analysis = consolidate((SAMPLE_JD, jd_b))
     voice = build_profile(master)
@@ -267,11 +254,9 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                     rationale="ok",
                     model="test",
                     tool_name=None,
-                    metadata=StepMeta(),
-                ),
-            )
+                    metadata=StepMeta()))
             return Tailored(
-                contact=master.contact,
+                name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
                 summary="",
                 skills=master.skills,
                 experience=master.experience,
@@ -289,20 +274,17 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                         resume_hash="",
                         jd_hash="",
                         model="test",
-                        draft_model=None,
-                    ),
+                        draft_model=None),
                     completed_at="now",
                     duration_seconds=0.0,
                     total_input_tokens=0,
                     total_output_tokens=0,
                     retry_attempts=0,
                     final_outcome=Outcome.SUCCESS,
-                    jobs=steps,
-                ),
+                    jobs=steps),
                 master=master,
                 jds=(SAMPLE_JD, jd_b),
-                analysis=analysis,
-            )
+                analysis=analysis)
 
     mp = pytest.MonkeyPatch()
     try:
@@ -319,8 +301,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                 "sample.tex",
                 "--out-dir",
                 str(tmp_path),
-            ],
-        )
+            ])
         assert result.exit_code == 0, result.stdout + (result.stderr or "")
         run_dir = tmp_path / "run-multi-cover"
         covers = sorted(run_dir.glob("cover_letter_*.md"))

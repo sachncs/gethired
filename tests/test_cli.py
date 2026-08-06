@@ -82,8 +82,7 @@ def test_show_jd_without_url_reports_error(tmp_path: Path, monkeypatch: pytest.M
 
 
 def test_validate_against_tex_file_reports_unsupported(
-    tmp_path: Path,
-) -> None:
+    tmp_path: Path) -> None:
     """``validate <path.tex>`` exits non-zero (only JSON is supported)."""
     tex_path = tmp_path / "resume.tex"
     tex_path.write_text("\\documentclass{article}\n")
@@ -121,8 +120,7 @@ def test_fetch_uses_jd_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
 
     monkeypatch.setattr(
         "gethired.fetcher.Fetcher.retrieve",
-        lambda _self, url: _fake_jd(url),
-    )
+        lambda _self, url: _fake_jd(url))
 
     result = runner.invoke(
         app,
@@ -131,8 +129,7 @@ def test_fetch_uses_jd_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
             "https://example.com/job",
             "--cache",
             str(cache_dir),
-        ],
-    )
+        ])
     assert result.exit_code == 0, result.stderr or result.stdout
     assert "Fetched" in (result.stdout or result.stderr)
 
@@ -154,8 +151,7 @@ def test_cli_loads_dotenv_at_import(
         capture_output=True,
         text=True,
         cwd=tmp_path,
-        check=False,
-    )
+        check=False)
     assert result.stdout.strip() == "loaded", (
         f".env not loaded: stdout={result.stdout!r} stderr={result.stderr!r}"
     )
@@ -168,7 +164,6 @@ def _fake_jd(url: str) -> Job:
         company="Acme",
         full_text="We need a Python engineer.",
         keywords=("python", "engineer"),
-        must_have_keywords=("python",),
-        nice_to_have_keywords=("engineer",),
-        content_hash="deadbeef",
-    )
+        must_have_keywords=("python"),
+        nice_to_have_keywords=("engineer"),
+        content_hash="deadbeef")

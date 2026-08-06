@@ -17,8 +17,7 @@ from collections.abc import Iterator
 from dataclasses import asdict
 from typing import (  # Any: Pydantic AI model/result types are duck-typed across providers
     TYPE_CHECKING,
-    Any,
-)
+    Any)
 
 if TYPE_CHECKING:
     from gethired.streaming import Callback, ProgressEvent
@@ -29,8 +28,7 @@ from pydantic_ai import Agent, RunContext
 from gethired.constants import (
     DROP_CHARS,
     MODEL_VAR,
-    RATIONALE_CHARS,
-)
+    RATIONALE_CHARS)
 from gethired.description import Analysis
 from gethired.exceptions import ConfigError
 from gethired.models import (
@@ -46,8 +44,7 @@ Resume,
     Tailored,
     Voice,
     job_lookup,
-    job_tailor,
-)
+    job_tailor)
 from gethired.observability import logger
 from gethired.provider import resolve_model
 from gethired.rubric import ANTI_AI, BANNED, GROUNDING
@@ -76,8 +73,7 @@ class WriterDeps:
         master: Resume,
         analysis: Analysis,
         voice: Voice,
-        previous_violations: tuple[str, ...] = (),
-    ) -> None:
+        previous_violations: tuple[str, ...] = ()) -> None:
         self.master = master
         self.analysis = analysis
         self.voice = voice
@@ -114,8 +110,7 @@ class WriterOutput(BaseModel):
     )
     dropped: list[str] = Field(
         default_factory=list,
-        description="Master paths to drop, with reason in rationale",
-    )
+        description="Master paths to drop, with reason in rationale")
     rationale: str = Field(description="One-sentence explanation of tailoring choices")
 
 
@@ -131,8 +126,7 @@ class Writer:
         self,
         model: str | None = None,
         debug: bool = False,
-        model_instance: object | None = None,
-    ) -> None:
+        model_instance: object | None = None) -> None:
         self.model_string = model or os.environ.get(MODEL_VAR)
         self.debug = debug
         self.logger = logger("writer")
@@ -144,8 +138,7 @@ class Writer:
         analysis: Analysis,
         voice: Voice,
         previous_violations: tuple[str, ...] = (),
-        on_progress: Callback | None = None,
-    ) -> tuple[Tailored, tuple[Step, ...]]:
+        on_progress: Callback | None = None) -> tuple[Tailored, tuple[Step, ...]]:
         """Produce a tailored resume and the Step trail.
 
         Args:
@@ -178,8 +171,7 @@ class Writer:
         analysis: Analysis,
         voice: Voice,
         previous_violations: tuple[str, ...],
-        on_progress: Callback | None = None,
-    ) -> tuple[Tailored, tuple[Step, ...]]:
+        on_progress: Callback | None = None) -> tuple[Tailored, tuple[Step, ...]]:
         """Run the Pydantic AI Agent against the configured model.
 
         Args:
@@ -203,8 +195,7 @@ class Writer:
             on_progress(
                 ProgressEvent(
                     step="writer",
-                    message=f"Invoking agent for {analysis.role}",
-                )
+                    message=f"Invoking agent for {analysis.role}")
             )
 
         agent: Agent[WriterDeps, WriterOutput] = Agent(
@@ -216,8 +207,7 @@ class Writer:
                 rubric(previous_violations),
                 jd(),
                 voice_prompt(voice),
-            ],
-        )
+            ])
 
         self.__register_read_only_tools(agent)
 
@@ -242,8 +232,7 @@ class Writer:
                 missing_or_verbatim,
                 analysis,
                 model_instance=model if self.model_instance is not None else None,
-                model_string=self.model_string,
-            )
+                model_string=self.model_string)
             writer_output.tailored_bullets.update(rephrases)
 
         tailored = apply(master, writer_output, analysis)
@@ -252,14 +241,12 @@ class Writer:
         )
         all_jobs = tool_jobs + (
             job_tailor(
-                outputs=("tailored_resume",),
+                outputs=("tailored_resume"),
                 rationale=(
                     f"LLM produced {len(writer_output.tailored_bullets)} rewritten bullets; "
                     f"rationale: {writer_output.rationale[:RATIONALE_CHARS]}"
                 ),
-                envelope=StepEnv(model=str(model_name) if model_name else "model"),
-            ),
-        )
+                envelope=StepEnv(model=str(model_name) if model_name else "model")))
         tailored = Tailored(
             name=tailored.name,
             email=tailored.email,
@@ -277,15 +264,13 @@ class Writer:
             rationale=tailored.rationale,
             grounding=tailored.grounding,
             jobs=all_jobs,
-            run_result=None,
-        )
+            run_result=None)
         if on_progress is not None:
             on_progress(
                 ProgressEvent(
                     step="writer",
                     message=f"Produced {len(writer_output.tailored_bullets)} rewritten bullets",
-                    job_type="tailor",
-                )
+                    job_type="tailor")
             )
         return tailored, all_jobs
 
@@ -479,18 +464,15 @@ def from_tools(result: Any) -> tuple[Step, ...]:
                 jobs.append(
                     job_lookup(
                         tool_name=tool_name,
-                        outputs=(f"tool:{tool_name}",),
+                        outputs=(f"tool:{tool_name}"),
                         rationale=f"Called read-only tool {tool_name}",
                         envelope=StepEnv(
                             model=str(
                                 getattr(
                                     getattr(message, "model", None),
                                     "model_name",
-                                    "model",
-                                )
-                            ),
-                        ),
-                    )
+                                    "model")
+                            )))
                 )
     return tuple(jobs)
 
@@ -556,8 +538,7 @@ REPHRASE_INSTRUCTIONS: tuple[str, ...] = (
     "(2) weave the JD's must-have keywords naturally into the rephrase;",
     "(3) keep the same length, opening verb, and voice as the master;",
     "(4) do not invent companies, projects, dates, numbers, or skills.",
-    "Return ONLY the JSON object with 'rephrases' mapping master_path to text.",
-)
+    "Return ONLY the JSON object with 'rephrases' mapping master_path to text.")
 """System instructions for the per-bullet rephrase fallback agent."""
 
 
@@ -566,8 +547,7 @@ def rephrase_missing_bullets(
     analysis: Analysis,
     *,
     model_instance: object | None,
-    model_string: str | None,
-) -> dict[str, list[str]]:
+    model_string: str | None) -> dict[str, list[str]]:
     """Rephrase every bullet in ``missing`` via a focused single-batch LLM call.
 
     Falls back to the original text when ``model_instance`` is a TestModel
@@ -597,8 +577,7 @@ def rephrase_missing_bullets(
         agent: Agent[None, RephraseBatch] = Agent(
             model_obj,
             output_type=RephraseBatch,
-            instructions=list(REPHRASE_INSTRUCTIONS),
-        )
+            instructions=list(REPHRASE_INSTRUCTIONS))
         payload = (
             f"JD must-have keywords: {keywords_blob}\n\n"
             f"Rephrase every bullet below. Mirror the JD's vocabulary without "
@@ -620,8 +599,7 @@ def rewrite(
     bullets: tuple[Bullet, ...],
     container_path: str,
     tailored_bullets: dict[str, list[str]],
-    dropped: frozenset[str],
-) -> tuple[list[Bullet], list[Citation]]:
+    dropped: frozenset[str]) -> tuple[list[Bullet], list[Citation]]:
     """Rewrite or drop bullets in a single experience/project container.
 
     ``container_path`` is the master path prefix without the bullet index, e.g.
@@ -642,8 +620,7 @@ def rewrite(
                     tailored_path=master_path,
                     master_path=master_path,
                     verbatim_span=bullet.text,
-                    job_id="writer-agent",
-                )
+                    job_id="writer-agent")
             )
         else:
             rewritten.append(bullet)
@@ -653,8 +630,7 @@ def rewrite(
 def apply_experiences(
     master: Resume,
     output: WriterOutput,
-    dropped: frozenset[str],
-) -> tuple[tuple[Experience, ...], list[Citation]]:
+    dropped: frozenset[str]) -> tuple[tuple[Experience, ...], list[Citation]]:
     """Apply the writer's bullet rewrites to the master's experiences."""
     new_experiences: list[Experience] = []
     new_grounding: list[Citation] = []
@@ -665,8 +641,7 @@ def apply_experiences(
             exp.bullets,
             f"experiences[{idx}].bullets",
             output.tailored_bullets,
-            dropped,
-        )
+            dropped)
         new_grounding.extend(bullet_grounding)
         new_experiences.append(
             Experience(
@@ -674,8 +649,7 @@ def apply_experiences(
                 company=exp.company,
                 start_date=exp.start_date,
                 end_date=exp.end_date,
-                bullets=tuple(rewritten_bullets),
-            )
+                bullets=tuple(rewritten_bullets))
         )
     return tuple(new_experiences), new_grounding
 
@@ -683,8 +657,7 @@ def apply_experiences(
 def apply_projects(
     master: Resume,
     output: WriterOutput,
-    dropped: frozenset[str],
-) -> tuple[tuple[Project, ...], list[Citation]]:
+    dropped: frozenset[str]) -> tuple[tuple[Project, ...], list[Citation]]:
     """Apply the writer's bullet rewrites to the master's projects."""
     new_projects: list[Project] = []
     new_grounding: list[Citation] = []
@@ -695,15 +668,13 @@ def apply_projects(
             project.bullets,
             f"projects[{p_idx}].bullets",
             output.tailored_bullets,
-            dropped,
-        )
+            dropped)
         new_grounding.extend(bullet_grounding)
         new_projects.append(
             Project(
                 name=project.name,
                 url=project.url,
-                bullets=tuple(rewritten_bullets),
-            )
+                bullets=tuple(rewritten_bullets))
         )
     return tuple(new_projects), new_grounding
 
@@ -713,8 +684,7 @@ def drop_reasons(output: WriterOutput) -> tuple[Reason, ...]:
     return tuple(
         Reason(
             item_id=path,
-            reason=(f"Marked for drop by writer agent: {output.rationale[:DROP_CHARS]}"),
-        )
+            reason=(f"Marked for drop by writer agent: {output.rationale[:DROP_CHARS]}"))
         for path in output.dropped
     )
 
@@ -722,8 +692,7 @@ def drop_reasons(output: WriterOutput) -> tuple[Reason, ...]:
 def apply(
     master: Resume,
     output: WriterOutput,
-    analysis: Analysis,
-) -> Tailored:
+    analysis: Analysis) -> Tailored:
     """Apply the writer agent's output onto the master resume.
 
     The agent produces a ``WriterOutput`` (Pydantic) with a flat
@@ -747,8 +716,7 @@ def apply(
         rationale=output.rationale,
         grounding=tuple(exp_grounding + proj_grounding),
         jobs=(),
-        run_result=None,
-    )
+        run_result=None)
 
 
 __all__ = ["Writer", "WriterDeps", "current_tracer"]

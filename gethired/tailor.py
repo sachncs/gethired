@@ -18,18 +18,15 @@ from gethired.constants import (
     DRIFT_SCALE,
     MODEL_VAR,
     TOKENS_BASE,
-    TOKENS_BULLET,
-)
+    TOKENS_BULLET)
 from gethired.cover_letter import (
     compose,
-    markdown,
-)
+    markdown)
 from gethired.critic import Critic
 from gethired.description import analyze_description
 from gethired.exceptions import (
     ConfigError,
-    TailorError,
-)
+    TailorError)
 from gethired.fetcher import Fetcher
 from gethired.merger import safe_merge
 from gethired.models import (
@@ -41,28 +38,23 @@ Resume,
     RunResult,
     Step,
     StepKind,
-    Tailored,
-)
+    Tailored)
 from gethired.observability import configure, logger, now
 from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
 from gethired.render_pdf import compile_pdf
 from gethired.renderer import (
-    report as render_report,
-)
+    report as render_report)
 from gethired.renderer import (
-    tex as render_tex,
-)
+    tex as render_tex)
 from gethired.renderer import (
-    text as render_text,
-)
+    text as render_text)
 from gethired.serialize import (
     from_bullets,
     from_tailored_dict,
     load_master,
     render_json,
-    snapshot,
-)
+    snapshot)
 from gethired.tracing import Tracer, tracer
 from gethired.validator import AtsReport, ats
 from gethired.writer import Writer, current_tracer
@@ -92,8 +84,7 @@ class Tailor:
         draft_model: str | None = None,
         data_dir: Path = DATA_DIR,
         tailored_dir: Path = OUTPUT_DIR,
-        produce_cover_letter: bool = False,
-    ) -> None:
+        produce_cover_letter: bool = False) -> None:
         """Construct the orchestrator.
 
         Args:
@@ -146,8 +137,7 @@ class Tailor:
             resume_hash="",
             jd_hash="",
             model=self.model,
-            draft_model=self.draft_model,
-        )
+            draft_model=self.draft_model)
         t = tracer(run.id, self.tailored_dir)
         token = current_tracer.set(t)
         try:
@@ -166,8 +156,7 @@ class Tailor:
                 analysis = safe_merge(
                     jds,
                     model=self.model,
-                    model_instance=self.model_instance,
-                )
+                    model_instance=self.model_instance)
             else:
                 analysis = None
 
@@ -180,20 +169,17 @@ class Tailor:
             resume_hash=resume_hash,
             jd_hash=jd_hash,
             model=self.model,
-            draft_model=self.draft_model,
-        )
+            draft_model=self.draft_model)
 
         writer = Writer(
             model=self.model,
             model_instance=self.model_instance,
-            debug=self.debug,
-        )
+            debug=self.debug)
         analysis_for_writer = analysis if analysis is not None else analyze_description(jds[0])
         tailored, writer_jobs = writer.tailor(
             master=master,
             analysis=analysis_for_writer,
-            voice=profile,
-        )
+            voice=profile)
 
         critic = Critic(debug=self.debug)
         tex_source = render_tex(tailored)
@@ -204,8 +190,7 @@ class Tailor:
             jds=jds,
             tex_source=tex_source,
             txt_source=txt_source,
-            pdf_path=None,
-        )
+            pdf_path=None)
 
         all_jobs = writer_jobs + critic_jobs
         tailored_with_jobs = replace(tailored, jobs=all_jobs)
@@ -218,8 +203,7 @@ class Tailor:
             total_output_tokens=0,
             retry_attempts=0,
             final_outcome=outcome(ats_report),
-            jobs=all_jobs,
-        )
+            jobs=all_jobs)
         tailored_with_jobs = replace(tailored_with_jobs, run_result=run_result)
 
         pdf_path = self.__compile_pdf_best_effort(tailored_with_jobs, tex_source)
@@ -230,14 +214,12 @@ class Tailor:
                 jds=jds,
                 tex_source=tex_source,
                 txt_source=txt_source,
-                pdf_path=pdf_path,
-            )
+                pdf_path=pdf_path)
             all_jobs = merge_steps(tailored_with_jobs.jobs, critic_jobs)
             run_result = replace(
                 run_result,
                 final_outcome=outcome(ats_report),
-                jobs=all_jobs,
-            )
+                jobs=all_jobs)
             tailored_with_jobs = replace(tailored_with_jobs, jobs=all_jobs, run_result=run_result)
 
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
@@ -246,8 +228,7 @@ class Tailor:
             tailored_with_jobs,
             master=master,
             jds=jds,
-            analysis=analysis,
-        )
+            analysis=analysis)
 
         if self.produce_cover_letter and analysis is not None:
             cover_result = compose(master=master, analysis=analysis, voice=profile)
@@ -272,8 +253,7 @@ class Tailor:
             analysis = safe_merge(
                 jds,
                 model=self.model,
-                model_instance=self.model_instance,
-            )
+                model_instance=self.model_instance)
         else:
             analysis = None
 
@@ -308,8 +288,7 @@ class Tailor:
             analysis = safe_merge(
                 jds,
                 model=self.model,
-                model_instance=self.model_instance,
-            )
+                model_instance=self.model_instance)
         else:
             analysis = None
         bullets = sum(len(exp.bullets) for exp in master.experience) + sum(
@@ -329,16 +308,14 @@ class Tailor:
         expected_gates = (
             "ATS_HARD_PASS",
             "BULLETS_QUANTIFIED",
-            "ACTION_VERBS_FIRST",
-        )
+            "ACTION_VERBS_FIRST")
         voice_drift_risk = min(1.0, bullets / max(profile.avg_bullet_length, 1) / DRIFT_SCALE)
         return Report(
             tokens_estimate=tokens_estimate,
             expected_gates=expected_gates,
             jd_keyword_coverage=coverage,
             voice_drift_risk=voice_drift_risk,
-            missing_must_haves=missing,
-        )
+            missing_must_haves=missing)
 
     def finalize(self, edited_json_path: Path) -> Tailored:
         """Re-render an edited tailored.json without invoking the agent.
@@ -364,8 +341,7 @@ class Tailor:
             tex_source=tex_source,
             pdf_path=None,
             txt_source=txt_source,
-            jds=(),
-        )
+            jds=())
         run_dir = Path(edited_json_path).parent
         (run_dir / "tailored.tex").write_text(tex_source)
         (run_dir / "tailored.txt").write_text(txt_source)
@@ -385,8 +361,7 @@ class Tailor:
                 current.splitlines(),
                 fromfile=other_run_id,
                 tofile="current",
-                lineterm="",
-            )
+                lineterm="")
         )
 
     # ------------------------------------------------------------------
@@ -419,7 +394,7 @@ class Tailor:
 
     def __load_jds(self) -> tuple[Job, ...]:
         if isinstance(self.jd_input, Job):
-            return (self.jd_input,)
+            return (self.jd_input)
         if isinstance(self.jd_input, tuple):
             if all(isinstance(j, Job) for j in self.jd_input):
                 jds_input = tuple(j for j in self.jd_input if isinstance(j, Job))
@@ -431,15 +406,14 @@ class Tailor:
             return tuple(retriever.retrieve(url) for url in urls)
         retriever = Fetcher(self.cache_dir)
         jd = retriever.retrieve(self.jd_input)
-        return (jd,)
+        return (jd)
 
     def __persist(
         self,
         tailored: Tailored,
         tex_source: str,
         txt_source: str,
-        ats_report,
-    ) -> Path:
+        ats_report) -> Path:
         run_dir = self.tailored_dir / tailored.run.id
         run_dir.mkdir(parents=True, exist_ok=True)
         (run_dir / "tailored.tex").write_text(tex_source)

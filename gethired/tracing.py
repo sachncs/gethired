@@ -72,8 +72,7 @@ class ActiveSpan:
         object.__setattr__(
             self.span,
             "attributes",
-            {**self.span.attributes, key: value},
-        )
+            {**self.span.attributes, key: value})
 
     def end(self) -> None:
         if self.ended:
@@ -120,8 +119,7 @@ class Tracer:
         self,
         name: str,
         kind: str,
-        **attributes: Any,
-    ) -> Iterator[ActiveSpan]:
+        **attributes: Any) -> Iterator[ActiveSpan]:
         """Start a new span; auto-end on context exit.
 
         Yields a handle so callers can attach additional attributes.
@@ -136,8 +134,7 @@ class Tracer:
             ended_at=started_at,
             duration_ms=0.0,
             attributes=dict(attributes),
-            parent_id=parent_id,
-        )
+            parent_id=parent_id)
         handle = ActiveSpan(self.sink, span)
         previous_id = self.active_id
         object.__setattr__(self, "active_id", span.span_id)

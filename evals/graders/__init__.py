@@ -10,8 +10,7 @@ from evals.graders.code import (
     code_no_jd_plagiarism,
     code_numbers_in_master,
     code_text_contains,
-    code_text_not_contains,
-)
+    code_text_not_contains)
 from evals.graders.model import ModelGrade, model_grade
 from evals.graders.registry import GraderRegistry
 

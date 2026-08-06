@@ -16,15 +16,13 @@ from gethired.models import (
     Contact,
     Experience,
 Resume,
-    Skills,
-)
+    Skills)
 from gethired.normalize import (
     flatten,
     ngrams,
     numbers,
     strip_latex,
-    tokenize,
-)
+    tokenize)
 
 
 @given(st.text(min_size=0, max_size=200))
@@ -58,8 +56,7 @@ def test_canonicalize_numeric_returns_int_set(text: str) -> None:
     st.lists(
         st.from_regex(r"[A-Za-z][A-Za-z0-9+#.-]{0,9}", fullmatch=True),
         min_size=0,
-        max_size=20,
-    )
+        max_size=20)
 )
 @settings(max_examples=30, deadline=None)
 def test_tokenize_for_overlap_roundtrips_to_lowercase(tokens: list[str]) -> None:
@@ -73,10 +70,8 @@ def test_tokenize_for_overlap_roundtrips_to_lowercase(tokens: list[str]) -> None
     st.lists(
         st.from_regex(r"[A-Za-z]{1,6}", fullmatch=True),
         min_size=3,
-        max_size=12,
-    ),
-    st.integers(min_value=1, max_value=5),
-)
+        max_size=12),
+    st.integers(min_value=1, max_value=5))
 @settings(max_examples=30, deadline=None)
 def test_extract_ngrams_preserves_length(tokens: list[str], n: int) -> None:
     """The number of n-grams equals ``len(tokens) - n + 1`` when input is long enough."""
@@ -97,15 +92,12 @@ def test_strip_latex_commands_does_not_raise(text: str) -> None:
 
 def _make_master(name_suffix: str) -> Master:
     """Return a deterministic Master for content-hash tests."""
-    return Resume(Resume(name=f"Test {name_suffix}", city="Test City", phone="+1-555-0100", email=f"test.{name_suffix}@example.com", github=None, linkedin=None,
-        ),
-        summary="Summary.",
+    return Resume(name=f"Test {name_suffix}", city="Test City", phone="+1-555-0100", email=f"test.{name_suffix}@example.com", github=None, linkedin=None, summary="Summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),
         experience=(),
         projects=(),
         education=(),
-        awards=(),
-    )
+        awards=())
 
 
 def test_resume_content_hash_is_deterministic() -> None:
@@ -130,7 +122,6 @@ def test_bullet_text_preserved_in_reorder() -> None:
         company="Acme",
         start_date="2020",
         end_date="2021",
-        bullets=bullets,
-    )
+        bullets=bullets)
     assert experience.bullets[0].text == "Built X"
     assert experience.bullets[1].text == "Shipped Y"

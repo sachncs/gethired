@@ -18,8 +18,7 @@ from gethired.models import Resume, Tailored
 from gethired.normalize import (
     ngrams,
     numbers,
-    tokenize,
-)
+    tokenize)
 from gethired.renderer import text
 from gethired.serialize import render_json
 
@@ -116,8 +115,7 @@ def code_no_jd_plagiarism(
     tailored_text: str,
     jd_text: str,
     ngram_size: int = 5,
-    technical_allowlist: frozenset[str] = frozenset(),
-) -> GraderResult:
+    technical_allowlist: frozenset[str] = frozenset()) -> GraderResult:
     """Assert that no n-gram from the JD appears verbatim in the tailored text.
 
     Excludes any n-gram in ``technical_allowlist`` (per the project's
@@ -195,8 +193,7 @@ WRITER_TOOL_NAMES: frozenset[str] = frozenset(
 def code_tool_correctness(
     name: str,
     trace_path: str,
-    expected_tools: tuple[str, ...] = (),
-) -> GraderResult:
+    expected_tools: tuple[str, ...] = ()) -> GraderResult:
     """Component-level grader (deepeval ``ToolCorrectnessMetric``).
 
     Compares the set of tool names the Writer agent actually invoked
@@ -209,15 +206,13 @@ def code_tool_correctness(
         return GraderResult(
             name=name,
             passed=False,
-            detail=f"no tool spans recorded; expected {sorted(expected_set)}",
-        )
+            detail=f"no tool spans recorded; expected {sorted(expected_set)}")
     if not expected_set:
         return GraderResult(
             name=name,
             passed=True,
             detail=f"agent invoked {sorted(actual)}; no expected set declared",
-            score=1.0,
-        )
+            score=1.0)
     missing = expected_set - actual
     extra = actual - expected_set
     passed = not missing
@@ -236,8 +231,7 @@ def code_tool_correctness(
         name=name,
         passed=passed,
         detail="; ".join(detail_parts) if detail_parts else "tools match",
-        score=score,
-    )
+        score=score)
 
 
 def code_argument_correctness(
@@ -245,8 +239,7 @@ def code_argument_correctness(
     trace_path: str,
     zero_arg_tools: frozenset[str] = frozenset(
         {"skills", "projects", "education", "awards", "jd"}
-    ),
-) -> GraderResult:
+    )) -> GraderResult:
     """Component-level grader (deepeval ``ArgumentCorrectnessMetric``).
 
     Verifies that every ``tool`` span in the trace that requires
@@ -258,8 +251,7 @@ def code_argument_correctness(
         return GraderResult(
             name=name,
             passed=False,
-            detail="no tool spans in trace",
-        )
+            detail="no tool spans in trace")
     bad = [
         span["name"]
         for span in spans
@@ -273,14 +265,12 @@ def code_argument_correctness(
     )
     return GraderResult(
         name=name, passed=passed, detail=detail,
-        score=1.0 if passed else (len(spans) - len(bad)) / len(spans),
-    )
+        score=1.0 if passed else (len(spans) - len(bad)) / len(spans))
 
 
 def code_plan_adherence(
     name: str,
-    trace_path: str,
-) -> GraderResult:
+    trace_path: str) -> GraderResult:
     """Reasoning-layer grader (deepeval ``PlanAdherenceMetric``).
 
     Flags the agent for repeated invocations of the same tool with
@@ -305,8 +295,7 @@ def code_plan_adherence(
 def code_plan_quality(
     name: str,
     trace_path: str,
-    expected_first_tool: str = "skills",
-) -> GraderResult:
+    expected_first_tool: str = "skills") -> GraderResult:
     """Reasoning-layer grader (deepeval ``PlanQualityMetric``).
 
     Asserts the agent's first tool call is a survey tool
@@ -332,8 +321,7 @@ def code_plan_quality(
 def code_step_efficiency(
     name: str,
     trace_path: str,
-    max_tool_calls: int = 6,
-) -> GraderResult:
+    max_tool_calls: int = 6) -> GraderResult:
     """Overall-execution grader (deepeval ``StepEfficiencyMetric``).
 
     Flags a run when the agent invokes more than ``max_tool_calls``
@@ -350,15 +338,13 @@ def code_step_efficiency(
     )
     return GraderResult(
         name=name, passed=passed, detail=detail,
-        score=min(1.0, max_tool_calls / n) if n else 1.0,
-    )
+        score=min(1.0, max_tool_calls / n) if n else 1.0)
 
 
 def code_task_completion(
     name: str,
     trace_path: str,
-    tailored: Tailored,
-) -> GraderResult:
+    tailored: Tailored) -> GraderResult:
     """Overall-execution grader (deepeval ``TaskCompletionMetric``).
 
     Combines the agent-trace presence (the agent must have produced

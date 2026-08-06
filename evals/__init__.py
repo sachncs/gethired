@@ -20,8 +20,7 @@ from evals.graders.code import (
     code_no_jd_plagiarism,
     code_numbers_in_master,
     code_text_contains,
-    code_text_not_contains,
-)
+    code_text_not_contains)
 from evals.harness import (
     EvalHarness,
     EvalSuiteResult,
@@ -31,8 +30,7 @@ from evals.harness import (
     TaskOutcome,
     TrialRecord,
     load_suite,
-    load_task,
-)
+    load_task)
 
 __all__ = [
     "EvalHarness",

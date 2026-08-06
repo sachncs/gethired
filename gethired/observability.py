@@ -38,8 +38,7 @@ def now() -> str:
 def configure(
     debug: bool = False,
     log_file: Path | None = None,
-    run_id: str | None = None,
-) -> Logger:
+    run_id: str | None = None) -> Logger:
     """Configure the global loguru logger.
 
     Args:
@@ -64,8 +63,7 @@ def configure(
         ),
         serialize=False,
         backtrace=True,
-        diagnose=debug,
-    )
+        diagnose=debug)
 
     if log_file is not None:
         log_file.parent.mkdir(parents=True, exist_ok=True)
@@ -75,8 +73,7 @@ def configure(
             serialize=True,
             rotation="10 MB",
             retention="7 days",
-            enqueue=True,
-        )
+            enqueue=True)
 
     if run_id is not None:
         default_logger.configure(extra={"run_id": run_id})

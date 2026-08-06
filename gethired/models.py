@@ -466,8 +466,7 @@ class Step:
             rationale=self.rationale,
             model=self.model,
             tool_name=self.tool_name,
-            metadata=self.metadata.as_dict(),
-        )
+            metadata=self.metadata.as_dict())
 
 
 @dataclass(frozen=True, slots=True)
@@ -540,8 +539,7 @@ class Run:
             resume_hash=self.resume_hash,
             jd_hash=self.jd_hash,
             model=self.model,
-            draft_model=self.draft_model,
-        )
+            draft_model=self.draft_model)
 
 
 @dataclass(frozen=True, slots=True)
@@ -579,8 +577,7 @@ class RunResult:
             total_output_tokens=self.total_output_tokens,
             retry_attempts=self.retry_attempts,
             final_outcome=self.final_outcome,
-            jobs=tuple(j.description() for j in self.jobs),
-        )
+            jobs=tuple(j.description() for j in self.jobs))
 
 
 @dataclass(frozen=True, slots=True)
@@ -698,8 +695,7 @@ def job(
     inputs: tuple[Source, ...] = (),
     outputs: tuple[str, ...] = (),
     rationale: str = "",
-    envelope: StepEnv | None = None,
-) -> Step:
+    envelope: StepEnv | None = None) -> Step:
     """Construct a generic ``Step`` from a kind + envelope.
 
     For most call sites, prefer one of the focused factories below
@@ -729,8 +725,7 @@ def job(
         rationale=rationale,
         model=env.model,
         tool_name=env.tool_name,
-        metadata=env.metadata,
-    )
+        metadata=env.metadata)
 
 
 def job_tailor(
@@ -738,16 +733,14 @@ def job_tailor(
     rationale: str,
     *,
     inputs: tuple[Source, ...] = (),
-    envelope: StepEnv | None = None,
-) -> Step:
+    envelope: StepEnv | None = None) -> Step:
     """Construct a TAILOR-kind Step."""
     return job(
         StepKind.TAILOR,
         inputs=inputs,
         outputs=outputs,
         rationale=rationale,
-        envelope=envelope,
-    )
+        envelope=envelope)
 
 
 def job_validate(
@@ -756,8 +749,7 @@ def job_validate(
     rationale: str,
     *,
     inputs: tuple[Source, ...] = (),
-    envelope: StepEnv | None = None,
-) -> Step:
+    envelope: StepEnv | None = None) -> Step:
     """Construct a VALIDATE_*-kind Step.
 
     Args:
@@ -773,8 +765,7 @@ def job_lookup(
     rationale: str,
     *,
     inputs: tuple[Source, ...] = (),
-    envelope: StepEnv | None = None,
-) -> Step:
+    envelope: StepEnv | None = None) -> Step:
     """Construct a LOOKUP-kind Step (read-only tool call)."""
     env = envelope or StepEnv(tool_name=tool_name)
     return job(StepKind.LOOKUP, inputs=inputs, outputs=outputs, rationale=rationale, envelope=env)

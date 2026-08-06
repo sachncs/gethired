@@ -25,8 +25,7 @@ Resume,
     StepKind,
     StepMeta,
     StepStatus,
-    Tailored,
-)
+    Tailored)
 
 runner = CliRunner()
 
@@ -54,11 +53,10 @@ def test_fetch_all_jds_returns_tuple_of_jobs(
             title=f"Title for {url}",
             company="Acme",
             full_text="body",
-            keywords=("python",),
-            must_have_keywords=("python",),
+            keywords=("python"),
+            must_have_keywords=("python"),
             nice_to_have_keywords=(),
-            content_hash=url,
-        )
+            content_hash=url)
 
     monkeypatch.setattr(cli_module, "DEFAULT_DATA_DIR_PATH", tmp_path)
     monkeypatch.setattr("gethired.cli.Fetcher.retrieve", fake_retrieve)
@@ -73,7 +71,7 @@ def test_fetch_all_jds_propagates_antibot(
     """``fetch_all_jds`` re-raises :class:`AntiBotError` so the CLI can recover."""
 
     def fake_retrieve(_self, url: str) -> Job:  # pragma: no cover - exception path
-        raise AntiBotError(url, 403, ("server: cloudflare",))
+        raise AntiBotError(url, 403, ("server: cloudflare"))
 
     monkeypatch.setattr(cli_module, "DEFAULT_DATA_DIR_PATH", tmp_path)
     monkeypatch.setattr("gethired.cli.Fetcher.retrieve", fake_retrieve)
@@ -93,21 +91,19 @@ def _two_jds() -> list[Job]:
             title="Senior ML Engineer",
             company="Acme",
             full_text="Senior ML Engineer at Acme. You will design platforms.",
-            keywords=("python",),
+            keywords=("python"),
             must_have_keywords=("python", "kubernetes"),
-            nice_to_have_keywords=("pytorch",),
-            content_hash="a",
-        ),
+            nice_to_have_keywords=("pytorch"),
+            content_hash="a"),
         Job(
             url="https://b.example/jd",
             title="Staff ML Engineer",
             company="Beta",
             full_text="Staff ML Engineer at Beta. You will lead reviews.",
-            keywords=("python",),
+            keywords=("python"),
             must_have_keywords=("python", "aws"),
             nice_to_have_keywords=("kubernetes", "pytorch"),
-            content_hash="b",
-        ),
+            content_hash="b"),
     ]
 
 
@@ -138,8 +134,7 @@ def test_cli_run_passes_all_urls_to_tailor(
             str(resume_tex_path),
             "--out-dir",
             str(tmp_path),
-        ],
-    )
+        ])
     assert result.exit_code != 0  # FakeTailor.run() raises; CLI surfaces it
     assert isinstance(captured["job_description"], tuple)
     assert len(captured["job_description"]) == 2
@@ -174,8 +169,7 @@ def test_cli_plan_cover_preflight_pass_tuples(
                 expected_gates=(),
                 jd_keyword_coverage={},
                 voice_drift_risk=0.0,
-                missing_must_haves=(),
-            )
+                missing_must_haves=())
 
     monkeypatch.setattr(cli_module, "Tailor", FakeTailor)
     monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: tuple(_two_jds()))
@@ -183,8 +177,7 @@ def test_cli_plan_cover_preflight_pass_tuples(
     for cmd in ("plan", "preflight"):
         result = runner.invoke(
             app,
-            [cmd, "https://a.example/jd", "https://b.example/jd", "--resume", str(resume_tex_path)],
-        )
+            [cmd, "https://a.example/jd", "https://b.example/jd", "--resume", str(resume_tex_path)])
         assert result.exit_code == 0, result.stdout + (result.stderr or "")
     # cover is exercised separately (writes files); skip here
 
@@ -232,8 +225,7 @@ def test_cli_run_with_pasted_jd_file_skips_fetch(
             str(resume_tex_path),
             "--out-dir",
             str(tmp_path),
-        ],
-    )
+        ])
     assert result.exit_code == 0, result.stdout + (result.stderr or "")
     assert not seen_urls, "fetch_all_jds must not be called when --pasted-jd is set"
     assert isinstance(captured["job_description"], tuple)
@@ -266,8 +258,7 @@ def test_cli_run_pasted_jd_stdin_dash(
     result = runner.invoke(
         app,
         ["run", "--pasted-jd", "-", "--resume", str(resume_tex_path), "--out-dir", str(tmp_path)],
-        input=jd_text,
-    )
+        input=jd_text)
     assert result.exit_code == 0, result.stdout + (result.stderr or "")
     pasted_jd = captured["job_description"][0]
     assert pasted_jd.url == "pasted://stdin"
@@ -289,8 +280,7 @@ def test_cli_run_pasted_jd_and_urls_mutually_exclusive(
             str(jd_file),
             "--resume",
             str(resume_tex_path),
-        ],
-    )
+        ])
     assert result.exit_code == 2
     combined = (result.stdout or "") + (result.stderr or "")
     assert "either <urls> or --pasted-jd" in combined
@@ -310,14 +300,12 @@ def test_cli_run_exits_2_on_antibot_non_tty(
         cli_module,
         "fetch_all_jds",
         lambda _urls: (_ for _ in ()).throw(  # noqa: E501
-            AntiBotError("https://blocked/jd", 403, ("server: cloudflare",))
-        ),
-    )
+            AntiBotError("https://blocked/jd", 403, ("server: cloudflare"))
+        ))
 
     result = runner.invoke(
         app,
-        ["run", "https://blocked/jd", "--resume", str(resume_tex_path), "--out-dir", str(tmp_path)],
-    )
+        ["run", "https://blocked/jd", "--resume", str(resume_tex_path), "--out-dir", str(tmp_path)])
     assert result.exit_code == 2
     combined = (result.stdout or "") + (result.stderr or "")
     assert "anti-bot" in combined.lower()
@@ -334,9 +322,8 @@ def test_cli_run_antibot_tty_invokes_inline_prompt(
         cli_module,
         "fetch_all_jds",
         lambda _urls: (_ for _ in ()).throw(  # noqa: E501
-            AntiBotError("https://blocked/jd", 403, ("server: cloudflare",))
-        ),
-    )
+            AntiBotError("https://blocked/jd", 403, ("server: cloudflare"))
+        ))
 
     captured: dict[str, object] = {}
 
@@ -355,8 +342,7 @@ def test_cli_run_antibot_tty_invokes_inline_prompt(
 
     result = runner.invoke(
         app,
-        ["run", "https://blocked/jd", "--resume", str(resume_tex_path), "--out-dir", str(tmp_path)],
-    )
+        ["run", "https://blocked/jd", "--resume", str(resume_tex_path), "--out-dir", str(tmp_path)])
     assert result.exit_code == 0, result.stdout + (result.stderr or "")
     pasted_jd = captured["job_description"][0]
     assert "Pasted JD body" in pasted_jd.full_text
@@ -375,9 +361,8 @@ def test_cli_no_tty_prompt_flag_overrides_isatty(
         cli_module,
         "fetch_all_jds",
         lambda _urls: (_ for _ in ()).throw(  # noqa: E501
-            AntiBotError("https://blocked/jd", 403, ("server: cloudflare",))
-        ),
-    )
+            AntiBotError("https://blocked/jd", 403, ("server: cloudflare"))
+        ))
 
     result = runner.invoke(
         app,
@@ -389,8 +374,7 @@ def test_cli_no_tty_prompt_flag_overrides_isatty(
             str(resume_tex_path),
             "--out-dir",
             str(tmp_path),
-        ],
-    )
+        ])
     assert result.exit_code == 2
     combined = (result.stdout or "") + (result.stderr or "")
     assert "--pasted-jd" in combined
@@ -403,15 +387,12 @@ def test_cli_no_tty_prompt_flag_overrides_isatty(
 
 def _make_master():
     """Build a minimal Master for cover-letter tests."""
-    return Resume(Resume(name="Jane Doe", city="NYC", phone="555", email="j@e.com", github=None, linkedin=None,
-        ),
-        summary="Senior engineer with ML focus.",
-        skills=Skills(categories={"Languages": ("python",)}),
+    return Resume(name="Jane Doe", city="NYC", phone="555", email="j@e.com", github=None, linkedin=None, summary="Senior engineer with ML focus.",
+        skills=Skills(categories={"Languages": ("python")}),
         experience=(),
         projects=(),
         education=(),
-        awards=(),
-    )
+        awards=())
 
 
 def test_cli_cover_single_url_writes_cover_letter_md(
@@ -420,7 +401,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
     """N=1 path: writes ``cover_letter.md`` (backward-compatible)."""
     master = _make_master()
     jd = _two_jds()[0]
-    analysis = consolidate((jd,))
+    analysis = consolidate((jd))
 
     class FakeTailor:
         def __init__(self, **_kwargs):
@@ -440,11 +421,9 @@ def test_cli_cover_single_url_writes_cover_letter_md(
                     rationale="ok",
                     model="test",
                     tool_name=None,
-                    metadata=StepMeta(),
-                ),
-            )
+                    metadata=StepMeta()))
             return Tailored(
-                contact=master.contact,
+                name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
                 summary="",
                 skills=Skills(categories={}),
                 experience=(),
@@ -462,22 +441,19 @@ def test_cli_cover_single_url_writes_cover_letter_md(
                         resume_hash="",
                         jd_hash="",
                         model="test",
-                        draft_model=None,
-                    ),
+                        draft_model=None),
                     completed_at="now",
                     duration_seconds=0.0,
                     total_input_tokens=0,
                     total_output_tokens=0,
                     retry_attempts=0,
                     final_outcome=Outcome.SUCCESS,
-                    jobs=steps,
-                ),
+                    jobs=steps),
                 master=master,
-                jds=(jd,),
-                analysis=analysis,
-            )
+                jds=(jd),
+                analysis=analysis)
 
-    monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: (jd,))
+    monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: (jd))
     monkeypatch.setattr(cli_module, "Tailor", FakeTailor)
 
     result = runner.invoke(
@@ -489,8 +465,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
             str(resume_tex_path),
             "--out-dir",
             str(tmp_path),
-        ],
-    )
+        ])
     assert result.exit_code == 0, result.stdout + (result.stderr or "")
     cover_files = list((tmp_path / "rid1").glob("cover_letter*.md"))
     assert any(p.name == "cover_letter.md" for p in cover_files), (
@@ -509,31 +484,28 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
             title="Senior ML Engineer",
             company="Acme",
             full_text="Senior ML Engineer at Acme. You will design platforms.",
-            keywords=("python",),
-            must_have_keywords=("python",),
+            keywords=("python"),
+            must_have_keywords=("python"),
             nice_to_have_keywords=(),
-            content_hash="a",
-        ),
+            content_hash="a"),
         Job(
             url="https://b.example/jd",
             title="Staff Backend Engineer",
             company="Beta",
             full_text="Staff Backend Engineer at Beta. You will lead API design.",
-            keywords=("aws",),
-            must_have_keywords=("aws",),
+            keywords=("aws"),
+            must_have_keywords=("aws"),
             nice_to_have_keywords=(),
-            content_hash="b",
-        ),
+            content_hash="b"),
         Job(
             url="https://c.example/jd",
             title="Lead Platform Engineer",
             company="Gamma",
             full_text="Lead Platform Engineer at Gamma. You will drive strategy.",
-            keywords=("kubernetes",),
-            must_have_keywords=("kubernetes",),
+            keywords=("kubernetes"),
+            must_have_keywords=("kubernetes"),
             nice_to_have_keywords=(),
-            content_hash="c",
-        ),
+            content_hash="c"),
     ]
     analysis = consolidate(tuple(jds))
 
@@ -555,11 +527,9 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
                     rationale="ok",
                     model="test",
                     tool_name=None,
-                    metadata=StepMeta(),
-                ),
-            )
+                    metadata=StepMeta()))
             return Tailored(
-                contact=master.contact,
+                name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
                 summary="",
                 skills=Skills(categories={}),
                 experience=(),
@@ -577,20 +547,17 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
                         resume_hash="",
                         jd_hash="",
                         model="test",
-                        draft_model=None,
-                    ),
+                        draft_model=None),
                     completed_at="now",
                     duration_seconds=0.0,
                     total_input_tokens=0,
                     total_output_tokens=0,
                     retry_attempts=0,
                     final_outcome=Outcome.SUCCESS,
-                    jobs=steps,
-                ),
+                    jobs=steps),
                 master=master,
                 jds=tuple(jds),
-                analysis=analysis,
-            )
+                analysis=analysis)
 
     monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: tuple(jds))
     monkeypatch.setattr(cli_module, "Tailor", FakeTailor)
@@ -598,8 +565,7 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
     urls = [jd.url for jd in jds]
     result = runner.invoke(
         app,
-        ["cover", *urls, "--resume", str(resume_tex_path), "--out-dir", str(tmp_path)],
-    )
+        ["cover", *urls, "--resume", str(resume_tex_path), "--out-dir", str(tmp_path)])
     assert result.exit_code == 0, result.stdout + (result.stderr or "")
     run_dir = tmp_path / "rid3"
     covers = sorted(p for p in run_dir.glob("cover_letter_*.md"))

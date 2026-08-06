@@ -85,8 +85,7 @@ CHECKLIST: Final[tuple[str, ...]] = (
     "present_tense_for_current_past_for_past",
     "include_numbers_to_quantify",
     "split_experience_if_necessary",
-    "leadership_experience_included",
-)
+    "leadership_experience_included")
 
 
 BANNED: Final[frozenset[str]] = frozenset(
@@ -224,8 +223,7 @@ GROUNDING: Final[tuple[str, ...]] = (
     "missing_skill_or_credential_is_a_gap_not_a_fabrication",
     "bullets_may_be_paraphrased_to_mirror_jd_terminology",
     "summary_may_be_rewritten_using_only_master_facts",
-    "reorder_emphasize_prune_never_invent",
-)
+    "reorder_emphasize_prune_never_invent")
 
 
 ANTI_AI: Final[tuple[str, ...]] = (
@@ -239,16 +237,14 @@ ANTI_AI: Final[tuple[str, ...]] = (
     "no_5_gram_jd_overlap_minus_technical_allowlist",
     "maintain_candidate_authentic_voice",
     "vary_opening_verbs_per_role",
-    "vary_sentence_length",
-)
+    "vary_sentence_length")
 
 
 PLAGIARISM: Final[tuple[str, ...]] = (
     "do_not_copy_jd_phrases_verbatim",
     "mirror_concepts_not_phrasing",
     "use_master_wording_when_overlapping",
-    "5_grams_must_be_excluded_from_technical_ngrams_allowlist",
-)
+    "5_grams_must_be_excluded_from_technical_ngrams_allowlist")
 
 
 VERBS: Final[frozenset[str]] = frozenset(
@@ -400,8 +396,7 @@ SECTIONS: Final[tuple[str, ...]] = (
     "Experience",
     "Education",
     "Technical Skills",
-    "Selected Projects",
-)
+    "Selected Projects")
 
 
 __all__ = [

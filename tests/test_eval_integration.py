@@ -37,8 +37,7 @@ def test_harness_runs_writer_tasks_with_deepeval_graders(
         "code.plan_quality",
         "code.plan_adherence",
         "code.step_efficiency",
-        "code.task_completion",
-    ):
+        "code.task_completion"):
         assert new_grader in registry, f"{new_grader} not registered"
 
     # The new graders must appear in the writer suite at least once.
@@ -46,16 +45,14 @@ def test_harness_runs_writer_tasks_with_deepeval_graders(
     for new_grader in (
         "code.tool_correctness",
         "code.argument_correctness",
-        "code.step_efficiency",
-    ):
+        "code.step_efficiency"):
         assert new_grader in suite_grader_names, f"{new_grader} not present in any writer task"
 
     harness = EvalHarness(
         suite_name="integration_smoke",
         registry=registry,
         trials_per_task=1,
-        output_dir=tmp_path / "results",
-    )
+        output_dir=tmp_path / "results")
     result = harness.run_suite(writer_tasks)
 
     # Every writer task should have run (1 trial each).

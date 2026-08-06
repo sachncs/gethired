@@ -23,16 +23,14 @@ from gethired.models import (
     Experience,
 Resume,
     Project,
-    Skills,
-)
+    Skills)
 from gethired.text_util import (
     EMAIL_RE,
     GITHUB_BARE_RE,
     LINKEDIN_BARE_RE,
     PHONE_RE,
     clean,
-    require_contact,
-)
+    require_contact)
 
 __all__ = [
     "parse_plain_text",
@@ -124,8 +122,7 @@ def parse_plain_text(text: str) -> Master:
         experience=experience_data,
         projects=project_data,
         education=education_data,
-        awards=award_data,
-    )
+        awards=award_data)
 
 
 def first_header_position(text: str) -> int:
@@ -180,8 +177,7 @@ def extract_contact(text: str, header_block: str) -> Contact:
 
     require_contact(name, city, phone, email)
 
-    return Resume(name=name, city=city, phone=phone, email=email, github=github_url, linkedin=linkedin_url,
-    )
+    return Resume(name=name, city=city, phone=phone, email=email, github=github_url, linkedin=linkedin_url)
 
 
 def extract_name(text: str) -> str:
@@ -232,8 +228,7 @@ def extract_experiences(body: str) -> tuple[Experience, ...]:
                 company=company,
                 start_date=start_date,
                 end_date=end_date,
-                bullets=bullets,
-            )
+                bullets=bullets)
         )
     return tuple(experiences)
 
@@ -286,8 +281,7 @@ def extract_education(body: str) -> tuple[Education, ...]:
                 degree=clean(degree),
                 major=clean(major),
                 graduation=graduation,
-                gpa=gpa,
-            )
+                gpa=gpa)
         )
     return tuple(education)
 
@@ -319,8 +313,7 @@ def extract_awards(body: str) -> tuple[Award, ...]:
                 title=clean(title),
                 organization=clean(organization),
                 date=date,
-                description=" ".join(description_lines),
-            )
+                description=" ".join(description_lines))
         )
     return tuple(awards)
 

@@ -20,23 +20,19 @@ from gethired.models import (
     GateTier,
     Job,
 Resume,
-    Tailored,
-)
+    Tailored)
 from gethired.normalize import (
-    flatten as normalize_flatten,
-)
+    flatten as normalize_flatten)
 from gethired.normalize import (
     ngrams,
     numbers,
     tokenize,
-    verb,
-)
+    verb)
 from gethired.rubric import (
     ALLOWLIST,
     BANNED,
     CONSTRUCTIONS,
-    SECTIONS,
-)
+    SECTIONS)
 
 
 @dataclass(frozen=True, slots=True)
@@ -110,8 +106,7 @@ class AtsReport:
 
 def grounding(
     tailored: Tailored,
-    master: Resume,
-) -> tuple[GroundingFault, ...]:
+    master: Resume) -> tuple[GroundingFault, ...]:
     """Verify every concrete claim in the tailored resume traces back to master.
 
     Checks:
@@ -131,8 +126,7 @@ def grounding(
                 violations.append(
                     GroundingFault(
                         path=f"skills.categories[{skill_category}]",
-                        detail=f"Skill {skill!r} not found in master",
-                    )
+                        detail=f"Skill {skill!r} not found in master")
                 )
 
     for citation in tailored.grounding:
@@ -140,8 +134,7 @@ def grounding(
             violations.append(
                 GroundingFault(
                     path=citation.tailored_path,
-                    detail=f"Cited span {citation.verbatim_span!r} not in master",
-                )
+                    detail=f"Cited span {citation.verbatim_span!r} not in master")
             )
 
     tailored_numbers = numbers(flatten(tailored))
@@ -149,8 +142,7 @@ def grounding(
         violations.append(
             GroundingFault(
                 path="tailored",
-                detail=f"Numeric value {number} not found in master",
-            )
+                detail=f"Numeric value {number} not found in master")
         )
 
     master_companies = {exp.company.lower() for exp in master.experience}
@@ -159,8 +151,7 @@ def grounding(
             violations.append(
                 GroundingFault(
                     path=f"experiences[{exp.company}]",
-                    detail=f"Company {exp.company!r} not in master",
-                )
+                    detail=f"Company {exp.company!r} not in master")
             )
 
     return tuple(violations)
@@ -194,8 +185,7 @@ def banned_word_violations(full_text: str) -> list[StyleFault]:
             violations.append(
                 StyleFault(
                     path="tailored",
-                    detail=f"Banned word {word!r} at position {match.start()}",
-                )
+                    detail=f"Banned word {word!r} at position {match.start()}")
             )
         # Stem-like: match word + common verb suffixes (ed, ing, es, s, d)
         stem_pattern = re.compile(rf"\b{re.escape(word)}(?:s|ed|ing|d)?\b", re.IGNORECASE)
@@ -209,8 +199,7 @@ def banned_word_violations(full_text: str) -> list[StyleFault]:
                     path="tailored",
                     detail=(
                         f"Banned word stem {word!r} matched {token!r} at position {match.start()}"
-                    ),
-                )
+                    ))
             )
     return violations
 
@@ -241,8 +230,7 @@ def quantification_violations(
                     detail=(
                         f"Only {ratio:.0%} of bullets quantified; "
                         f"threshold {threshold_ratio:.0%}"
-                    ),
-                )
+                    ))
             )
     return violations
 
@@ -255,16 +243,14 @@ def summary_violations(tailored: Tailored) -> list[StyleFault]:
                 path="summary",
                 detail=(
                     f"Summary does not start with an action verb: {tailored.summary[:60]!r}"
-                ),
-            )
+                ))
         ]
     return []
 
 
 def style(
     tailored: Tailored,
-    threshold_ratio: float = QUANTIFY,
-) -> tuple[StyleFault, ...]:
+    threshold_ratio: float = QUANTIFY) -> tuple[StyleFault, ...]:
     """Check for banned words, parallelism, length variance, and quantification."""
     violations: list[StyleFault] = []
     full_text = flatten(tailored).lower()
@@ -293,9 +279,7 @@ def parallelism(role: str, bullets: tuple[Bullet, ...]) -> tuple[StyleFault, ...
                 detail=(
                     f"{common[0][1]} bullets open with the same verb "
                     f"{common[0][0]!r}; vary opening verbs"
-                ),
-            ),
-        )
+                )))
     return ()
 
 
@@ -307,8 +291,7 @@ def parallelism(role: str, bullets: tuple[Bullet, ...]) -> tuple[StyleFault, ...
 def plagiarism(
     tailored: Tailored,
     jds: tuple[Job, ...],
-    ngram_size: int = 5,
-) -> tuple[PlagiarismFault, ...]:
+    ngram_size: int = 5) -> tuple[PlagiarismFault, ...]:
     """Check for verbatim n-gram overlap between tailored resume and JDs.
 
     Excludes n-grams in ``ALLOWLIST``.
@@ -341,8 +324,7 @@ def ats(
     pdf_path: Path | None,
     txt_source: str,
     jds: tuple[Job, ...],
-    quantification_threshold: float = QUANTIFY,
-) -> AtsReport:
+    quantification_threshold: float = QUANTIFY) -> AtsReport:
     """Run all 12 ATS gates (9 hard-blocking, 3 advisory).
 
     Args:
@@ -378,8 +360,7 @@ def pdf_guard(
     pdf_path: Path | None,
     gate: AtsGate,
     skip_detail: str = "PDF not compiled (skipped)",
-    missing_detail: str | None = None,
-) -> AtsResult | None:
+    missing_detail: str | None = None) -> AtsResult | None:
     """Return the ``SKIP`` / ``FAIL`` result for a PDF-dependent gate.
 
     PDF-dependent gates share a two-step guard: skip when no PDF was
@@ -404,8 +385,7 @@ def pdf_guard(
         return AtsResult(
             gate,
             GateStatus.FAIL,
-            detail=missing_detail or f"PDF missing: {pdf_path}",
-        )
+            detail=missing_detail or f"PDF missing: {pdf_path}")
     return None
 
 
@@ -426,8 +406,7 @@ def gate_text(pdf_path: Path | None) -> AtsResult:
         return AtsResult(
             AtsGate.PDF_TEXT_EXTRACTABLE,
             GateStatus.FAIL,
-            detail="No text extractable from PDF",
-        )
+            detail="No text extractable from PDF")
     return AtsResult(AtsGate.PDF_TEXT_EXTRACTABLE, GateStatus.PASS, detail="OK")
 
 
@@ -444,8 +423,7 @@ def gate_match(pdf_path: Path | None, txt_source: str) -> AtsResult:
     return AtsResult(
         AtsGate.PDF_TEXT_MATCHES_TXT,
         GateStatus.FAIL,
-        detail="PDF text and tailored.txt differ after normalisation",
-    )
+        detail="PDF text and tailored.txt differ after normalisation")
 
 
 def gate_sections(tex_source: str) -> AtsResult:
@@ -456,8 +434,7 @@ def gate_sections(tex_source: str) -> AtsResult:
         return AtsResult(
             AtsGate.SECTION_HEADINGS_STANDARD,
             GateStatus.FAIL,
-            detail=f"Missing sections: {sorted(missing)}",
-        )
+            detail=f"Missing sections: {sorted(missing)}")
     return AtsResult(
         AtsGate.SECTION_HEADINGS_STANDARD, GateStatus.PASS, detail="All required sections present"
     )
@@ -474,8 +451,7 @@ def gate_tables(tex_source: str) -> AtsResult:
             return AtsResult(
                 AtsGate.NO_TABLES_FOR_LAYOUT,
                 GateStatus.FAIL,
-                detail=f"Layout table detected: {pattern}",
-            )
+                detail=f"Layout table detected: {pattern}")
     return AtsResult(AtsGate.NO_TABLES_FOR_LAYOUT, GateStatus.PASS, detail="OK")
 
 
@@ -500,27 +476,24 @@ def gate_colors(tex_source: str) -> AtsResult:
         return AtsResult(
             AtsGate.NO_COLORS,
             GateStatus.FAIL,
-            detail=f"Non-link color usage: {non_link_colors[:3]}",
-        )
+            detail=f"Non-link color usage: {non_link_colors[:3]}")
     return AtsResult(AtsGate.NO_COLORS, GateStatus.PASS, detail="OK")
 
 
 def gate_font(tex_source: str) -> AtsResult:
-    match = re.search(r"\\documentclass\[(?:[^]]*,)?(\d+)pt(?:,[^]]*)?\]", tex_source)
+    match = re.search(r"\\documentclass\[(?:[^]]*)?(\d+)pt(?:,[^]]*)?\]", tex_source)
     if match is None:
         return AtsResult(
             AtsGate.FONT_SIZE_10_12,
             GateStatus.FAIL,
-            detail="No font size directive found",
-        )
+            detail="No font size directive found")
     size = int(match.group(1))
     if 10 <= size <= 12:
         return AtsResult(AtsGate.FONT_SIZE_10_12, GateStatus.PASS, detail=f"{size}pt OK")
     return AtsResult(
         AtsGate.FONT_SIZE_10_12,
         GateStatus.FAIL,
-        detail=f"Font size {size}pt out of range [10,12]",
-    )
+        detail=f"Font size {size}pt out of range [10,12]")
 
 
 def gate_length(pdf_path: Path | None) -> AtsResult:
@@ -538,13 +511,11 @@ def gate_length(pdf_path: Path | None) -> AtsResult:
         return AtsResult(
             AtsGate.LENGTH_WITHIN_LIMIT,
             GateStatus.PASS,
-            detail=f"{page_count} page(s), within limit of {PAGES}",
-        )
+            detail=f"{page_count} page(s), within limit of {PAGES}")
     return AtsResult(
         AtsGate.LENGTH_WITHIN_LIMIT,
         GateStatus.FAIL,
-        detail=f"{page_count} page(s) exceeds limit of {PAGES}",
-    )
+        detail=f"{page_count} page(s) exceeds limit of {PAGES}")
 
 
 def gate_keywords(tailored: Tailored, jds: tuple[Job, ...]) -> AtsResult:
@@ -562,8 +533,7 @@ def gate_keywords(tailored: Tailored, jds: tuple[Job, ...]) -> AtsResult:
     return AtsResult(
         AtsGate.KEYWORDS_COVERED,
         GateStatus.FAIL,
-        detail=f"Missing must-have keywords: {missing[:10]}",
-    )
+        detail=f"Missing must-have keywords: {missing[:10]}")
 
 
 def gate_quantify(tailored: Tailored, threshold: float) -> AtsResult:
@@ -580,13 +550,11 @@ def gate_quantify(tailored: Tailored, threshold: float) -> AtsResult:
         return AtsResult(
             AtsGate.BULLETS_QUANTIFIED,
             GateStatus.PASS,
-            detail=f"{ratio:.0%} quantified (>= {threshold:.0%})",
-        )
+            detail=f"{ratio:.0%} quantified (>= {threshold:.0%})")
     return AtsResult(
         AtsGate.BULLETS_QUANTIFIED,
         GateStatus.FAIL,
-        detail=f"{ratio:.0%} quantified (< {threshold:.0%})",
-    )
+        detail=f"{ratio:.0%} quantified (< {threshold:.0%})")
 
 
 def gate_verbs(tailored: Tailored) -> AtsResult:
@@ -606,8 +574,7 @@ def gate_verbs(tailored: Tailored) -> AtsResult:
     return AtsResult(
         AtsGate.ACTION_VERBS_FIRST,
         GateStatus.FAIL,
-        detail=f"{len(bad)} bullets don't start with action verbs",
-    )
+        detail=f"{len(bad)} bullets don't start with action verbs")
 
 
 __all__ = [

@@ -50,8 +50,7 @@ def resolve_base_url(explicit: str | None = None) -> str | None:
 def resolve_model(
     model_string: str | None,
     api_key: str | None = None,
-    base_url: str | None = None,
-) -> ResolvedModel:
+    base_url: str | None = None) -> ResolvedModel:
     """Resolve a model string into a Pydantic AI model instance.
 
     Supports the following formats:
@@ -91,16 +90,14 @@ def resolve_model(
             model_name=model_name,
             api_key=resolve_api_key(api_key),
             base_url=resolved_url,
-            display_label="MiniMax",
-        )
+            display_label="MiniMax")
 
     if provider_name in ("anthropic", ""):
         return build_anthropic_model(
             model_name=model_name,
             api_key=resolve_api_key(api_key),
             base_url=resolve_base_url(base_url),
-            display_label="Anthropic",
-        )
+            display_label="Anthropic")
 
     if provider_name == "openai":
         return build_openai_model(model_name, api_key)
@@ -122,14 +119,12 @@ def build_anthropic_model(
     model_name: str,
     api_key: str,
     base_url: str | None,
-    display_label: str,
-) -> ResolvedModel:
+    display_label: str) -> ResolvedModel:
     provider = AnthropicProvider(api_key=api_key, base_url=base_url)
     model = AnthropicModel(model_name, provider=provider)
     return ResolvedModel(
         model=model,
-        display_name=f"{display_label}:{model_name}",
-    )
+        display_name=f"{display_label}:{model_name}")
 
 
 def build_openai_model(model_name: str, api_key: str | None) -> ResolvedModel:

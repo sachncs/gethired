@@ -20,8 +20,7 @@ from gethired.serialize import from_master_dict, from_tailored_dict
 from gethired.validator import (
     grounding,
     plagiarism,
-    style,
-)
+    style)
 
 
 @dataclass(frozen=True, slots=True)
@@ -106,8 +105,7 @@ def audit(run_dir: Path) -> AuditReport:
         jds=(),
         tex_source=_read_optional(paths["tex"]),
         txt_source=_read_optional(paths["txt"]),
-        pdf_path=paths["pdf"] if paths["pdf"].exists() else None,
-    )
+        pdf_path=paths["pdf"] if paths["pdf"].exists() else None)
     run_id = (
         tailored.run_result.run.id if tailored.run_result is not None else run_dir.name
     )
@@ -119,8 +117,7 @@ def audit(run_dir: Path) -> AuditReport:
         ats_passed=not ats_report.hard_failed_gates,
         ats_failed_gates=tuple(g.value for g in ats_report.hard_failed_gates),
         ats_advisory_failed_gates=tuple(g.value for g in ats_report.advisory_failed_gates),
-        ats_skipped_gates=tuple(g.value for g in ats_report.skipped_gates),
-    )
+        ats_skipped_gates=tuple(g.value for g in ats_report.skipped_gates))
 
 
 def audit_json(report: AuditReport) -> str:

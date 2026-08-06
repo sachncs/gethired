@@ -42,8 +42,7 @@ def main() -> int:
         keywords=("python", "kubernetes", "pytorch", "distributed"),
         must_have_keywords=("python", "kubernetes", "pytorch"),
         nice_to_have_keywords=("llm", "rag", "aws"),
-        content_hash="smoke-test",
-    )
+        content_hash="smoke-test")
 
     tailor = Tailor(resume=master, job_description=jd, debug=False, model="MiniMax-M3")
     print("Running full pipeline with MiniMax-M3...")

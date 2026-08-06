@@ -21,11 +21,10 @@ def _sample_analysis() -> Analysis:
         role="Senior ML Engineer",
         seniority="senior",
         must_have=("python", "kubernetes"),
-        nice_to_have=("pytorch",),
+        nice_to_have=("pytorch"),
         keywords=("python", "kubernetes"),
         responsibilities=("design ML platforms", "lead reviews"),
-        company="Acme",
-    )
+        company="Acme")
 
 
 def test_cover_letter_mirrors_master_contact(resume) -> None:

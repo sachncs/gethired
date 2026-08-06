@@ -12,8 +12,7 @@ from typing import Final
 NUMBER_PATTERNS: Final[tuple[re.Pattern[str], ...]] = (
     re.compile(r"(\d[\d,]*)\s*\+?"),
     re.compile(r"\$(\d[\d,]*(?:\.\d+)?)"),
-    re.compile(r"(\d+(?:\.\d+)?)\s*%"),
-)
+    re.compile(r"(\d+(?:\.\d+)?)\s*%"))
 
 NUMBER_WORDS: Final[dict[str, int]] = {
     "zero": 0,
@@ -198,8 +197,7 @@ VERB_LOOKUP: Final[re.Pattern[str]] = re.compile(
     r"|v(?:alidated|erified)"
     r"|w(?:on|orked|rote)"
     r")$",
-    re.IGNORECASE,
-)
+    re.IGNORECASE)
 
 
 def ngrams(tokens: tuple[str, ...], n: int) -> tuple[str, ...]:

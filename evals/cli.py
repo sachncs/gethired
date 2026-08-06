@@ -26,8 +26,7 @@ def run(
     ),
     trials: int = typer.Option(1, "--trials", "-n"),
     model: str | None = typer.Option(None, "--model", "-m"),
-    suite_name: str = typer.Option("default", "--suite", "-s"),
-) -> None:
+    suite_name: str = typer.Option("default", "--suite", "-s")) -> None:
     """Run the eval suite and write a markdown + JSON report."""
     if not tasks_dir.exists():
         typer.echo(f"Tasks directory not found: {tasks_dir}", err=True)
@@ -50,8 +49,7 @@ def run(
         suite_name=suite_name,
         registry=GraderRegistry(),
         trials_per_task=trials,
-        output_dir=Path("evals/results"),
-    )
+        output_dir=Path("evals/results"))
 
     typer.echo(
         f"Running {len(suite)} task(s) × {trials} trial(s) "
@@ -61,8 +59,8 @@ def run(
     typer.echo(result.to_markdown())
 
     # Tag breakdown
-    cap_only = sum(1 for t in suite if t.tags == ("capability",))
-    reg_only = sum(1 for t in suite if t.tags == ("regression",))
+    cap_only = sum(1 for t in suite if t.tags == ("capability"))
+    reg_only = sum(1 for t in suite if t.tags == ("regression"))
     both = sum(1 for t in suite if "capability" in t.tags and "regression" in t.tags)
     if cap_only or reg_only or both:
         typer.echo("")

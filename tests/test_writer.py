@@ -18,8 +18,7 @@ from gethired.writer import (
     apply,
     enumerate_bullet_paths,
     lookup_bullet_text,
-    rephrase_missing_bullets,
-)
+    rephrase_missing_bullets)
 
 
 def _sample_analysis() -> Analysis:
@@ -27,11 +26,10 @@ def _sample_analysis() -> Analysis:
         role="Senior ML Engineer",
         seniority="senior",
         must_have=("python", "kubernetes"),
-        nice_to_have=("distributed",),
+        nice_to_have=("distributed"),
         keywords=("python", "kubernetes"),
-        responsibilities=("design ML platforms",),
-        company="Acme",
-    )
+        responsibilities=("design ML platforms"),
+        company="Acme")
 
 
 def test_writer_with_test_model_produces_tailored_resume(resume) -> None:
@@ -49,8 +47,7 @@ def test_writer_with_test_model_produces_tailored_resume(resume) -> None:
     tailored, jobs = writer.tailor(
         master=resume,
         analysis=analysis,
-        voice=voice,
-    )
+        voice=voice)
 
     # Contact information must be preserved from the master
     assert tailored.name == resume.name
@@ -111,16 +108,14 @@ def test_writer_raises_configuration_error_when_model_missing(
 
 
 def test_tailor_raises_configuration_error_when_model_missing(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    monkeypatch: pytest.MonkeyPatch) -> None:
     """Tailor raises ConfigError at construction when MODEL is unset."""
     monkeypatch.delenv("MODEL", raising=False)
     with pytest.raises(ConfigError, match="MODEL is required"):
         Tailor(
             resume="sample.tex",
             job_description="https://example.com/jd",
-            debug=False,
-        )
+            debug=False)
 
 
 def test_apply_writer_output_removes_dropped_entries(resume) -> None:
@@ -141,8 +136,7 @@ def test_apply_writer_output_removes_dropped_entries(resume) -> None:
             dropped_project,
             dropped_project_bullet,
         ],
-        rationale="Drop irrelevant experience and project entries.",
-    )
+        rationale="Drop irrelevant experience and project entries.")
 
     tailored = apply(resume, output, _sample_analysis())
 
@@ -174,8 +168,7 @@ def test_apply_writer_output_removes_dropped_entries(resume) -> None:
 
 
 def test_enumerate_bullet_paths_covers_every_experience_and_project_bullet(
-    resume,
-) -> None:
+    resume) -> None:
     """``enumerate_bullet_paths`` returns one path per experience/project bullet."""
     paths = enumerate_bullet_paths(resume)
     expected_count = sum(len(e.bullets) for e in resume.experience) + sum(
@@ -202,8 +195,7 @@ def test_rephrase_missing_bullets_test_model_returns_originals(resume) -> None:
         missing,
         _sample_analysis(),
         model_instance=TestModel(),
-        model_string=None,
-    )
+        model_string=None)
     assert set(out.keys()) == {p for p, _ in missing}
     for path, original in missing:
         assert out[path] == [original]
@@ -240,8 +232,7 @@ def test_rephrase_missing_bullets_invokes_agent(monkeypatch, resume) -> None:
         [("experiences[0].bullets[0]", "Original text here.")],
         _sample_analysis(),
         model_instance=sentinel,  # type: ignore[arg-type]
-        model_string=None,
-    )
+        model_string=None)
     assert "init_kwargs" in captured, "Agent was not constructed"
     assert "Original text here." in captured["payload"]
     assert "experiences[0].bullets[0]" in captured["payload"]
@@ -273,8 +264,7 @@ def test_writer_rephrases_every_bullet_in_production(monkeypatch, resume) -> Non
                 for c in tailored.grounding
                 if c.tailored_path == path
             ),
-            None,
-        )
+            None)
         assert rewritten is not None, f"no rewrite record for {path}"
         # Find the matching bullet in the tailored output.
         if path.startswith("experiences["):

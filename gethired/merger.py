@@ -20,8 +20,7 @@ from pydantic_ai import Agent
 
 from gethired.description import (
     Analysis,
-    consolidate,
-)
+    consolidate)
 from gethired.exceptions import TailorError
 from gethired.provider import resolve_model
 
@@ -75,8 +74,7 @@ MERGER_INSTRUCTIONS: tuple[str, ...] = (
     "- nice_to_have_keywords: intersection — keep only keywords every JD considers nice.",
     "- keywords: must-haves first (highest priority), then nice-to-haves, deduplicated.",
     "- responsibilities: union of all responsibility sentences, deduplicated, input order.",
-    "Return ONLY the JSON object matching the schema. No prose, no markdown fences.",
-)
+    "Return ONLY the JSON object matching the schema. No prose, no markdown fences.")
 """System instructions for the merger agent."""
 
 
@@ -119,8 +117,7 @@ def merge_job_descriptions(
     jds: tuple[Job, ...],
     *,
     model: str | None = None,
-    model_instance: object | None = None,
-) -> Analysis:
+    model_instance: object | None = None) -> Analysis:
     """Run the LLM-driven merger.
 
     Args:
@@ -144,9 +141,8 @@ def merge_job_descriptions(
         agent: Agent[None, MergeResult] = Agent(
             model_obj,
             output_type=MergeResult,
-            instructions=list(MERGER_INSTRUCTIONS),
-        )
-        result = agent.run_sync(_build_prompt(jds))
+            instructions=list(MERGER_INSTRUCTIONS))
+        result = agent.run_sync(build_prompt(jds))
         merged: MergeResult = result.output
         return Analysis(
             role=merged.role,
@@ -155,8 +151,7 @@ def merge_job_descriptions(
             nice_to_have=tuple(merged.nice_to_have_keywords),
             keywords=tuple(merged.keywords),
             responsibilities=tuple(merged.responsibilities),
-            company=merged.company,
-        )
+            company=merged.company)
     except MergeError:
         raise
     except Exception as exc:
@@ -168,8 +163,7 @@ def safe_merge(
     *,
     model: str | None = None,
     model_instance: object | None = None,
-    warn: bool = True,
-) -> Analysis:
+    warn: bool = True) -> Analysis:
     """Run :func:`merge_job_descriptions`; on ``MergeError`` (or when the
     injected model is a TestModel), fall back to
     :func:`gethired.description.consolidate`.
@@ -193,8 +187,7 @@ def safe_merge(
         if warn:
             print(
                 f"warning: LLM merge failed ({exc}); falling back to programmatic consolidation",
-                file=sys.stderr,
-            )
+                file=sys.stderr)
         return consolidate(jds)
 
 

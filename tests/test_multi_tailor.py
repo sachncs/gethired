@@ -22,9 +22,8 @@ SAMPLE_JD_A = Job(
     ),
     keywords=("python", "kubernetes"),
     must_have_keywords=("python", "kubernetes"),
-    nice_to_have_keywords=("pytorch",),
-    content_hash="a",
-)
+    nice_to_have_keywords=("pytorch"),
+    content_hash="a")
 
 SAMPLE_JD_B = Job(
     url="https://example.com/jd-b",
@@ -36,8 +35,7 @@ SAMPLE_JD_B = Job(
     keywords=("python", "aws"),
     must_have_keywords=("python", "aws"),
     nice_to_have_keywords=("kubernetes", "pytorch"),
-    content_hash="b",
-)
+    content_hash="b")
 
 
 def _realistic_test_model(jds: tuple[Job, ...]) -> TestModel:
@@ -50,8 +48,7 @@ def _realistic_test_model(jds: tuple[Job, ...]) -> TestModel:
         must_have_keywords=list(consolidated.must_have),
         nice_to_have_keywords=list(consolidated.nice_to_have),
         keywords=list(consolidated.keywords),
-        responsibilities=list(consolidated.responsibilities),
-    )
+        responsibilities=list(consolidated.responsibilities))
     return TestModel(custom_output_args=payload)
 
 
@@ -66,8 +63,7 @@ def test_tailor_accepts_multiple_job_descriptions(resume) -> None:
         resume=resume,
         job_description=(SAMPLE_JD_A, SAMPLE_JD_B),
         model="test",
-        model_instance=TestModel(),
-    )
+        model_instance=TestModel())
     result = tailor.run()
     # Contact must round-trip from master
     assert result.contact.email == resume.email
@@ -88,8 +84,7 @@ def test_tailor_with_multiple_jds_uses_llm_merge(monkeypatch: pytest.MonkeyPatch
     realistic_model = _realistic_test_model((SAMPLE_JD_A, SAMPLE_JD_B))
     monkeypatch.setattr(
         "gethired.tailor.safe_merge",
-        lambda jds, **_kw: merge_job_descriptions(jds, model_instance=realistic_model),
-    )
+        lambda jds, **_kw: merge_job_descriptions(jds, model_instance=realistic_model))
     merged = merge_job_descriptions(
         (SAMPLE_JD_A, SAMPLE_JD_B), model_instance=realistic_model
     )
@@ -116,8 +111,7 @@ def test_tailor_safe_merge_used_in_pipeline(
         job_description=(SAMPLE_JD_A, SAMPLE_JD_B),
         model="test",
         model_instance=TestModel(),
-        tailored_dir=tmp_path,
-    )
+        tailored_dir=tmp_path)
     tailor.run()
     assert captured, "safe_merge was not invoked"
     assert captured[0] == (SAMPLE_JD_A, SAMPLE_JD_B)
@@ -134,8 +128,7 @@ def test_tailor_run_with_multiple_jds_persists_artifacts(resume, tmp_path) -> No
         job_description=(SAMPLE_JD_A, SAMPLE_JD_B),
         model="test",
         model_instance=TestModel(),
-        tailored_dir=tmp_path,
-    )
+        tailored_dir=tmp_path)
     result = tailor.run()
     run_dir = tmp_path / result.run.id
     # The run-id is a UUID
@@ -156,8 +149,7 @@ def test_tailor_run_with_multiple_jds_persists_artifacts(resume, tmp_path) -> No
 
 
 def test_safe_merge_keeps_programmatic_fallback_intact(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    monkeypatch: pytest.MonkeyPatch) -> None:
     """If the LLM merger raises, ``safe_merge`` falls back to programmatic consolidate."""
     def boom(*_args: object, **_kwargs: object) -> None:
         raise MergeError("simulated outage")

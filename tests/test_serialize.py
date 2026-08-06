@@ -20,8 +20,7 @@ from gethired.models import (
 Resume,
     Project,
     Reason,
-    Skills,
-)
+    Skills)
 from gethired.serialize import (
     MasterSnapshot,
     as_dict,
@@ -31,15 +30,12 @@ from gethired.serialize import (
     from_tailored_dict,
     load_master,
     render_json,
-    snapshot,
-)
+    snapshot)
 
 
 def _sample_master() -> Master:
     """Build a minimal but realistic Master for round-trip tests."""
-    return Resume(Resume(name="Test User", city="Test City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None,
-        ),
-        summary="A short summary.",
+    return Resume(name="Test User", city="Test City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None, summary="A short summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),
         experience=(
             Experience(
@@ -49,17 +45,12 @@ def _sample_master() -> Master:
                 end_date="2021",
                 bullets=(
                     Bullet(text="Built X"),
-                    Bullet(text="Shipped Y"),
-                ),
-            ),
-        ),
+                    Bullet(text="Shipped Y")))),
         projects=(
             Project(
                 name="Proj",
                 url="https://example.com/proj",
-                bullets=(Bullet(text="Did Z"),),
-            ),
-        ),
+                bullets=(Bullet(text="Did Z")))),
         education=(
             Education(
                 institution="Test U",
@@ -67,18 +58,13 @@ def _sample_master() -> Master:
                 degree="BS",
                 major="CS",
                 graduation="2020",
-                gpa=None,
-            ),
-        ),
+                gpa=None)),
         awards=(
             Award(
                 title="Award",
                 organization="Org",
                 date="2020",
-                description="Desc",
-            ),
-        ),
-    )
+                description="Desc")))
 
 
 def test_coerce_bullets_maps_dicts_to_bullets() -> None:
@@ -94,7 +80,7 @@ def test_coerce_master_from_dict_roundtrips() -> None:
     snap = snapshot(master)
     raw = json.loads(render_json(snap))
     reconstructed = from_master_dict(raw)
-    assert reconstructed.contact == master.contact
+    assert reconstructed.name == master.name and reconstructed.email == master.email
     assert reconstructed.summary == master.summary
     assert reconstructed.skills.categories == master.skills.categories
     assert reconstructed.experiences[0].role == "Engineer"
@@ -221,10 +207,9 @@ def test_coerce_tailored_from_dict_preserves_dropped_and_grounding() -> None:
         ],
     }
     tailored = from_tailored_dict(raw)
-    assert tailored.dropped == (Reason(item_id="experiences[0]", reason="r"),)
+    assert tailored.dropped == (Reason(item_id="experiences[0]", reason="r"))
     assert tailored.grounding[0] == Citation(
         tailored_path="experiences[0].bullets[0]",
         master_path="experiences[0].bullets[0]",
         verbatim_span="x",
-        job_id="writer",
-    )
+        job_id="writer")

@@ -18,8 +18,7 @@ from gethired.parser import (
     extract_summary,
     find_balanced_args,
     find_macro_invocations,
-    strip_comments,
-)
+    strip_comments)
 
 
 def test_strip_comments_removes_percent_lines() -> None:

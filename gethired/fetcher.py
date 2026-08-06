@@ -24,8 +24,7 @@ from gethired.constants import (
     CACHE_DAYS,
     KEYWORDS_FALLBACK,
     KEYWORDS_MAX,
-    RETRIES,
-)
+    RETRIES)
 from gethired.exceptions import AntiBotError, FetchError
 from gethired.models import Job
 from gethired.observability import Logger, logger
@@ -47,8 +46,7 @@ ANTIBOT_HEADER_MARKERS: Final[tuple[str, ...]] = (
     "cf-chl-bypass",
     "x-amzn-waf-action",
     "x-amz-waf-action",
-    "akamai",
-)
+    "akamai")
 """Header substrings (lowercased) whose presence classifies a response as an anti-bot challenge."""
 
 
@@ -113,8 +111,7 @@ class Fetcher:
                 url_hash=url_hash,
                 content_hash=content_hash,
                 fetched_at=datetime.now(UTC).isoformat(),
-                raw_html=raw_html,
-            )
+                raw_html=raw_html)
         )
         return self.__parse(raw_html, url, content_hash)
 
@@ -125,8 +122,7 @@ class Fetcher:
                 with httpx.Client(
                     headers={"User-Agent": USER_AGENT},
                     timeout=FETCH_TIMEOUT_SECONDS,
-                    follow_redirects=True,
-                ) as client:
+                    follow_redirects=True) as client:
                     response_value = client.get(url)
                     antibot = classify_antibot(url, response_value)
                     if antibot is not None:
@@ -134,8 +130,7 @@ class Fetcher:
                             "anti-bot challenge detected; not retrying",
                             url=url,
                             status=antibot.status,
-                            markers=list(antibot.markers),
-                        )
+                            markers=list(antibot.markers))
                         raise antibot
                     response_value.raise_for_status()
                     return response_value.text
@@ -149,8 +144,7 @@ class Fetcher:
                     url=url,
                     attempt=attempt,
                     error=str(exc),
-                    backoff_seconds=backoff_seconds,
-                )
+                    backoff_seconds=backoff_seconds)
                 if attempt < self.max_attempts:
                     time.sleep(backoff_seconds)
         raise FetchError(f"Failed to fetch {url} after {self.max_attempts} attempts: {last_exc}")
@@ -169,8 +163,7 @@ class Fetcher:
                 url_hash=data_dict["url_hash"],
                 content_hash=data_dict["content_hash"],
                 fetched_at=data_dict["fetched_at"],
-                raw_html=data_dict["raw_html"],
-            )
+                raw_html=data_dict["raw_html"])
         except (json.JSONDecodeError, KeyError):
             return None
 
@@ -202,8 +195,7 @@ class Fetcher:
 def jsonld(html: str) -> dict | None:
     pattern = re.compile(
         r'<script[^>]*type="application/ld\+json"[^>]*>(.*?)</script>',
-        re.DOTALL | re.IGNORECASE,
-    )
+        re.DOTALL | re.IGNORECASE)
     for match in pattern.finditer(html):
         try:
             data_dict = json.loads(match.group(1))
@@ -241,8 +233,7 @@ def from_jsonld(data: dict, url: str, content_hash: str) -> Job:
         keywords=extracted_keywords,
         must_have_keywords=must_have,
         nice_to_have_keywords=nice_to_have,
-        content_hash=content_hash,
-    )
+        content_hash=content_hash)
 
 
 def from_text(text: str, url: str, content_hash: str) -> Job:
@@ -254,8 +245,7 @@ def from_text(text: str, url: str, content_hash: str) -> Job:
         keywords=keywords(text),
         must_have_keywords=(),
         nice_to_have_keywords=keywords(text),
-        content_hash=content_hash,
-    )
+        content_hash=content_hash)
 
 
 KEYWORD_STOPWORDS: Final[frozenset[str]] = frozenset(

@@ -15,8 +15,7 @@ Resume,
     Run,
     RunResult,
     Skills,
-    Tailored,
-)
+    Tailored)
 from gethired.renderer import tex, text
 from gethired.validator import (
     AtsGate,
@@ -26,8 +25,7 @@ from gethired.validator import (
     grounding,
     pdf_guard,
     plagiarism,
-    style,
-)
+    style)
 
 
 def _make_tailored(master: Resume) -> Tailored:
@@ -40,8 +38,7 @@ def _make_tailored(master: Resume) -> Tailored:
         total_output_tokens=0,
         retry_attempts=0,
         final_outcome=Outcome.SUCCESS,
-        jobs=(),
-    )
+        jobs=())
     return Tailored(
         name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=master.summary,
@@ -54,8 +51,7 @@ def _make_tailored(master: Resume) -> Tailored:
         rationale="identity",
         grounding=(),
         jobs=(),
-        run_result=run_result,
-    )
+        run_result=run_result)
 
 
 def test_grounding_passes_for_identity_transform(resume) -> None:
@@ -93,8 +89,7 @@ def test_grounding_detects_invented_skill(resume) -> None:
         rationale="",
         grounding=(),
         jobs=(),
-        run_result=tailored.run_result,
-    )
+        run_result=tailored.run_result)
     violations = grounding(fake, resume)
     skill_violations = [v for v in violations if v.detail.startswith("Skill 'QuantumScript'")]
     assert skill_violations, (
@@ -126,8 +121,7 @@ def test_grounding_detects_invented_number(resume) -> None:
         rationale="",
         grounding=(),
         jobs=(),
-        run_result=tailored.run_result,
-    )
+        run_result=tailored.run_result)
     violations = grounding(fake, resume)
     number_violations = [v for v in violations if "99999999" in v.detail]
     assert number_violations, (
@@ -149,8 +143,7 @@ def test_style_detects_banned_word(resume) -> None:
         rationale="",
         grounding=(),
         jobs=(),
-        run_result=tailored.run_result,
-    )
+        run_result=tailored.run_result)
     violations = style(fake)
     assert any("leverage" in v.detail.lower() for v in violations)
 
@@ -162,12 +155,11 @@ def test_plagiarism_passes_for_identity_transform(resume) -> None:
         title="ML Engineer",
         company="Acme",
         full_text="some completely unrelated job description text here",
-        keywords=("python",),
+        keywords=("python"),
         must_have_keywords=(),
-        nice_to_have_keywords=("python",),
-        content_hash="abc",
-    )
-    violations = plagiarism(tailored, (jd,))
+        nice_to_have_keywords=("python"),
+        content_hash="abc")
+    violations = plagiarism(tailored, (jd))
     assert violations == ()
 
 
@@ -183,8 +175,7 @@ def test_plagiarism_detects_5gram_overlap(resume) -> None:
         keywords=(),
         must_have_keywords=(),
         nice_to_have_keywords=(),
-        content_hash="abc",
-    )
+        content_hash="abc")
     tailored = _make_tailored(resume)
     fake = Tailored(
         name=resume.name,email=resume.email,city=resume.city,phone=resume.phone,github=resume.github,linkedin=resume.linkedin,
@@ -197,9 +188,7 @@ def test_plagiarism_detects_5gram_overlap(resume) -> None:
                 company="Acme",
                 start_date="Jan 2020",
                 end_date="Dec 2020",
-                bullets=(Bullet(text=f"Worked on {shared_phrase} for enterprise customers."),),
-            ),
-        ),
+                bullets=(Bullet(text=f"Worked on {shared_phrase} for enterprise customers.")))),
         projects=resume.projects,
         education=resume.education,
         awards=resume.awards,
@@ -207,9 +196,8 @@ def test_plagiarism_detects_5gram_overlap(resume) -> None:
         rationale="",
         grounding=(),
         jobs=(),
-        run_result=tailored.run_result,
-    )
-    violations = plagiarism(fake, (jd,))
+        run_result=tailored.run_result)
+    violations = plagiarism(fake, (jd))
     expected_5gram = "designed and deployed isolated ai"
     assert any(expected_5gram in v.ngram for v in violations), (
         f"Expected 5-gram {expected_5gram!r} not found in violations: "
@@ -321,9 +309,8 @@ def test_advisory_gate_failure_is_not_blocking(resume) -> None:
         keywords=("python", "kubernetes", "docker", "terraform", "kafka"),
         must_have_keywords=("terraform", "kafka"),
         nice_to_have_keywords=(),
-        content_hash="jd",
-    )
-    report = ats(tailored, t, None, t2, (jd,))
+        content_hash="jd")
+    report = ats(tailored, t, None, t2, (jd))
     assert AtsGate.KEYWORDS_COVERED in report.advisory_failed_gates
     assert AtsGate.KEYWORDS_COVERED.tier is GateTier.ADVISORY
     assert report.hard_failed_gates == ()
@@ -393,6 +380,5 @@ def test_pdf_artefact_status_accepts_custom_skip_and_missing_details() -> None:
     missing = pdf_guard(
         Path("/nope.pdf"),
         AtsGate.PDF_COMPILES,
-        missing_detail="custom missing",
-    )
+        missing_detail="custom missing")
     assert missing is not None and missing.detail == "custom missing"

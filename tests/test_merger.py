@@ -12,8 +12,7 @@ from gethired.merger import (
     MergeError,
     MergeResult,
     merge_job_descriptions,
-    safe_merge,
-)
+    safe_merge)
 from gethired.models import Job
 
 SAMPLE_JD_A = Job(
@@ -26,9 +25,8 @@ SAMPLE_JD_A = Job(
     ),
     keywords=("python", "kubernetes"),
     must_have_keywords=("python", "kubernetes"),
-    nice_to_have_keywords=("pytorch",),
-    content_hash="a",
-)
+    nice_to_have_keywords=("pytorch"),
+    content_hash="a")
 
 SAMPLE_JD_B = Job(
     url="https://example.com/jd-b",
@@ -40,8 +38,7 @@ SAMPLE_JD_B = Job(
     keywords=("python", "aws"),
     must_have_keywords=("python", "aws"),
     nice_to_have_keywords=("kubernetes", "pytorch"),
-    content_hash="b",
-)
+    content_hash="b")
 
 
 def _custom_test_model(jds: tuple[Job, ...]) -> TestModel:
@@ -59,8 +56,7 @@ def _custom_test_model(jds: tuple[Job, ...]) -> TestModel:
         must_have_keywords=list(consolidated.must_have),
         nice_to_have_keywords=list(consolidated.nice_to_have),
         keywords=list(consolidated.keywords),
-        responsibilities=list(consolidated.responsibilities),
-    )
+        responsibilities=list(consolidated.responsibilities))
     return TestModel(custom_output_args=payload)
 
 
@@ -80,8 +76,8 @@ def test_merge_two_jds_unions_must_haves_and_intersects_nice() -> None:
 
 def test_merge_single_jd_invokes_llm_with_one_input() -> None:
     """Single-JD path also runs the LLM merger (always-merge policy)."""
-    test_model = _custom_test_model((SAMPLE_JD_A,))
-    merged = merge_job_descriptions((SAMPLE_JD_A,), model_instance=test_model)
+    test_model = _custom_test_model((SAMPLE_JD_A))
+    merged = merge_job_descriptions((SAMPLE_JD_A), model_instance=test_model)
     assert isinstance(merged.role, str) and merged.role
     assert "python" in merged.must_have
 
@@ -112,13 +108,12 @@ def test_merge_failure_wraps_llm_errors() -> None:
 
     with pytest.raises(MergeError):
         merge_job_descriptions(
-            (SAMPLE_JD_A,), model="MiniMax-M3", model_instance=BrokenModel()
+            (SAMPLE_JD_A), model="MiniMax-M3", model_instance=BrokenModel()
         )
 
 
 def test_safe_merge_falls_back_to_consolidate_on_merge_failure(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
+    monkeypatch: pytest.MonkeyPatch) -> None:
     """``safe_merge`` falls back to programmatic consolidate on ``MergeError``."""
 
     def boom(*_args: object, **_kwargs: object) -> None:
@@ -143,7 +138,6 @@ def test_safe_merge_short_circuits_when_model_instance_is_test_model() -> None:
     merged = safe_merge(
         (SAMPLE_JD_A, SAMPLE_JD_B),
         model_instance=TestModel(),  # default: every field == "a"
-        warn=False,
-    )
+        warn=False)
     assert "python" in merged.must_have
     assert "aws" in merged.must_have

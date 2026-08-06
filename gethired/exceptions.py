@@ -36,8 +36,7 @@ class AntiBotError(FetchError):
         self,
         url: str,
         status: int,
-        markers: tuple[str, ...],
-    ) -> None:
+        markers: tuple[str, ...]) -> None:
         marker_blob = ", ".join(markers)
         super().__init__(f"Anti-bot challenge for {url}: HTTP {status} (markers: {marker_blob})")
         self.url = url

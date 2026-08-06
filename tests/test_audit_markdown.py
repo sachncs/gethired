@@ -9,14 +9,13 @@ def test_audit_markdown_includes_hard_advisory_and_skipped() -> None:
     """The markdown render surfaces every gate tier when present."""
     report = AuditReport(
         run_id="abc",
-        grounding_violations=("g1: detail",),
-        style_violations=("s1: detail",),
-        plagiarism_violations=("p1: 5gram",),
+        grounding_violations=("g1: detail"),
+        style_violations=("s1: detail"),
+        plagiarism_violations=("p1: 5gram"),
         ats_passed=False,
-        ats_failed_gates=("pdf_compiles",),
-        ats_advisory_failed_gates=("bullets_quantified",),
-        ats_skipped_gates=("length_within_limit",),
-    )
+        ats_failed_gates=("pdf_compiles"),
+        ats_advisory_failed_gates=("bullets_quantified"),
+        ats_skipped_gates=("length_within_limit"))
     md = audit_markdown(report)
     assert "Hard-failed gates" in md
     assert "pdf_compiles" in md
@@ -39,8 +38,7 @@ def test_audit_markdown_omits_empty_sections() -> None:
         ats_passed=True,
         ats_failed_gates=(),
         ats_advisory_failed_gates=(),
-        ats_skipped_gates=(),
-    )
+        ats_skipped_gates=())
     md = audit_markdown(report)
     assert "Hard-failed gates" not in md
     assert "Advisory-failed gates" not in md

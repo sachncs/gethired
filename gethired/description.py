@@ -19,8 +19,7 @@ MARKERS: Final[tuple[str, ...]] = (
     "your role",
     "what you'll do",
     "key responsibilities",
-    "the role involves",
-)
+    "the role involves")
 """Sentence prefixes that signal a job-description responsibility statement."""
 
 SENIORITY_KEYWORDS: Final[tuple[tuple[str, str], ...]] = (
@@ -29,8 +28,7 @@ SENIORITY_KEYWORDS: Final[tuple[tuple[str, str], ...]] = (
     ("senior", "senior"),
     ("lead", "lead"),
     ("junior", "junior"),
-    ("intern", "intern"),
-)
+    ("intern", "intern"))
 """(search_keyword, label) pairs used to infer seniority from JD text."""
 
 SENIORITY_RANK: Final[dict[str, int]] = {
@@ -83,8 +81,7 @@ def analyze(description: Job) -> Analysis:
         nice_to_have=description.nice_to_have_keywords,
         keywords=description.must_have_keywords + description.nice_to_have_keywords[:5],
         responsibilities=tuple(s for s in sentences if looks_like_responsibility(s)),
-        company=description.company,
-    )
+        company=description.company)
 
 
 def union_skills(analyses: tuple[Analysis, ...]) -> list[str]:
@@ -158,8 +155,7 @@ def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
     analyses = tuple(analyze_description(jd) for jd in descriptions)
     top_seniority = max(
         analyses,
-        key=lambda a: SENIORITY_RANK.get(a.seniority, 0),
-    ).seniority
+        key=lambda a: SENIORITY_RANK.get(a.seniority, 0)).seniority
     companies = tuple(dict.fromkeys(jd.company for jd in descriptions if jd.company))
     return Analysis(
         role=descriptions[0].title or UNKNOWN_ROLE,
@@ -168,8 +164,7 @@ def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
         nice_to_have=intersect_skills(analyses),
         keywords=merged_keywords(analyses),
         responsibilities=union_responsibilities(analyses),
-        company=", ".join(companies),
-    )
+        company=", ".join(companies))
 
 
 # Re-exported under the original multi-word names for backwards compatibility.
@@ -211,8 +206,7 @@ def overlay_for_jd(merged: Analysis, jd: Job) -> Analysis:
         nice_to_have=merged.nice_to_have,
         keywords=merged.keywords,
         responsibilities=responsibilities,
-        company=company,
-    )
+        company=company)
 
 
 def split_sentences(text: str) -> tuple[str, ...]:
