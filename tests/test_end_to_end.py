@@ -198,7 +198,7 @@ def test_end_to_end_multi_jd_run_persists_combined_match_report(tmp_path: Path) 
         full_text="Staff ML Engineer. Must have: Python, AWS, Kubernetes.",
         keywords=("python", "aws", "kubernetes"),
         must_have_keywords=("python", "aws"),
-        nice_to_have_keywords=("kubernetes"),
+        nice_to_have_keywords=("kubernetes",),
         content_hash="b")
     tailor = Tailor(
         resume="sample.tex",
@@ -228,7 +228,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
         full_text="Staff Backend Engineer. You will lead API design.",
         keywords=("python", "aws"),
         must_have_keywords=("python", "aws"),
-        nice_to_have_keywords=("kubernetes"),
+        nice_to_have_keywords=("kubernetes",),
         content_hash="b")
     master = parse_tex("sample.tex")
     analysis = consolidate((SAMPLE_JD, jd_b))

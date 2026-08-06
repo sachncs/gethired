@@ -25,7 +25,7 @@ SAMPLE_JD_A = Job(
     ),
     keywords=("python", "kubernetes"),
     must_have_keywords=("python", "kubernetes"),
-    nice_to_have_keywords=("pytorch"),
+    nice_to_have_keywords=("pytorch",),
     content_hash="a")
 
 SAMPLE_JD_B = Job(

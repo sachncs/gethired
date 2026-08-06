@@ -93,7 +93,7 @@ def _two_jds() -> list[Job]:
             full_text="Senior ML Engineer at Acme. You will design platforms.",
             keywords=("python"),
             must_have_keywords=("python", "kubernetes"),
-            nice_to_have_keywords=("pytorch"),
+            nice_to_have_keywords=("pytorch",),
             content_hash="a"),
         Job(
             url="https://b.example/jd",

@@ -165,5 +165,5 @@ def _fake_jd(url: str) -> Job:
         full_text="We need a Python engineer.",
         keywords=("python", "engineer"),
         must_have_keywords=("python"),
-        nice_to_have_keywords=("engineer"),
+        nice_to_have_keywords=("engineer",),
         content_hash="deadbeef")

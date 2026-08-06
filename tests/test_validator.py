@@ -157,7 +157,7 @@ def test_plagiarism_passes_for_identity_transform(resume) -> None:
         full_text="some completely unrelated job description text here",
         keywords=("python"),
         must_have_keywords=(),
-        nice_to_have_keywords=("python"),
+        nice_to_have_keywords=("python",),
         content_hash="abc")
     violations = plagiarism(tailored, (jd))
     assert violations == ()
