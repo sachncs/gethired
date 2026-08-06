@@ -231,7 +231,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
         nice_to_have_keywords=("kubernetes",),
         content_hash="b")
     master = parse_tex("sample.tex")
-    analysis = consolidate((SAMPLE_JD, jd_b))
+    analysis = consolidate((SAMPLE_JD, jd_b,))
     voice = build_profile(master)
     per_b = overlay_for_jd(analysis, jd_b)
     cover_b = compose(master, per_b, voice)

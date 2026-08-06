@@ -159,7 +159,7 @@ def test_plagiarism_passes_for_identity_transform(resume) -> None:
         must_have_keywords=(),
         nice_to_have_keywords=("python",),
         content_hash="abc")
-    violations = plagiarism(tailored, (jd))
+    violations = plagiarism(tailored, (jd,))
     assert violations == ()
 
 
@@ -197,7 +197,7 @@ def test_plagiarism_detects_5gram_overlap(resume) -> None:
         grounding=(),
         jobs=(),
         run_result=tailored.run_result)
-    violations = plagiarism(fake, (jd))
+    violations = plagiarism(fake, (jd,))
     expected_5gram = "designed and deployed isolated ai"
     assert any(expected_5gram in v.ngram for v in violations), (
         f"Expected 5-gram {expected_5gram!r} not found in violations: "

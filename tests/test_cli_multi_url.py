@@ -401,7 +401,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
     """N=1 path: writes ``cover_letter.md`` (backward-compatible)."""
     master = _make_master()
     jd = _two_jds()[0]
-    analysis = consolidate((jd))
+    analysis = consolidate((jd,))
 
     class FakeTailor:
         def __init__(self, **_kwargs):

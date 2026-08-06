@@ -640,7 +640,7 @@ def critic_runner(task: TaskDefinition) -> tuple[dict[str, Any], dict[str, Any]]
 
     grounding_violations = grounding(tailored, master)
     style_violations = style(tailored)
-    plagiarism_violations = plagiarism(tailored, (jd))
+    plagiarism_violations = plagiarism(tailored, (jd,))
     return (
         {
             "master": master,
