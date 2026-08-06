@@ -26,12 +26,12 @@ from gethired.cover_letter import (
 )
 from gethired.critic import Critic
 from gethired.description import analyze_description
-from gethired.description import consolidate as consolidate_analysis
 from gethired.exceptions import (
     ConfigError,
     TailorError,
 )
 from gethired.fetcher import Fetcher
+from gethired.merger import safe_merge
 from gethired.models import (
     Job,
     Master,
@@ -162,10 +162,12 @@ class Tailor:
             master = self.__load_master()
             jds = self.__load_jds()
             profile = build_profile(master)
-            if len(jds) > 1:
-                analysis = consolidate_analysis(jds)
-            elif jds:
-                analysis = analyze_description(jds[0])
+            if jds:
+                analysis = safe_merge(
+                    jds,
+                    model=self.model,
+                    model_instance=self.model_instance,
+                )
             else:
                 analysis = None
 
@@ -240,15 +242,22 @@ class Tailor:
 
         self.__persist(tailored_with_jobs, tex_source, txt_source, ats_report)
 
+        final = replace(
+            tailored_with_jobs,
+            master=master,
+            jds=jds,
+            analysis=analysis,
+        )
+
         if self.produce_cover_letter and analysis is not None:
             cover_result = compose(master=master, analysis=analysis, voice=profile)
             cover_md = markdown(cover_result.letter)
-            run_dir = self.tailored_dir / tailored_with_jobs.run.id
+            run_dir = self.tailored_dir / final.run.id
             (run_dir / "cover_letter.md").write_text(cover_md)
             self.logger.info("Cover letter written", path=str(run_dir / "cover_letter.md"))
-            return tailored_with_jobs
+            return final
 
-        return tailored_with_jobs
+        return final
 
     def plan(self) -> dict[str, object]:
         """Estimate cost without executing the agent.
@@ -259,10 +268,12 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        if len(jds) > 1:
-            analysis = consolidate_analysis(jds)
-        elif jds:
-            analysis = analyze_description(jds[0])
+        if jds:
+            analysis = safe_merge(
+                jds,
+                model=self.model,
+                model_instance=self.model_instance,
+            )
         else:
             analysis = None
 
@@ -293,10 +304,12 @@ class Tailor:
         master = self.__load_master()
         jds = self.__load_jds()
         profile = build_profile(master)
-        if len(jds) > 1:
-            analysis = consolidate_analysis(jds)
-        elif jds:
-            analysis = analyze_description(jds[0])
+        if jds:
+            analysis = safe_merge(
+                jds,
+                model=self.model,
+                model_instance=self.model_instance,
+            )
         else:
             analysis = None
         bullets = sum(len(exp.bullets) for exp in master.experiences) + sum(

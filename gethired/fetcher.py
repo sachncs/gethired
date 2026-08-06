@@ -26,7 +26,7 @@ from gethired.constants import (
     KEYWORDS_MAX,
     RETRIES,
 )
-from gethired.exceptions import FetchError
+from gethired.exceptions import AntiBotError, FetchError
 from gethired.models import Job
 from gethired.observability import Logger, logger
 
@@ -36,6 +36,37 @@ USER_AGENT: Final[str] = (
     "Chrome/120.0.0.0 Safari/537.36"
 )
 FETCH_TIMEOUT_SECONDS: Final[float] = 30.0
+
+ANTIBOT_STATUSES: Final[frozenset[int]] = frozenset({403, 503})
+"""HTTP statuses that, when paired with a WAF marker, signal an anti-bot challenge."""
+
+ANTIBOT_HEADER_MARKERS: Final[tuple[str, ...]] = (
+    "server: cloudflare",
+    "cf-ray",
+    "cf-mitigated",
+    "cf-chl-bypass",
+    "x-amzn-waf-action",
+    "x-amz-waf-action",
+    "akamai",
+)
+"""Header substrings (lowercased) whose presence classifies a response as an anti-bot challenge."""
+
+
+def _classify_antibot(url: str, response_value: httpx.Response) -> AntiBotError | None:
+    """Return an ``AntiBotError`` if the response looks like a WAF/anti-bot block.
+
+    None when the response is not an anti-bot block — caller treats it as a regular
+    transient failure and retries.
+    """
+    if response_value.status_code not in ANTIBOT_STATUSES:
+        return None
+    headers_blob = " ".join(
+        f"{k.lower()}: {v.lower()}" for k, v in response_value.headers.items()
+    )
+    matched = tuple(m for m in ANTIBOT_HEADER_MARKERS if m in headers_blob)
+    if not matched:
+        return None
+    return AntiBotError(url, response_value.status_code, matched)
 
 
 @dataclass(frozen=True, slots=True)
@@ -97,8 +128,19 @@ class Fetcher:
                     follow_redirects=True,
                 ) as client:
                     response_value = client.get(url)
+                    antibot = _classify_antibot(url, response_value)
+                    if antibot is not None:
+                        logger.warning(
+                            "anti-bot challenge detected; not retrying",
+                            url=url,
+                            status=antibot.status,
+                            markers=list(antibot.markers),
+                        )
+                        raise antibot
                     response_value.raise_for_status()
                     return response_value.text
+            except AntiBotError:
+                raise
             except (httpx.HTTPError, httpx.StreamError) as exc:
                 last_exc = exc
                 backoff_seconds = 2 ** (attempt - 1)
@@ -328,4 +370,4 @@ def tier(data: dict, text: str) -> tuple[tuple[str, ...], tuple[str, ...]]:
     return tuple(must_have), tuple(nice_to_have)
 
 
-__all__ = ["CacheEntry", "Fetcher"]
+__all__ = ["ANTIBOT_HEADER_MARKERS", "ANTIBOT_STATUSES", "CacheEntry", "Fetcher"]

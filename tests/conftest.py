@@ -7,6 +7,8 @@ from pathlib import Path
 
 import pytest
 
+from gethired.constants import DATA_DIR
+from gethired.constants import MASTER as MASTER_PATH
 from gethired.parser import parse_tex as tex
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -17,6 +19,21 @@ FIXTURES_DIR = Path(__file__).parent / "fixtures"
 def disable_pdf_compilation() -> None:
     """Set ``LATEX_ENGINE=none`` for the entire test session."""
     os.environ.setdefault("LATEX_ENGINE", "none")
+
+
+@pytest.fixture(autouse=True)
+def _clean_master_cache() -> None:
+    """Delete ``data/master.json`` before each test.
+
+    The CLI's ``Tailor.__load_master`` short-circuits to the cached JSON when
+    it exists. Real pipeline runs (``gethired run --resume ...``) overwrite it
+    with whatever resume was last parsed, which would poison tests that
+    expect ``sample.tex``'s placeholder data. Each test gets a clean slate
+    so the parser runs from the ``.tex`` file.
+    """
+    cache = PROJECT_ROOT / DATA_DIR / Path(MASTER_PATH).name
+    if cache.exists():
+        cache.unlink()
 
 
 @pytest.fixture(scope="session")

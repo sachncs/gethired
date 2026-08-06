@@ -9,6 +9,8 @@ These exercise the public command surface declared in ``gethired.cli``:
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -133,6 +135,30 @@ def test_fetch_uses_jd_cache(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) ->
     )
     assert result.exit_code == 0, result.stderr or result.stdout
     assert "Fetched" in (result.stdout or result.stderr)
+
+
+def test_cli_loads_dotenv_at_import(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """``cli`` calls ``dotenv.load_dotenv`` at import so ``.env`` is picked up."""
+    env_file = tmp_path / ".env"
+    env_file.write_text("GETHIRED_TEST_DOTENV_KEY=loaded\n")
+    monkeypatch.chdir(tmp_path)
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import os, gethired.cli; "
+            "print(os.environ.get('GETHIRED_TEST_DOTENV_KEY', ''))",
+        ],
+        capture_output=True,
+        text=True,
+        cwd=tmp_path,
+        check=False,
+    )
+    assert result.stdout.strip() == "loaded", (
+        f".env not loaded: stdout={result.stdout!r} stderr={result.stderr!r}"
+    )
 
 
 def _fake_jd(url: str) -> Job:

@@ -56,11 +56,15 @@ plagiarism, and the 12 ATS gates before render.
 - **Single CLI surface** — `gethired <verb>`: `ingest`, `fetch`, `show`, `plan`, `run`, `cover`, `preflight`, `validate`, `trace`, `audit`, `diff`. Each command is single-purpose and scriptable.
 - **PII consent** — first run prompts for consent (`y/N`); recorded in `~/.config/gethired/consent.json`; re-prompted every 90 days.
 - **PDF compilation** — compiles the TeX into a PDF via `tectonic` (default) or `pdflatex` (fallback). Set `LATEX_ENGINE=none` to skip.
-- **Multi-JD consolidated run** — `Tailor(job_description=(jd_a, jd_b))` merges analyses (union of must-haves, intersection of nice-to-haves).
+- **Multi-JD consolidated run** — `Tailor(job_description=(jd_a, jd_b))` merges analyses via an LLM-driven merger (`gethired.merger.safe_merge`) with a programmatic fallback to `description.consolidate`. Must-haves are unioned, nice-to-haves intersected, and the LLM reasons about seniority, role specificity, and responsibility overlap rather than naive set union. Even a single-URL run goes through the merger for consistency.
+- **Multi-URL CLI** — `gethired run <url1> <url2> <url3>` fetches every URL, runs the LLM merger, and tailors once against the consolidated analysis.
+- **Per-URL cover letters** — `gethired cover <url1> <url2> <url3>` writes one `cover_letter_<index>_<slug>.md` per JD, each with its own role/seniority/company/responsibilities but the merged keyword universe. Single-URL `cover` writes `cover_letter.md` (backward-compatible).
+- **Anti-bot recovery** — when a fetch is blocked by Cloudflare / AWS WAF (HTTP 403 + WAF marker headers), the CLI prints a recovery command; if stdin is a TTY, an inline paste prompt ingests the JD text and the run continues.
+- **Paste-fallback flag** — `--pasted-jd <file>` or `--pasted-jd -` (stdin) skips the fetcher entirely for jobs behind anti-bot walls.
 - **`tailor audit <run-dir>`** — re-runs all four validators against a previous run; emits `audit.json` + `audit.md` with hard / advisory / skipped breakdowns.
 - **Cover-letter tailoring** — `Tailor(..., produce_cover_letter=True)` writes `cover_letter.md`.
 - **Streaming intermediate output** — `Writer.tailor(..., on_progress=...)` emits `ProgressEvent`s as the pipeline runs.
-- **`preflight` dry-run** — `gethired preflight <urls>` prints cost estimate + gate prediction without an LLM call.
+- **`preflight` dry-run** — `gethired preflight <urls>` prints cost estimate + gate prediction without an LLM call; union of must-haves across URLs is reflected in `missing_must_haves`.
 
 ## Installation
 
@@ -151,7 +155,22 @@ gethired show master
 gethired trace <run-id>
 ```
 
-Every `gethired run` writes a `tailored/<run-id>/` directory containing `tailored.tex`, `tailored.txt`, `tailored.json`, and `match_report.md`.
+Multi-URL runs consolidate requirements across every JD via an LLM merger:
+
+```bash
+gethired run https://example.com/jd-a https://example.com/jd-b
+gethired cover https://example.com/jd-a https://example.com/jd-b   # one letter per JD
+```
+
+Anti-bot / paste-fallback (when a JD is blocked by Cloudflare or AWS WAF):
+
+```bash
+gethired run --pasted-jd jd.txt                # read JD from file
+gethired run --pasted-jd - < jd.txt            # read JD from stdin
+gethired run --no-tty-prompt <blocked-url>     # never auto-prompt; print recovery only
+```
+
+Every `gethired run` writes a `tailored/<run-id>/` directory containing `tailored.tex`, `tailored.txt`, `tailored.json`, and `match_report.md`. `gethired cover` adds `cover_letter.md` (single URL) or `cover_letter_<index>_<slug>.md` per JD (multi-URL).
 
 ### Programmatic Tailor entry
 
@@ -194,9 +213,9 @@ Precedence: constructor arguments → `.env` → built-in defaults. Without `MOD
 | Command | Purpose |
 |---|---|
 | `gethired ingest <tex>` | parse master resume into `data/master.json` |
-| `gethired fetch <urls>` | fetch + cache JDs (sync httpx, content-hash invalidation) |
-| `gethired run <urls>` | full pipeline: parser → fetcher → description → profiler → writer → critic → renderer |
-| `gethired cover <urls>` | full pipeline + cover-letter production (`cover_letter.md`) |
+| `gethired fetch <urls>` | fetch + cache JDs (sync httpx, content-hash invalidation); multiple URLs supported |
+| `gethired run <urls>` | full pipeline: parser → fetcher → description → profiler → writer → critic → renderer; multiple URLs consolidated via the LLM merger |
+| `gethired cover <urls>` | full pipeline + cover-letter production (`cover_letter.md` for N=1, one `cover_letter_<index>_<slug>.md` per JD for N≥2) |
 | `gethired preflight <urls>` | dry-run: cost + gate prediction, no LLM call |
 | `gethired plan <urls>` | cost estimate only (no LLM call) |
 | `gethired show master` | print `data/master.json` |
@@ -205,6 +224,11 @@ Precedence: constructor arguments → `.env` → built-in defaults. Without `MOD
 | `gethired trace <run-id>` | pretty-print Job trail from a previous run |
 | `gethired audit <run-dir>` | re-run all 4 validators against a previous run; emit `audit.json` + `audit.md` |
 | `gethired diff <a> <b>` | diff two tailored runs (markdown) |
+
+Flags available on `run`, `cover`, `plan`, and `preflight`:
+
+- `--pasted-jd <path>` (or `-` for stdin) — bypass the fetcher and use a JD pasted from disk / stdin.
+- `--no-tty-prompt` — never auto-launch the paste prompt on anti-bot detection; print the recovery command instead.
 
 ## Traceability
 

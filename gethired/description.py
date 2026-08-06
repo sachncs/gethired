@@ -177,6 +177,44 @@ analyze_description = analyze
 analyze_description_multiple = consolidate
 
 
+def overlay_for_jd(merged: Analysis, jd: Job) -> Analysis:
+    """Build a per-JD analysis by overlaying the JD's own fields on top of the merged keyword set.
+
+    Useful for cover-letter production: the keyword universe stays merged (so
+    every letter reflects every JD's must-haves), but role / seniority /
+    company / responsibilities come from the specific JD so each letter
+    addresses its own posting rather than a generic blended role.
+
+    Args:
+        merged: The LLM-merged analysis (used for must_have / nice_to_have /
+            keywords).
+        jd: The single JD whose role/seniority/company/responsibilities
+            should drive the per-letter output.
+
+    Returns:
+        A new ``Analysis`` with the JD-specific fields overlaid on the
+        merged keyword set.
+    """
+    per_jd = analyze(jd)
+    role = per_jd.role if per_jd.role != UNKNOWN_ROLE else merged.role
+    seniority = (
+        per_jd.seniority if per_jd.seniority != UNSPECIFIED else merged.seniority
+    )
+    company = per_jd.company if per_jd.company else merged.company
+    responsibilities = (
+        per_jd.responsibilities if per_jd.responsibilities else merged.responsibilities
+    )
+    return Analysis(
+        role=role,
+        seniority=seniority,
+        must_have=merged.must_have,
+        nice_to_have=merged.nice_to_have,
+        keywords=merged.keywords,
+        responsibilities=responsibilities,
+        company=company,
+    )
+
+
 def split_sentences(text: str) -> tuple[str, ...]:
     parts = [s.strip() for s in text.replace("\n", " ").split(".") if s.strip()]
     return tuple(parts)
@@ -204,4 +242,5 @@ __all__ = [
     "UNSPECIFIED",
     "analyze",
     "consolidate",
+    "overlay_for_jd",
 ]

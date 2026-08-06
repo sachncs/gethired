@@ -25,7 +25,8 @@ def test_compile_pdf_uses_tectonic_by_default(
         with patch("subprocess.run") as run_mock:
 
             def fake_run(cmd, **_kwargs):
-                out = Path(cmd[1])
+                # cmd = [binary, "-interaction=nonstopmode", tex_path]
+                out = Path(cmd[2])
                 out.with_suffix(".pdf").write_bytes(b"%PDF-1.4 fake")
 
             run_mock.side_effect = fake_run
@@ -44,7 +45,8 @@ def test_compile_pdf_falls_back_to_pdflatex_when_env_var_set(
         with patch("subprocess.run") as run_mock:
 
             def fake_run(cmd, **_kwargs):
-                Path(cmd[1]).with_suffix(".pdf").write_bytes(b"%PDF-1.4 fake")
+                # cmd = [binary, "-interaction=nonstopmode", tex_path]
+                Path(cmd[2]).with_suffix(".pdf").write_bytes(b"%PDF-1.4 fake")
 
             run_mock.side_effect = fake_run
             tex = r"\documentclass{article}\begin{document}hi\end{document}"

@@ -15,11 +15,14 @@ import hashlib
 from dataclasses import dataclass, field
 from dataclasses import fields as dc_fields
 from enum import StrEnum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from uuid import uuid4
 
 from gethired.exceptions import TailorError
 from gethired.observability import now as utcnow_iso
+
+if TYPE_CHECKING:
+    from gethired.description import Analysis
 
 
 def new_uuid() -> str:
@@ -570,6 +573,9 @@ class Tailored:
     grounding: tuple[Citation, ...]
     jobs: tuple[Step, ...]
     run_result: RunResult | None = None
+    master: Master | None = None
+    jds: tuple[Job, ...] = ()
+    analysis: Analysis | None = None
 
     @property
     def run(self) -> Run:

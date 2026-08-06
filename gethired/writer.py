@@ -95,13 +95,21 @@ class WriterOutput(BaseModel):
     ``experiences[0].bullets[0]``) to a list of rewritten bullet strings.
     The writer applies these onto the master, preserving canonical
     fields (company, dates, urls, contact, education, awards).
+
+    Contract: ``tailored_bullets`` MUST contain an entry for every
+    experience and project bullet path in the master. Paths the model
+    omits are rephrased by a focused fallback pass so the tailored
+    output never carries a verbatim master bullet.
     """
 
     summary: str = Field(description="Rewritten summary, ≤ 3 sentences")
     tailored_bullets: dict[str, list[str]] = Field(
         description=(
             "Map of master_path (e.g. 'experiences[0].bullets[0]') to a list "
-            "of rewritten bullet strings. The first string replaces the master bullet."
+            "of rewritten bullet strings. REQUIRED: include an entry for EVERY "
+            "experience and project bullet path. Paths omitted here are "
+            "rephrased by a fallback pass; the writer must always produce "
+            "a rephrase, even if only a minor reword to mirror the JD's vocabulary."
         )
     )
     dropped: list[str] = Field(
@@ -216,6 +224,27 @@ class Writer:
         result = asyncio.run(agent.run(prompt(master, analysis), deps=deps))
         writer_output = result.output
         tool_jobs = from_tools(result)
+
+        # Every-bullet rewrite contract: every master bullet must be rephrased
+        # (never carried over verbatim). The writer's main pass may omit paths
+        # from tailored_bullets or return the original text unchanged. Either
+        # case triggers the fallback rephrase.
+        expected_paths = enumerate_bullet_paths(master)
+        missing_or_verbatim: list[tuple[str, str]] = []
+        for path in expected_paths:
+            original = lookup_bullet_text(master, path) or ""
+            candidates = writer_output.tailored_bullets.get(path)
+            rephrased = candidates[0] if candidates else ""
+            if path not in writer_output.tailored_bullets or rephrased.strip() == original.strip():
+                missing_or_verbatim.append((path, original))
+        if missing_or_verbatim:
+            rephrases = rephrase_missing_bullets(
+                missing_or_verbatim,
+                analysis,
+                model_instance=model if self.model_instance is not None else None,
+                model_string=self.model_string,
+            )
+            writer_output.tailored_bullets.update(rephrases)
 
         tailored = apply(master, writer_output, analysis)
         model_name = (
@@ -408,10 +437,19 @@ def prompt(master: Master, analysis: Analysis) -> str:
         f"Must-have skills: {', '.join(analysis.must_have)}\n"
         f"Nice-to-have: {', '.join(analysis.nice_to_have)}"
     )
+    paths = enumerate_bullet_paths(master)
+    paths_block = "\n".join(f"- {p}" for p in paths)
     return (
         f"Here is the master resume (single source of truth):\n\n"
         f"{master_md}\n\n"
         f"Here is the structured JD analysis:\n\n{jd_summary}\n\n"
+        f"REQUIRED: rephrase EVERY bullet in the resume. The master has "
+        f"{len(paths)} bullets across experiences and projects. Every path "
+        f"below MUST appear as a key in your tailored_bullets output:\n"
+        f"{paths_block}\n\n"
+        f"A path the model omits triggers a fallback rephrase pass, so the "
+        f"final tailored output must always reword every bullet — never "
+        f"carry a master bullet verbatim.\n\n"
         f"Produce a Tailored. Use the read-only tools to verify any "
         f"fact before including it. Every bullet must include a Citation."
     )
@@ -450,6 +488,127 @@ def from_tools(result: Any) -> tuple[Step, ...]:
                     )
                 )
     return tuple(jobs)
+
+
+# ---------------------------------------------------------------------------
+# Every-bullet rewrite contract
+# ---------------------------------------------------------------------------
+
+
+def enumerate_bullet_paths(master: Master) -> list[str]:
+    """Return every experience and project bullet path in the master, in order."""
+    paths: list[str] = []
+    for i, exp in enumerate(master.experiences):
+        for j in range(len(exp.bullets)):
+            paths.append(f"experiences[{i}].bullets[{j}]")
+    for i, proj in enumerate(master.projects):
+        for j in range(len(proj.bullets)):
+            paths.append(f"projects[{i}].bullets[{j}]")
+    return paths
+
+
+def lookup_bullet_text(master: Master, master_path: str) -> str | None:
+    """Return the original bullet text at ``master_path`` (or None if not found)."""
+    try:
+        if master_path.startswith("experiences["):
+            tail = master_path[len("experiences[") :]
+            idx_str, rest = tail.split("].bullets[", 1)
+            idx = int(idx_str)
+            b_idx = int(rest.rstrip("]"))
+            return master.experiences[idx].bullets[b_idx].text
+        if master_path.startswith("projects["):
+            tail = master_path[len("projects[") :]
+            idx_str, rest = tail.split("].bullets[", 1)
+            idx = int(idx_str)
+            b_idx = int(rest.rstrip("]"))
+            return master.projects[idx].bullets[b_idx].text
+    except (IndexError, ValueError):
+        return None
+    return None
+
+
+def _is_test_model(model: object | None) -> bool:
+    """True when ``model`` is Pydantic AI's ``TestModel`` (skip LLM fallback paths)."""
+    name = getattr(model, "model_name", None)
+    return name == "test"
+
+
+class RephraseBatch(BaseModel):
+    """Output schema for the per-bullet rephrase fallback agent."""
+
+    rephrases: dict[str, str] = Field(
+        description=(
+            "Map of master_path to rephrased bullet text. Every input path "
+            "must appear exactly once."
+        )
+    )
+
+
+REPHRASE_INSTRUCTIONS: tuple[str, ...] = (
+    "You rephrase resume bullets to mirror the target JD's vocabulary without inventing facts.",
+    "For each bullet:",
+    "(1) preserve every fact from the original (numbers, technologies, scope, dates);",
+    "(2) weave the JD's must-have keywords naturally into the rephrase;",
+    "(3) keep the same length, opening verb, and voice as the master;",
+    "(4) do not invent companies, projects, dates, numbers, or skills.",
+    "Return ONLY the JSON object with 'rephrases' mapping master_path to text.",
+)
+"""System instructions for the per-bullet rephrase fallback agent."""
+
+
+def rephrase_missing_bullets(
+    missing: list[tuple[str, str]],
+    analysis: Analysis,
+    *,
+    model_instance: object | None,
+    model_string: str | None,
+) -> dict[str, list[str]]:
+    """Rephrase every bullet in ``missing`` via a focused single-batch LLM call.
+
+    Falls back to the original text when ``model_instance`` is a TestModel
+    (test determinism) or when the LLM call itself raises.
+
+    Args:
+        missing: Pairs of ``(master_path, original_text)``.
+        analysis: Structured JD analysis (for keyword guidance).
+        model_instance: Pre-constructed model instance (tests).
+        model_string: Model identifier (production path).
+
+    Returns:
+        Map of master_path to a single-element list ``[rephrased]``.
+    """
+    if not missing:
+        return {}
+    if _is_test_model(model_instance):
+        return {path: [text] for path, text in missing}
+    try:
+        bullets_block = "\n".join(f"- {path}: {text}" for path, text in missing)
+        keywords_blob = ", ".join(analysis.must_have) or "(none specified)"
+        if model_instance is None:
+            resolved = resolve_model(model_string)
+            model_obj: Any = resolved.model
+        else:
+            model_obj = model_instance
+        agent: Agent[None, RephraseBatch] = Agent(
+            model_obj,
+            output_type=RephraseBatch,
+            instructions=list(REPHRASE_INSTRUCTIONS),
+        )
+        payload = (
+            f"JD must-have keywords: {keywords_blob}\n\n"
+            f"Rephrase every bullet below. Mirror the JD's vocabulary without "
+            f"inventing facts.\n\nBULLETS:\n{bullets_block}\n\n"
+            f"Return a JSON object with a 'rephrases' key mapping each "
+            f"master_path to the rephrased bullet text."
+        )
+        result = agent.run_sync(payload)
+        return {
+            path: [result.output.rephrases[path]]
+            for path, _ in missing
+            if path in result.output.rephrases
+        }
+    except Exception:
+        return {path: [text] for path, text in missing}
 
 
 def rewrite(

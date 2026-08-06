@@ -9,6 +9,36 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Automatic `.env` loading in the CLI** — `python-dotenv` (already a dependency) is now wired into `gethired.cli`. The CLI loads `.env` from the current working directory and the package root on import; existing process env vars always win so command-line overrides still work. Library users importing `gethired.tailor` directly are unaffected.
+
+### Fixed
+
+- **CLI rejected a configured model when only `.env` was set** — `python-dotenv` was a dependency but never invoked, so users had to `source .env` or pass every variable on the command line. Loading happens at CLI import time now.
+- **`gethired/description.py` `overlay_for_jd`** — previously deleted when consolidating to programmatic-only; restored as the source of per-JD role/seniority/company/responsibilities for cover-letter production.
+- **`tests/test_render_pdf.py` tectonic + pdflatex test fakes** — both indexed `cmd[1]` (the `-interaction=nonstopmode` flag) instead of `cmd[2]` (the tex path), so the fake PDF was never written to the expected location and `compile_pdf` raised `AttributeError` on `result.returncode`. Tests now read `cmd[2]` and pass.
+
+### Multi-JD + paste fallback + anti-bot recovery
+
+- **LLM-driven multi-JD merger** (`gethired/merger.py`) — `merge_job_descriptions` runs a Pydantic AI `Agent` against the configured model and produces a consolidated `Analysis` (union of must-haves, intersection of nice-to-haves, highest seniority, comma-joined companies, deduplicated responsibilities). `safe_merge` wraps it and falls back to programmatic `description.consolidate` on any failure (rate limit, validation error, missing API key) so the pipeline never blocks on the LLM. The merger runs even for N=1 so every run flows through one code path.
+- **Multi-URL CLI** — `gethired run/cover/plan/preflight <url1> <url2> …` now fetches every URL, runs the merger, and tailors once against the consolidated analysis. The previous `cli.fetch_first_jd` helper that dropped URLs ≥2 is gone.
+- **Per-URL cover letters** — `gethired cover` with N≥2 URLs writes one `cover_letter_<index>_<slug>.md` per JD. Each letter carries the JD's own role/seniority/company/responsibilities (via `description.overlay_for_jd`) but shares the merged must-have / nice-to-have / keyword universe. Single-URL `cover` writes `cover_letter.md` (byte-identical to the previous behaviour).
+- **Anti-bot detection + recovery** — `fetcher._classify_antibot` raises a new `AntiBotError` (subclass of `FetchError`) when a fetch is blocked by Cloudflare (`server: cloudflare`, `cf-ray`, `cf-mitigated`) or AWS WAF (`x-amzn-waf-action`). The CLI catches it and either launches an inline paste prompt (TTY) or prints the recovery command (`gethired run --pasted-jd <file>` / `--pasted-jd -`) and exits 2.
+- **`--pasted-jd <file>` / `-` flag** on `run`, `cover`, `plan`, and `preflight`. Bypasses the fetcher entirely for JDs behind anti-bot walls. Mutually exclusive with `<urls>` (exit 2). The pasted text is run through the fetcher's keyword extractor so `must_have_keywords` is populated for the merger.
+- **TTY auto-prompt + `--no-tty-prompt` escape hatch** — when an anti-bot block fires and stdin is a TTY, the CLI prompts inline for the JD text and continues. `--no-tty-prompt` short-circuits to the recovery-command path (useful in pseudo-TTYs and CI).
+- **`Tailored.master` / `Tailored.jds` / `Tailored.analysis` optional fields** — the orchestrator attaches these so the CLI can produce per-JD cover letters without re-running the pipeline.
+- **Test coverage** — 30 new tests across `tests/test_merger.py` (LLM merger + programmatic fallback), `tests/test_fetcher.py` (anti-bot classification), `tests/test_cli_multi_url.py` (multi-URL fetching, paste fallback, anti-bot recovery, per-URL cover letters), and `tests/test_end_to_end.py` (multi-JD run + per-JD cover letter end-to-end). Total suite: 328 passed (up from 297), 1 skipped.
+
+### Changed
+
+- **`Tailor.__run_pipeline`, `plan`, and `preflight` now route every JD tuple through `safe_merge` (LLM merger with programmatic fallback)** instead of branching on `len(jds) > 1` to call `consolidate_analysis`. The programmatic consolidator remains the safety net inside `safe_merge`.
+- **`preflight.missing_must_haves` reflects the union across every URL** (previously: the first JD's must-haves only).
+- **`cover_letter.compose` is called from the CLI rather than the orchestrator** so cover-letter production is the CLI's responsibility and the orchestrator stays focused on the tailoring pipeline.
+
+### Removed
+
+- **`gethired.cli.fetch_first_jd`** — silently dropped every URL after the first. Replaced by `cli.fetch_all_jds` (returns a `tuple[Job, …]`).
+
+
 - **New module `gethired/serialize.py`** — single source of truth for JSON ↔ domain-model coercion (`coerce_master_from_dict`, `coerce_tailored_from_dict`, `load_master_from_json`, `master_to_snapshot`, `render_json`, `tailored_to_snapshot_dict`, `MasterSnapshot`). Previously triplicated across `tailor.read_master_json`, `audit.__coerce_tailored`/`__coerce_master`, and inline code in `cli.validate`. `tailor.py` and `cli.py` now re-export `coerce_bullets` / `read_master_json` / `to_tailored` from `serialize.py` for backward compatibility.
 - **PDF-artefact guard helper** — `validator.pdf_artefact_status()` consolidates the `if pdf_path is None / not exists` guard previously repeated in `gate_pdf_compiles`, `gate_pdf_text_extractable`, `gate_pdf_text_matches_txt`, and `gate_length_within_limit`. Each gate now calls the helper and proceeds with its real check on the happy path.
 - **Property-based tests** (`tests/test_normalize_property.py`) — `hypothesis`-driven coverage for `normalise_whitespace` (idempotence, no double-spaces), `canonicalize_numeric` (always returns a set of ints), `tokenize_for_overlap` (lowercase roundtrip), `extract_ngrams` (length preservation), and `MasterResume.content_hash` (determinism, sensitivity to input). `hypothesis>=6.100` added to dev dependencies.

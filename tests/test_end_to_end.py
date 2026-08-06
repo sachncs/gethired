@@ -9,11 +9,29 @@ from __future__ import annotations
 from pathlib import Path
 
 import pymupdf
+import pytest
 from pydantic_ai.models.test import TestModel
+from typer.testing import CliRunner
 
-from gethired.models import Job, Outcome, StepKind, job_validate
+from gethired import cli as cli_module
+from gethired.cover_letter import compose, markdown
+from gethired.description import consolidate, overlay_for_jd
+from gethired.models import (
+    Job,
+    Outcome,
+    Run,
+    RunResult,
+    Step,
+    StepKind,
+    StepMeta,
+    StepStatus,
+    Tailored,
+    job_validate,
+)
+from gethired.parser import parse_tex
+from gethired.profiler import build as build_profile
 from gethired.renderer import tex, text
-from gethired.tailor import VALIDATION, Tailor, merge_steps
+from gethired.tailor import VALIDATION, Tailor, hash_urls, merge_steps
 from gethired.validator import AtsGate, AtsReport, ats
 
 SAMPLE_JD = Job(
@@ -179,3 +197,136 @@ def test_pipeline_pdf_pass_revalidates_and_recomputes_outcome(tmp_path: Path, mo
         matches = [job for job in result.jobs if job.type is job_type]
         assert len(matches) == 1, f"{job_type.value} duplicated: {len(matches)}"
     assert result.run_result.final_outcome is Outcome.ATS_HARD_FAIL
+
+
+def test_end_to_end_multi_jd_run_persists_combined_match_report(tmp_path: Path) -> None:
+    """A multi-JD run writes a single run-dir; the match report's jd_urls_hash covers both URLs."""
+    jd_b = Job(
+        url="https://example.com/jd-b",
+        title="Staff ML Engineer",
+        company="Beta Co",
+        full_text="Staff ML Engineer. Must have: Python, AWS, Kubernetes.",
+        keywords=("python", "aws", "kubernetes"),
+        must_have_keywords=("python", "aws"),
+        nice_to_have_keywords=("kubernetes",),
+        content_hash="b",
+    )
+    tailor = Tailor(
+        resume="sample.tex",
+        job_description=(SAMPLE_JD, jd_b),
+        debug=False,
+        model="test",
+        model_instance=TestModel(),
+        tailored_dir=tmp_path,
+    )
+    result = tailor.run()
+    run_dir = tmp_path / result.run.id
+    assert (run_dir / "tailored.json").exists()
+    assert (run_dir / "match_report.md").exists()
+    # The merged analysis attached to Tailored reflects both JDs (union of must-haves).
+    assert result.analysis is not None
+    for kw in ("python", "kubernetes", "aws"):
+        assert kw in result.analysis.must_have
+    # jd_urls_hash is deterministic and covers both URLs.
+    assert result.run.jd_urls_hash == hash_urls((SAMPLE_JD, jd_b))
+
+
+def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
+    """``cover`` with two URLs writes two per-JD letters with their own role."""
+    jd_b = Job(
+        url="https://example.com/jd-b",
+        title="Staff Backend Engineer",
+        company="Beta Co",
+        full_text="Staff Backend Engineer. You will lead API design.",
+        keywords=("python", "aws"),
+        must_have_keywords=("python", "aws"),
+        nice_to_have_keywords=("kubernetes",),
+        content_hash="b",
+    )
+    master = parse_tex("sample.tex")
+    analysis = consolidate((SAMPLE_JD, jd_b))
+    voice = build_profile(master)
+    per_b = overlay_for_jd(analysis, jd_b)
+    cover_b = compose(master, per_b, voice)
+    cover_b_md = markdown(cover_b.letter)
+
+    class FakeTailor:
+        def __init__(self, **_kwargs):
+            pass
+
+        def run(self):
+            steps = (
+                Step(
+                    id="x",
+                    type=StepKind.TAILOR,
+                    started_at="now",
+                    completed_at="now",
+                    status=StepStatus.SUCCESS,
+                    inputs=(),
+                    outputs=(),
+                    rationale="ok",
+                    model="test",
+                    tool_name=None,
+                    metadata=StepMeta(),
+                ),
+            )
+            return Tailored(
+                contact=master.contact,
+                summary="",
+                skills=master.skills,
+                experiences=master.experiences,
+                projects=master.projects,
+                education=master.education,
+                awards=master.awards,
+                dropped=(),
+                rationale="",
+                grounding=(),
+                jobs=steps,
+                run_result=RunResult(
+                    run=Run(
+                        id="run-multi-cover",
+                        started_at="now",
+                        master_hash="",
+                        jd_urls_hash="",
+                        model="test",
+                        draft_model=None,
+                    ),
+                    completed_at="now",
+                    duration_seconds=0.0,
+                    total_input_tokens=0,
+                    total_output_tokens=0,
+                    retry_attempts=0,
+                    final_outcome=Outcome.SUCCESS,
+                    jobs=steps,
+                ),
+                master=master,
+                jds=(SAMPLE_JD, jd_b),
+                analysis=analysis,
+            )
+
+    mp = pytest.MonkeyPatch()
+    try:
+        mp.setattr(cli_module, "Tailor", FakeTailor)
+        mp.setattr(cli_module, "fetch_all_jds", lambda _urls: (SAMPLE_JD, jd_b))
+
+        result = CliRunner().invoke(
+            cli_module.app,
+            [
+                "cover",
+                SAMPLE_JD.url,
+                jd_b.url,
+                "--resume",
+                "sample.tex",
+                "--out-dir",
+                str(tmp_path),
+            ],
+        )
+        assert result.exit_code == 0, result.stdout + (result.stderr or "")
+        run_dir = tmp_path / "run-multi-cover"
+        covers = sorted(run_dir.glob("cover_letter_*.md"))
+        assert len(covers) == 2, f"expected 2 per-JD cover letters, got {[p.name for p in covers]}"
+        bodies = [p.read_text() for p in covers]
+        assert any("Staff Backend Engineer" in b for b in bodies)
+        assert cover_b_md.strip() in [b.strip() for b in bodies]
+    finally:
+        mp.undo()

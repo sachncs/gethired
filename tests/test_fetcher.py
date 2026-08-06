@@ -5,7 +5,7 @@ from __future__ import annotations
 import httpx
 import pytest
 
-from gethired.exceptions import FetchError
+from gethired.exceptions import AntiBotError, FetchError
 from gethired.fetcher import Fetcher
 
 
@@ -67,3 +67,74 @@ def test_fetch_recovers_after_first_failure(
     assert attempts == 2
     assert sleep_calls == [1]
     assert job_description.url == "https://example.com/jd"
+
+
+def test_fetch_raises_antibot_on_cloudflare_challenge(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """HTTP 403 with a Cloudflare header marker becomes ``AntiBotError``."""
+
+    def cloudflare_block(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            403,
+            headers={"server": "cloudflare", "cf-ray": "abc123"},
+            text="<html>cf-mitigated</html>",
+            request=request,
+        )
+
+    transport = httpx.MockTransport(cloudflare_block)
+    real_client_class = httpx.Client
+    monkeypatch.setattr(
+        "gethired.fetcher.httpx.Client",
+        lambda **_unused: real_client_class(transport=transport),
+    )
+    retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
+    with pytest.raises(AntiBotError) as excinfo:
+        retriever.retrieve("https://example.com/jd")
+    assert excinfo.value.status == 403
+    assert any("cloudflare" in m for m in excinfo.value.markers)
+
+
+def test_fetch_raises_antibot_on_aws_waf_block(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """HTTP 403 with AWS WAF header markers becomes ``AntiBotError``."""
+
+    def waf_block(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(
+            403,
+            headers={"x-amzn-waf-action": "challenge"},
+            text="blocked",
+            request=request,
+        )
+
+    transport = httpx.MockTransport(waf_block)
+    real_client_class = httpx.Client
+    monkeypatch.setattr(
+        "gethired.fetcher.httpx.Client",
+        lambda **_unused: real_client_class(transport=transport),
+    )
+    retriever = Fetcher(cache_dir=tmp_path, max_attempts=3)
+    with pytest.raises(AntiBotError) as excinfo:
+        retriever.retrieve("https://example.com/jd")
+    assert excinfo.value.status == 403
+    assert any("amzn" in m or "amz" in m for m in excinfo.value.markers)
+
+
+def test_fetch_does_not_classify_plain_403_as_antibot(
+    monkeypatch: pytest.MonkeyPatch, tmp_path
+) -> None:
+    """HTTP 403 without WAF markers stays a regular ``FetchError`` after retries."""
+
+    def plain_403(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(403, text="Forbidden", request=request)
+
+    transport = httpx.MockTransport(plain_403)
+    real_client_class = httpx.Client
+    monkeypatch.setattr(
+        "gethired.fetcher.httpx.Client",
+        lambda **_unused: real_client_class(transport=transport),
+    )
+    retriever = Fetcher(cache_dir=tmp_path, max_attempts=2)
+    with pytest.raises(FetchError):
+        retriever.retrieve("https://example.com/jd")

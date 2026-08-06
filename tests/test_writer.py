@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 from pydantic_ai.models.test import TestModel
 
@@ -9,7 +11,15 @@ from gethired.description import Analysis
 from gethired.exceptions import ConfigError
 from gethired.profiler import build as build_profile
 from gethired.tailor import Tailor
-from gethired.writer import Writer, WriterOutput, apply
+from gethired.writer import (
+    RephraseBatch,
+    Writer,
+    WriterOutput,
+    apply,
+    enumerate_bullet_paths,
+    lookup_bullet_text,
+    rephrase_missing_bullets,
+)
 
 
 def _sample_analysis() -> Analysis:
@@ -156,3 +166,128 @@ def test_apply_writer_output_removes_dropped_entries(master_resume) -> None:
         dropped_project,
         dropped_project_bullet,
     ]
+
+
+# ---------------------------------------------------------------------------
+# Every-bullet rewrite contract
+# ---------------------------------------------------------------------------
+
+
+def test_enumerate_bullet_paths_covers_every_experience_and_project_bullet(
+    master_resume,
+) -> None:
+    """``enumerate_bullet_paths`` returns one path per experience/project bullet."""
+    paths = enumerate_bullet_paths(master_resume)
+    expected_count = sum(len(e.bullets) for e in master_resume.experiences) + sum(
+        len(p.bullets) for p in master_resume.projects
+    )
+    assert len(paths) == expected_count
+    assert all(p.startswith("experiences[") or p.startswith("projects[") for p in paths)
+
+
+def test_lookup_bullet_text_round_trips(master_resume) -> None:
+    """``lookup_bullet_text`` returns the original bullet at any enumerated path."""
+    paths = enumerate_bullet_paths(master_resume)
+    for path in paths:
+        text = lookup_bullet_text(master_resume, path)
+        assert text is not None, f"missing bullet text at {path}"
+        assert text.strip(), f"empty bullet text at {path}"
+
+
+def test_rephrase_missing_bullets_test_model_returns_originals(master_resume) -> None:
+    """Under TestModel, the fallback keeps the master text verbatim (test determinism)."""
+    paths = enumerate_bullet_paths(master_resume)
+    missing = [(p, lookup_bullet_text(master_resume, p) or "") for p in paths]
+    out = rephrase_missing_bullets(
+        missing,
+        _sample_analysis(),
+        model_instance=TestModel(),
+        model_string=None,
+    )
+    assert set(out.keys()) == {p for p, _ in missing}
+    for path, original in missing:
+        assert out[path] == [original]
+
+
+def test_rephrase_missing_bullets_empty_input_returns_empty() -> None:
+    """No missing bullets → no work."""
+    assert rephrase_missing_bullets(
+        [], _sample_analysis(), model_instance=None, model_string=None
+    ) == {}
+
+
+def test_rephrase_missing_bullets_invokes_agent(monkeypatch, master_resume) -> None:
+    """The rephrase batch agent is invoked with all missing paths in one call."""
+    captured: dict[str, object] = {}
+
+    real_agent = __import__("gethired.writer", fromlist=["Agent"]).Agent
+
+    class _SpyAgent:
+        def __init__(self, *args, **kwargs):
+            captured["init_args"] = args
+            captured["init_kwargs"] = kwargs
+
+        def run_sync(self, payload):
+            captured["payload"] = payload
+            return SimpleNamespace(
+                output=RephraseBatch(rephrases={"experiences[0].bullets[0]": "x"})
+            )
+
+    monkeypatch.setattr("gethired.writer.Agent", _SpyAgent)
+    # Pass a non-None, non-TestModel sentinel that satisfies Agent's type hint.
+    sentinel: object = object()
+    out = rephrase_missing_bullets(
+        [("experiences[0].bullets[0]", "Original text here.")],
+        _sample_analysis(),
+        model_instance=sentinel,  # type: ignore[arg-type]
+        model_string=None,
+    )
+    assert "init_kwargs" in captured, "Agent was not constructed"
+    assert "Original text here." in captured["payload"]
+    assert "experiences[0].bullets[0]" in captured["payload"]
+    assert out == {"experiences[0].bullets[0]": ["x"]}
+    monkeypatch.setattr("gethired.writer.Agent", real_agent)
+
+
+def test_writer_rephrases_every_bullet_in_production(monkeypatch, master_resume) -> None:
+    """Production writer run with a TestModel that omits some paths triggers the fallback."""
+
+    # TestModel returns `tailored_bullets={}` (default TestModel behaviour) for
+    # the main WriterOutput call. The writer's fallback must then rephrase
+    # every missing bullet via its own TestModel-backed batch agent.
+    analysis = _sample_analysis()
+    voice = build_profile(master_resume)
+    writer = Writer(model="test", model_instance=TestModel())
+    tailored, _ = writer.tailor(master=master_resume, analysis=analysis, voice=voice)
+
+    # Every original bullet must appear, rephrased (TestModel returns the
+    # original verbatim under the fallback path).
+    expected_paths = enumerate_bullet_paths(master_resume)
+    rewritten_paths = {c.tailored_path for c in tailored.grounding}
+    assert expected_paths, "master has no bullets"
+    for path in expected_paths:
+        original = lookup_bullet_text(master_resume, path) or ""
+        rewritten = next(
+            (
+                c
+                for c in tailored.grounding
+                if c.tailored_path == path
+            ),
+            None,
+        )
+        assert rewritten is not None, f"no rewrite record for {path}"
+        # Find the matching bullet in the tailored output.
+        if path.startswith("experiences["):
+            tail = path[len("experiences[") :]
+            idx_str, rest = tail.split("].bullets[", 1)
+            idx, b_idx = int(idx_str), int(rest.rstrip("]"))
+            actual = tailored.experiences[idx].bullets[b_idx].text
+        else:
+            tail = path[len("projects[") :]
+            idx_str, rest = tail.split("].bullets[", 1)
+            idx, b_idx = int(idx_str), int(rest.rstrip("]"))
+            actual = tailored.projects[idx].bullets[b_idx].text
+        assert actual == original, (
+            f"bullet at {path} was not rephrased by the fallback; got {actual!r}"
+        )
+    assert rewritten_paths == set(expected_paths)

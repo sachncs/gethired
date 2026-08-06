@@ -18,7 +18,19 @@ without triggering the full dependency chain.
 from __future__ import annotations
 
 import importlib
+import warnings
 from typing import TYPE_CHECKING, Any
+
+# PyMuPDF's SWIG-generated C extension sets ``__module__`` on builtin types
+# (``SwigPyPacked``, ``SwigPyObject``, ``swigvarlink``) at import time. Python
+# 3.12+ emits a ``DeprecationWarning`` for each. Silence the noise here so the
+# filter is in effect before ``gethired.parser`` or ``gethired.validator``
+# imports ``pymupdf``.
+warnings.filterwarnings(
+    "ignore",
+    message=r"builtin type .* has no __module__ attribute",
+    category=DeprecationWarning,
+)
 
 if TYPE_CHECKING:
     from gethired.exceptions import (
