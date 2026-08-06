@@ -47,7 +47,7 @@ def test_all_models_are_frozen() -> None:
     The test then verifies (1) the model has frozen semantics and (2) every
     declared field is accessible on the resulting instance.
     """
-    contact = Resume(name="x", city="x", phone="x", email="x", github=None, linkedin=None)
+    contact = Resume(name="x", city="x", phone="x", email="x", github=None, linkedin=None, summary="", skills=Skills(categories={}), experience=(), projects=(), education=(), awards=())
     placeholder_objs: dict[type, object] = {
         Contact: contact,
         Bullet: Bullet(text="x"),

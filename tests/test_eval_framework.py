@@ -43,13 +43,7 @@ def test_code_equal_fails_on_mismatch() -> None:
 
 def test_code_field_present_on_dataclass() -> None:
     """``_resolve_path`` supports dotted paths on dataclasses."""
-    contact = Resume(
-        name="Placeholder Name",
-        city="Test City",
-        phone="5555550100",
-        email="placeholder@example.com",
-        github=None,
-        linkedin=None)
+    contact = Resume(name="Placeholder Name", city="Test City", phone="5555550100", email="placeholder@example.com", github=None, linkedin=None, summary="", skills=Skills(categories={}), experience=(), projects=(), education=(), awards=())
     result = code_field_present("test", resume=contact, path="name")
     assert result.passed
     assert "Placeholder Name" in result.detail
@@ -68,25 +62,13 @@ def test_code_field_present_missing_returns_false() -> None:
 
 
 def test_code_field_length_correct_count() -> None:
-    contact = Resume(
-        name="A",
-        city="X",
-        phone="0",
-        email="a@b.c",
-        github=None,
-        linkedin=None)
+    contact = Resume(name="A", city="X", phone="0", email="a@b.c", github=None, linkedin=None, summary="", skills=Skills(categories={}), experience=(), projects=(), education=(), awards=())
     result = code_field_length("test", resume=contact, path="name", expected=1)
     assert result.passed
 
 
 def test_code_field_length_wrong_count() -> None:
-    contact = Resume(
-        name="AB",
-        city="X",
-        phone="0",
-        email="a@b.c",
-        github=None,
-        linkedin=None)
+    contact = Resume(name="AB", city="X", phone="0", email="a@b.c", github=None, linkedin=None, summary="", skills=Skills(categories={}), experience=(), projects=(), education=(), awards=())
     result = code_field_length("test", resume=contact, path="name", expected=1)
     assert not result.passed
 
@@ -98,7 +80,13 @@ def test_code_text_contains_case_insensitive() -> None:
 
 def test_code_text_contains_case_sensitive() -> None:
     result = code_text_contains(
-        "test", text="Hello World", substring="WORLD", case_insensitive=False
+        "test", text="Hello World", substring="WORLD", case_insensitive=False,
+    summary='',
+    skills=Skills(categories={}),
+    experience=(),
+    projects=(),
+    education=(),
+    awards=(),
     )
     assert not result.passed
 
