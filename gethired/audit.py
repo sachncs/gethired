@@ -61,7 +61,7 @@ def audit_paths(run_dir: Path) -> dict[str, Path]:
     }
 
 
-def audit_load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Master]:
+def audit_load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Resume]:
     """Load both JSON files or raise TailorError with the offending path."""
     if not tailored_path.exists():
         raise TailorError(f"tailored.json missing in {tailored_path.parent}")
@@ -159,7 +159,7 @@ def audit_markdown(report: AuditReport) -> str:
     return "\n".join(lines)
 
 
-def __load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Master]:
+def __load(tailored_path: Path, master_path: Path) -> tuple[Tailored, Resume]:
     tailored_raw: Any = json.loads(tailored_path.read_text())
     master_raw: Any = json.loads(master_path.read_text())
     return from_tailored_dict(tailored_raw), from_master_dict(master_raw)

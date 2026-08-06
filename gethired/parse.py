@@ -11,7 +11,7 @@ Args:
     source: Path to the resume file, or raw TeX text.
 
 Returns:
-    The parsed ``Master`` resume.
+    The parsed ``Resume`` resume.
 
 Raises:
     ParseError: When the source cannot be parsed into a resume.
@@ -43,7 +43,7 @@ EXTENSION_PARSERS: dict[str, Callable[..., Resume]] = {
 IMAGE_EXTENSIONS = frozenset({".png", ".jpg", ".jpeg", ".tiff", ".bmp"})
 
 
-def dispatch_path(path: Path) -> Master:
+def dispatch_path(path: Path) -> Resume:
     """Parse a master from an existing Path by inspecting its extension."""
     suffix = path.suffix.lower()
     if suffix in EXTENSION_PARSERS:
@@ -57,7 +57,7 @@ def dispatch_path(path: Path) -> Master:
     return _plain_text(content)
 
 
-def dispatch_string(source: str) -> Master:
+def dispatch_string(source: str) -> Resume:
     """Parse a master from a string by content sniffing.
 
     Strings with a TeX preamble are routed to the TeX parser; short
@@ -72,7 +72,7 @@ def dispatch_string(source: str) -> Master:
     return _plain_text(source)
 
 
-def parse(source: str | Path) -> Master:
+def parse(source: str | Path) -> Resume:
     """Parse a master resume from any supported format.
 
     Dispatches by file extension when ``source`` is a path, and by content

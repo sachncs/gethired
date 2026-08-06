@@ -90,8 +90,8 @@ def test_strip_latex_commands_does_not_raise(text: str) -> None:
     assert isinstance(strip_latex(text), str)
 
 
-def _make_resume(name_suffix: str) -> Master:
-    """Return a deterministic Master for content-hash tests."""
+def _make_resume(name_suffix: str) -> Resume:
+    """Return a deterministic Resume for content-hash tests."""
     return Resume(name=f"Test {name_suffix}", city="Test City", phone="+1-555-0100", email=f"test.{name_suffix}@example.com", github=None, linkedin=None, summary="Summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),
         experience=(),
@@ -102,15 +102,15 @@ def _make_resume(name_suffix: str) -> Master:
 
 def test_resume_content_hash_is_deterministic() -> None:
     """Two MasterResumes with the same fields produce the same content hash."""
-    a = _make_master("a")
-    b = _make_master("a")
+    a = _make_resume("a")
+    b = _make_resume("a")
     assert a.content_hash() == b.content_hash()
 
 
 def test_resume_content_hash_changes_with_input() -> None:
     """Different master fields produce different content hashes."""
-    a = _make_master("a")
-    b = _make_master("b")
+    a = _make_resume("a")
+    b = _make_resume("b")
     assert a.content_hash() != b.content_hash()
 
 

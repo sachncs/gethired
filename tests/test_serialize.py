@@ -34,7 +34,7 @@ from gethired.serialize import (
 
 
 def _sample_resume() -> Resume:
-    """Build a minimal but realistic Master for round-trip tests."""
+    """Build a minimal but realistic Resume for round-trip tests."""
     return Resume(name="Test User", city="Test City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None, summary="A short summary.",
         skills=Skills(categories={"Languages": ("Python", "Go")}),
         experience=(
@@ -76,7 +76,7 @@ def test_coerce_bullets_maps_dicts_to_bullets() -> None:
 
 def test_coerce_master_from_dict_roundtrips() -> None:
     """A round-trip through render_json → from_master_dict preserves data."""
-    master = _sample_master()
+    master = _sample_resume()
     snap = snapshot(master)
     raw = json.loads(render_json(snap))
     reconstructed = from_master_dict(raw)
@@ -89,7 +89,7 @@ def test_coerce_master_from_dict_roundtrips() -> None:
 
 def test_coerce_tailored_from_dict_preserves_run_result() -> None:
     """A tailored JSON with run_result round-trips into a full Tailored."""
-    master = _sample_master()
+    master = _sample_resume()
     snap = snapshot(master)
     raw = json.loads(render_json(snap))
     tailored = from_tailored_dict(raw)
@@ -124,7 +124,7 @@ def test_coerce_tailored_from_dict_handles_missing_run_result() -> None:
 
 def test_load_master_from_json_reads_disk(tmp_path: Path) -> None:
     """``load_master`` reads a previously written master JSON."""
-    master = _sample_master()
+    master = _sample_resume()
     snap = snapshot(master)
     path = tmp_path / "master.json"
     path.write_text(render_json(snap))
@@ -135,7 +135,7 @@ def test_load_master_from_json_reads_disk(tmp_path: Path) -> None:
 
 def test_master_snapshot_uses_overrides() -> None:
     """``MasterSnapshot`` overrides flow into the embedded run identity."""
-    master = _sample_master()
+    master = _sample_resume()
     snap = snapshot(master, snapshot=MasterSnapshot(model="cli", draft_model="haiku"))
     assert snap.run_result.run.model == "cli"
     assert snap.run_result.run.draft_model == "haiku"
@@ -143,7 +143,7 @@ def test_master_snapshot_uses_overrides() -> None:
 
 def test_tailored_to_snapshot_dict_returns_dict() -> None:
     """``as_dict`` returns the same payload as a dict."""
-    master = _sample_master()
+    master = _sample_resume()
     snap = snapshot(master)
     payload = as_dict(snap)
     assert isinstance(payload, dict)

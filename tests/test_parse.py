@@ -1,7 +1,7 @@
 """Tests for the plug-and-play parse() entry point.
 
 Verifies the public contract: parse() dispatches by file extension and
-returns a Master regardless of input format.
+returns a Resume regardless of input format.
 """
 
 from __future__ import annotations
@@ -15,17 +15,17 @@ from gethired.models import Resume
 
 
 def test_parse_tex_file_returns_master(tmp_path: Path, resume_tex_path: Path) -> None:
-    """parse() with a .tex file returns a Master."""
+    """parse() with a .tex file returns a Resume."""
     master = parse(resume_tex_path)
-    assert isinstance(master, Master)
+    assert isinstance(master, Resume)
     assert master.name == "Placeholder Name"
     assert master.email == "placeholder@example.com"
 
 
 def test_parse_tex_string_returns_master(resume_tex_text: str) -> None:
-    """parse() with raw TeX text (no file) returns a Master."""
+    """parse() with raw TeX text (no file) returns a Resume."""
     master = parse(resume_tex_text)
-    assert isinstance(master, Master)
+    assert isinstance(master, Resume)
     assert master.name == "Placeholder Name"
 
 
@@ -41,12 +41,12 @@ def test_parse_unknown_extension_falls_back_to_tex(
     weird_path = tmp_path / "resume.weird"
     weird_path.write_text(resume_tex_text)
     master = parse(weird_path)
-    assert isinstance(master, Master)
+    assert isinstance(master, Resume)
     assert master.name == "Placeholder Name"
 
 
 def test_parse_returns_master_with_populated_fields(resume_tex_path: Path) -> None:
-    """parse() returns a Master with contact, skills, and experiences populated.
+    """parse() returns a Resume with contact, skills, and experiences populated.
 
     Verifies the data process: the parsed master is non-empty and has the
     expected structure.

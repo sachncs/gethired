@@ -1,7 +1,7 @@
 """Plain-text resume parser.
 
 ``plain`` converts a plain-text resume into the same
-``Master`` model produced by the TeX parser. The contact block is
+``Resume`` model produced by the TeX parser. The contact block is
 mandatory and fails fast with the same message as ``contact``;
 every other section (summary, skills, experience, projects, education,
 awards) is extracted best-effort from its standard section header.
@@ -92,14 +92,14 @@ INSTITUTION_START_RE: Final[re.Pattern[str]] = re.compile(
 )
 
 
-def parse_plain_text(text: str) -> Master:
-    """Parse a plain-text resume into a ``Master``.
+def parse_plain_text(text: str) -> Resume:
+    """Parse a plain-text resume into a ``Resume``.
 
     Args:
         text: Plain-text resume content.
 
     Returns:
-        The parsed ``Master``.
+        The parsed ``Resume``.
 
     Raises:
         ParseError: When a required contact field is missing.
@@ -115,8 +115,13 @@ def parse_plain_text(text: str) -> Master:
     education_data = extract_education(sections_dict.get("education", ""))
     award_data = extract_awards(sections_dict.get("awards", ""))
 
-    return Master(
-        contact=contact_info,
+    return Resume(
+        name=contact_info.name,
+        email=contact_info.email,
+        city=contact_info.city,
+        phone=contact_info.phone,
+        github=contact_info.github,
+        linkedin=contact_info.linkedin,
         summary=summary_text,
         skills=skills_data,
         experience=experience_data,

@@ -2,7 +2,7 @@
 
 The corpus exercises realistic variation in contact formatting, skill
 categories, role counts, project counts, education, and awards. Every
-fixture must dispatch into a fully-populated ``Master`` and the full
+fixture must dispatch into a fully-populated ``Resume`` and the full
 tailoring pipeline must run against it.
 """
 

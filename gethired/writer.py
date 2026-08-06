@@ -110,7 +110,7 @@ class WriterOutput(BaseModel):
     )
     dropped: list[str] = Field(
         default_factory=list,
-        description="Master paths to drop, with reason in rationale")
+        description="Resume paths to drop, with reason in rationale")
     rationale: str = Field(description="One-sentence explanation of tailoring choices")
 
 

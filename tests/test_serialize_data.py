@@ -1,6 +1,6 @@
 """Tests for the serialize module's edge cases and round-trips.
 
-These tests verify the canonical JSON ↔ Master/Tailored coercion handles
+These tests verify the canonical JSON ↔ Resume/Tailored coercion handles
 real-world inputs (nested dataclasses, StrEnum fields, optional fields).
 """
 
@@ -58,8 +58,8 @@ def test_from_bullets_handles_empty_input() -> None:
 
 
 def test_from_master_dict_round_trips_through_render_json() -> None:
-    """A Master can be serialised, written to disk, and read back identically."""
-    master = _sample_master()
+    """A Resume can be serialised, written to disk, and read back identically."""
+    master = _sample_resume()
     raw_text = render_json(master)
     raw_dict = json.loads(raw_text)
     reconstructed = from_master_dict(raw_dict)
@@ -71,7 +71,7 @@ def test_from_master_dict_round_trips_through_render_json() -> None:
 
 def test_from_tailored_dict_handles_empty_grounding() -> None:
     """A Tailored with no grounding citations is reconstructed correctly."""
-    master = _sample_master()
+    master = _sample_resume()
     tailored = Tailored(
         name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=master.summary,
@@ -92,7 +92,7 @@ def test_from_tailored_dict_handles_empty_grounding() -> None:
 
 def test_from_tailored_dict_handles_empty_jobs() -> None:
     """A Tailored with no jobs list is reconstructed correctly."""
-    master = _sample_master()
+    master = _sample_resume()
     tailored = Tailored(
         name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=master.summary,
@@ -152,9 +152,9 @@ def render_json_via_dataclass(obj) -> str:
 
 
 def test_load_master_round_trips_through_disk(tmp_path: Path) -> None:
-    """A Master serialised to disk and loaded back via load_master round-trips."""
+    """A Resume serialised to disk and loaded back via load_master round-trips."""
 
-    master = _sample_master()
+    master = _sample_resume()
     path = tmp_path / "master.json"
     path.write_text(render_json(snapshot(master)))
     loaded = load_master(path)
@@ -164,7 +164,7 @@ def test_load_master_round_trips_through_disk(tmp_path: Path) -> None:
 
 def test_as_dict_returns_python_dict_not_string() -> None:
     """as_dict returns the same payload as render_json but as a dict, not a str."""
-    master = _sample_master()
+    master = _sample_resume()
     payload = as_dict(master)
     assert isinstance(payload, dict)
     assert payload["contact"]["name"] == "Jane Doe"
@@ -173,7 +173,7 @@ def test_as_dict_returns_python_dict_not_string() -> None:
 
 def test_snapshot_has_master_model_label() -> None:
     """snapshot() tags the embedded run with model='master' for audit traceability."""
-    master = _sample_master()
+    master = _sample_resume()
     snap = snapshot(master)
     assert snap.run_result.run.model == "master"
     assert snap.run_result.run.started_at  # populated

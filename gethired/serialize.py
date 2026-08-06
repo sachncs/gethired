@@ -1,13 +1,13 @@
 """JSON ↔ domain-model coercion.
 
 Single source of truth for converting between the on-disk JSON snapshot and
-the canonical ``Master`` / ``Tailored`` dataclasses. The same
+the canonical ``Resume`` / ``Tailored`` dataclasses. The same
 mapping previously lived in three places (``tailor.load_master``,
 ``audit.__coerce_tailored``, ``cli.validate``); this module consolidates
 them so every reader agrees on the schema.
 
 The on-disk schema is whatever ``renderer.render_json`` writes — i.e. the
-default ``dataclasses.asdict`` shape. Both ``Master`` and
+default ``dataclasses.asdict`` shape. Both ``Resume`` and
 ``Tailored`` use the same field layout for the common sections
 (contact / skills / experiences / projects / education / awards);
 ``Tailored`` adds ``dropped``, ``rationale``, ``grounding``, ``jobs``,
@@ -186,7 +186,7 @@ def load_resume(path: Path) -> Resume:
 
 
 # ---------------------------------------------------------------------------
-# Snapshotting (Master → Tailored for JSON serialisation)
+# Snapshotting (Resume → Tailored for JSON serialisation)
 # ---------------------------------------------------------------------------
 
 
@@ -227,7 +227,7 @@ def snapshot(
         education=master.education,
         awards=master.awards,
         dropped=(),
-        rationale="Master snapshot",
+        rationale="Resume snapshot",
         grounding=(),
         jobs=(),
         run_result=RunResult(

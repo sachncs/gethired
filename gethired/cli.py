@@ -553,7 +553,7 @@ def write_cover_letters(
 
 
 def resume_for_tailored(tailored):
-    """Return the ``Master`` attached to a ``Tailored`` by the orchestrator."""
+    """Return the ``Resume`` attached to a ``Tailored`` by the orchestrator."""
     master_obj = tailored.master
     if master_obj is None:
         raise RuntimeError("Tailored.master not populated; cannot produce cover letter")

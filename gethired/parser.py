@@ -1,6 +1,6 @@
 """Parser for the master resume.
 
-Supports four input formats, all yielding the same ``Master``:
+Supports four input formats, all yielding the same ``Resume``:
 
 * ``tex(text)`` — deterministic TeX parser for the existing resume style
 * ``text(text)`` — plain-text fallback
@@ -388,14 +388,14 @@ def extract_awards(body: str) -> tuple[Award, ...]:
     return tuple(awards)
 
 
-def tex(source: str | Path) -> Master:
-    """Parse a TeX source resume into a ``Master``.
+def tex(source: str | Path) -> Resume:
+    """Parse a TeX source resume into a ``Resume``.
 
     Args:
         source: Either the raw TeX text or a path to a ``.tex`` file.
 
     Returns:
-        The parsed ``Master``.
+        The parsed ``Resume``.
 
     Raises:
         ParseError: If the source cannot be parsed into a resume.
@@ -438,7 +438,7 @@ def tex(source: str | Path) -> Master:
 
 
 def text(text: str) -> Resume:
-    """Parse a plain-text resume into a ``Master``.
+    """Parse a plain-text resume into a ``Resume``.
 
     Routes to ``tex`` when the text contains TeX markers. Otherwise
     the text is parsed as a plain-text resume: the contact block is
@@ -449,7 +449,7 @@ def text(text: str) -> Resume:
         text: Plain-text resume content.
 
     Returns:
-        The parsed ``Master``.
+        The parsed ``Resume``.
 
     Raises:
         ParseError: When a required contact field is missing.
@@ -459,7 +459,7 @@ def text(text: str) -> Resume:
     return plain(text)
 
 
-def pdf(path: Path) -> Master:
+def pdf(path: Path) -> Resume:
     """Extract text from a PDF and route through the TeX-style parser."""
     with pymupdf.open(path) as document:
         raw_text = "\n".join(document[i].get_text() for i in range(len(document)))
@@ -469,7 +469,7 @@ def pdf(path: Path) -> Master:
     return tex(raw_text)
 
 
-def image(path: Path) -> Master:
+def image(path: Path) -> Resume:
     """Extract text from an image via a vision-capable model.
 
     Requires a multimodal model identifier in ``IMAGE_MODEL`` (or the same
@@ -480,7 +480,7 @@ def image(path: Path) -> Master:
         path: Path to the image file (PNG, JPEG, WEBP, PDF-as-image).
 
     Returns:
-        The parsed ``Master``.
+        The parsed ``Resume``.
 
     Raises:
         ParseError: If the file is missing or the model returns no text.
@@ -521,7 +521,7 @@ def image(path: Path) -> Master:
     return tex(raw_text)
 
 
-def dispatch(source: str | Path) -> Master:
+def dispatch(source: str | Path) -> Resume:
     """Route to the appropriate parser based on file extension.
 
     Detects whether ``source`` is a file path (by attempting ``Path.exists()``
@@ -559,7 +559,7 @@ parse_pdf = pdf
 parse_image = image
 
 
-def __dispatch(source: str | Path) -> Master:
+def __dispatch(source: str | Path) -> Resume:
     """Backwards-compatible dispatcher; prefer :func:`dispatch`."""
     if isinstance(source, str) and "\\" in source:
         return tex(source)

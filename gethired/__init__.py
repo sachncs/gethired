@@ -3,7 +3,7 @@
 Public surface (intentionally small):
 
 * :class:`Tailor` — orchestrator
-* :class:`Master` — parsed master resume
+* :class:`Resume` — parsed master resume
 * :class:`Tailored` — produced tailored resume
 * :class:`Job` — job description (the JD)
 * :func:`parse` — convenience: parse a master resume from any supported format
@@ -11,7 +11,7 @@ Public surface (intentionally small):
 
 Submodules are imported lazily so that ``import gethired`` does not require
 ``trafilatura``, ``pymupdf``, ``pydantic_ai``, etc. Users who only need
-:func:`parse` or :class:`Master` can do ``from gethired import parse, Master``
+:func:`parse` or :class:`Resume` can do ``from gethired import parse, Resume``
 without triggering the full dependency chain.
 """
 
@@ -63,7 +63,7 @@ def __getattr__(name: str) -> Any:
     """
     lazy_loads = {
         "Tailor": "gethired.tailor",
-        "Master": "gethired.models",
+        "Resume": "gethired.models",
         "Tailored": "gethired.models",
         "Job": "gethired.models",
         "Contact": "gethired.models",
@@ -98,7 +98,7 @@ __all__ = [
     "FetchError",
     "GroundingError",
     "Job",
-    "Master",
+    "Resume",
     "ParseError",
     "PlagiarismError",
     "StyleError",

@@ -272,7 +272,7 @@ class Resume:
         return sha256(self.to_markdown())
 
 
-# Commit 1.1: Add Resume class as a flat field model; keep Master as a backward-compat
+# Commit 1.1: Add Resume class as a flat field model; keep Resume as a backward-compat
 # alias that delegates to Resume. This carries every Unit 1 commit so the repo
 # stays green while importers catch up. The alias is removed in commit 1.22.
 @dataclass(frozen=True, slots=True)
@@ -342,7 +342,7 @@ class Resume:
         return sha256(self.to_markdown())
 
 
-Master = Resume  # type: ignore[misc]  # deprecated alias, removed in commit 1.22
+Resume = Resume  # type: ignore[misc]  # deprecated alias, removed in commit 1.22
 
 
 @dataclass(frozen=True, slots=True)
@@ -791,7 +791,7 @@ __all__ = [
     "GateTier",
     "Job",
     "JobData",
-    "Master",  # deprecated alias for Resume, removed in commit 1.22
+    "Resume",  # deprecated alias for Resume, removed in commit 1.22
     "Project",
     "Resume",
     "Run",

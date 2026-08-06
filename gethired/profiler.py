@@ -1,6 +1,6 @@
 """Voice profile builder.
 
-Computes a deterministic voice fingerprint from a Master. Used by the
+Computes a deterministic voice fingerprint from a Resume. Used by the
 writer agent's instructions and by the validator to detect voice drift.
 """
 

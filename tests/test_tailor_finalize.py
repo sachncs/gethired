@@ -19,7 +19,7 @@ from gethired.serialize import render_json, snapshot
 from gethired.tailor import Tailor
 
 
-def _sample_master_json() -> str:
+def _sample_resume_json() -> str:
     """Build a serialised Tailored (master snapshot) for testing."""
     master = Resume(
         name="Test", city="City", phone="+1-555-0100", email="test@example.com", github=None, linkedin=None,
@@ -43,7 +43,7 @@ def _make_tailor_with_test_model() -> Tailor:
 def test_finalize_re_renders_tailored_json(tmp_path: Path) -> None:
     """``finalize`` parses an edited ``tailored.json`` and re-renders artefacts."""
     source = tmp_path / "source.json"
-    source.write_text(_sample_master_json())
+    source.write_text(_sample_resume_json())
     tailor = _make_tailor_with_test_model()
     tailored = tailor.finalize(source)
     assert tailored.name == "Test"

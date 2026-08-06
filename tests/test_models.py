@@ -58,7 +58,7 @@ def test_all_models_are_frozen() -> None:
         ),
         Award: Award(title="x", organization="x", date="x", description="x"),
         Skills: Skills(categories={}),
-        Master: Master(
+        Resume: Resume(
             name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
             summary="x",
             skills=Skills(categories={}),

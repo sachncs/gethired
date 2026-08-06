@@ -386,7 +386,7 @@ def test_cli_no_tty_prompt_flag_overrides_isatty(
 
 
 def _make_resume():
-    """Build a minimal Master for cover-letter tests."""
+    """Build a minimal Resume for cover-letter tests."""
     return Resume(name="Jane Doe", city="NYC", phone="555", email="j@e.com", github=None, linkedin=None, summary="Senior engineer with ML focus.",
         skills=Skills(categories={"Languages": ("python")}),
         experience=(),
@@ -399,7 +399,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, resume_tex_path: Path
 ) -> None:
     """N=1 path: writes ``cover_letter.md`` (backward-compatible)."""
-    master = _make_master()
+    master = _make_resume()
     jd = _two_jds()[0]
     analysis = consolidate((jd,))
 
@@ -477,7 +477,7 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, resume_tex_path: Path
 ) -> None:
     """N=3 path: writes three per-JD cover letters with per-JD role and merged keywords."""
-    master = _make_master()
+    master = _make_resume()
     jds = [
         Job(
             url="https://a.example/jd",
