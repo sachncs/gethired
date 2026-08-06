@@ -67,14 +67,14 @@ def from_bullets(items: list[dict[str, str]]) -> tuple[Bullet, ...]:
     return tuple(Bullet(text=item["text"]) for item in items)
 
 
-def from_master_dict(raw: dict[str, Any]) -> Master:
-    """Construct a ``Master`` from the JSON-serialised shape.
+def from_master_dict(raw: dict[str, Any]) -> Resume:
+    """Construct a ``Resume`` from the JSON-serialised shape.
 
-    The ``raw`` mapping must contain ``contact``, ``summary``, ``skills``,
-    ``experiences``, ``projects``, ``education``, and ``awards``. Optional
-    ``schema_version`` is ignored.
+    The ``raw`` mapping must contain ``summary``, ``skills``, ``experience``,
+    ``projects``, ``education``, and ``awards``. Optional ``version`` (or
+    legacy ``schema_version``) is ignored.
     """
-    contact_info = Contact(**raw["contact"])
+    contact = raw.get("contact", {})
     skills_data = Skills(categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()})
     experience_data = tuple(
         Experience(
@@ -84,7 +84,7 @@ def from_master_dict(raw: dict[str, Any]) -> Master:
             end_date=exp["end_date"],
             bullets=from_bullets(exp["bullets"]),
         )
-        for exp in raw["experiences"]
+        for exp in raw["experience"]
     )
     project_data = tuple(
         Project(
@@ -96,8 +96,13 @@ def from_master_dict(raw: dict[str, Any]) -> Master:
     )
     education_data = tuple(Education(**edu) for edu in raw["education"])
     award_data = tuple(Award(**award) for award in raw["awards"])
-    return Master(
-        contact=contact_info,
+    return Resume(
+        name=contact.get("name", ""),
+        email=contact.get("email", ""),
+        city=contact.get("city", ""),
+        phone=contact.get("phone", ""),
+        github=contact.get("github") or contact.get("github_url"),
+        linkedin=contact.get("linkedin") or contact.get("linkedin_url"),
         summary=raw["summary"],
         skills=skills_data,
         experience=experience_data,
@@ -105,11 +110,6 @@ def from_master_dict(raw: dict[str, Any]) -> Master:
         education=education_data,
         awards=award_data,
     )
-
-
-def _contact_from(raw: dict[str, Any]) -> Contact:
-    """Reconstruct the Contact dataclass from the serialised dict."""
-    return Contact(**raw["contact"])
 
 
 def skills_from(raw: dict[str, Any]) -> Skills:
@@ -154,31 +154,39 @@ def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
     Tolerates a missing ``run_result`` (legacy snapshots) by returning
     ``run_result=None``.
     """
+    contact = raw.get("contact", {})
     return Tailored(
-        contact=_contact_from(raw),
+        name=contact.get("name", ""),
+        email=contact.get("email", ""),
+        city=contact.get("city", ""),
+        phone=contact.get("phone", ""),
+        github=contact.get("github") or contact.get("github_url"),
+        linkedin=contact.get("linkedin") or contact.get("linkedin_url"),
         summary=raw["summary"],
-        skills=_skills_from(raw),
-        experience=_experiences_from(raw),
-        projects=_projects_from(raw),
+        skills=skills_from(raw),
+        experience=experiences_from(raw),
+        projects=projects_from(raw),
         education=tuple(Education(**edu) for edu in raw["education"]),
         awards=tuple(Award(**award) for award in raw["awards"]),
         dropped=tuple(Reason(**dropped) for dropped in raw.get("dropped", [])),
         rationale=raw.get("rationale", ""),
-        grounding=_grounding_from(raw),
+        grounding=grounding_from(raw),
         jobs=(),
         run_result=from_run_result_dict(raw.get("run_result")),
     )
 
 
-def load_master(path: Path) -> Master:
-    """Read a master JSON snapshot from disk and coerce it.
+def load_resume(path: Path) -> Resume:
+    """Read a resume JSON snapshot from disk and coerce it.
 
     Args:
         path: Path to a JSON file produced by ``render_json`` against a
-            ``Master`` (typically via ``snapshot``).
+            ``Resume`` (typically via ``snapshot``).
 
     Returns:
-        The reconstructed ``Master``.
+        The reconstructed ``Resume``.
+
+    Deprecated alias for :func:`load_resume`. Removed in Unit 11.
     """
     raw: dict[str, Any] = json.loads(Path(path).read_text())
     return from_master_dict(raw)
@@ -298,3 +306,7 @@ def from_step_dict(raw: dict[str, Any]) -> Step:
     if "metadata" in raw and isinstance(raw["metadata"], dict):
         raw = {**raw, "metadata": StepMeta(**raw["metadata"])}
     return Step(**raw)
+
+
+# Deprecated alias for load_resume. Removed in Unit 11.
+load_master = load_resume

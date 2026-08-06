@@ -165,8 +165,8 @@ def consolidate(descriptions: tuple[Job, ...]) -> Analysis:
         role=descriptions[0].title or UNKNOWN_ROLE,
         seniority=top_seniority,
         must_have=tuple(union_skills(analyses)),
-        nice_to_have=_intersect_skills(analyses),
-        keywords=_merged_keywords(analyses),
+        nice_to_have=intersect_skills(analyses),
+        keywords=merged_keywords(analyses),
         responsibilities=_union_responsibilities(analyses),
         company=", ".join(companies),
     )

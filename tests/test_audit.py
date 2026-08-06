@@ -64,8 +64,8 @@ def _sample_run_payloads() -> tuple[dict[str, object], dict[str, object]]:
             "run": {
                 "id": "test-run-id",
                 "started_at": "2026-01-01T00:00:00.000Z",
-                "master_hash": "x",
-                "jd_urls_hash": "y",
+                "resume_hash": "x",
+                "jd_hash": "y",
                 "model": "test",
                 "draft_model": None,
             },

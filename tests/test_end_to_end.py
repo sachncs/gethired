@@ -200,7 +200,7 @@ def test_pipeline_pdf_pass_revalidates_and_recomputes_outcome(tmp_path: Path, mo
 
 
 def test_end_to_end_multi_jd_run_persists_combined_match_report(tmp_path: Path) -> None:
-    """A multi-JD run writes a single run-dir; the match report's jd_urls_hash covers both URLs."""
+    """A multi-JD run writes a single run-dir; the match report's jd_hash covers both URLs."""
     jd_b = Job(
         url="https://example.com/jd-b",
         title="Staff ML Engineer",
@@ -227,8 +227,8 @@ def test_end_to_end_multi_jd_run_persists_combined_match_report(tmp_path: Path) 
     assert result.analysis is not None
     for kw in ("python", "kubernetes", "aws"):
         assert kw in result.analysis.must_have
-    # jd_urls_hash is deterministic and covers both URLs.
-    assert result.run.jd_urls_hash == hash_urls((SAMPLE_JD, jd_b))
+    # jd_hash is deterministic and covers both URLs.
+    assert result.run.jd_hash == hash_urls((SAMPLE_JD, jd_b))
 
 
 def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
@@ -287,7 +287,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                         id="run-multi-cover",
                         started_at="now",
                         resume_hash="",
-                        jd_urls_hash="",
+                        jd_hash="",
                         model="test",
                         draft_model=None,
                     ),

@@ -87,7 +87,7 @@ def extract_suffix_multipliers(text: str) -> set[int]:
     for match in pattern.finditer(text):
         digits = float(match.group(1))
         suffix = match.group(2).lower()
-        found.add(int(digits * _SUFFIX_MULTIPLIER[suffix]))
+        found.add(int(digits * SUFFIX_MULTIPLIER[suffix]))
     return found
 
 
@@ -140,8 +140,8 @@ def numbers(text: str) -> set[int]:
     """
     found: set[int] = set()
     found |= extract_numeric_patterns(text)
-    found |= _extract_suffix_multipliers(text)
-    found |= _extract_word_numbers(text)
+    found |= extract_suffix_multipliers(text)
+    found |= extract_word_numbers(text)
     return found
 
 

@@ -422,7 +422,7 @@ class Source:
 
     master_path: str
     verbatim_span: str
-    master_hash: str
+    resume_hash: str
 
     def description(self) -> Source:
         return self
@@ -434,7 +434,7 @@ class SourceView:
 
     master_path: str
     verbatim_span: str
-    master_hash: str
+    resume_hash: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -497,7 +497,7 @@ class JobData:
                 {
                     "master_path": ref.master_path,
                     "verbatim_span": ref.verbatim_span,
-                    "master_hash": ref.master_hash,
+                    "resume_hash": ref.resume_hash,
                 }
                 for ref in self.inputs
             ],
@@ -528,8 +528,8 @@ class Run:
 
     id: str
     started_at: str
-    master_hash: str
-    jd_urls_hash: str
+    resume_hash: str
+    jd_hash: str
     model: str
     draft_model: str | None
 
@@ -537,8 +537,8 @@ class Run:
         return RunView(
             id=self.id,
             started_at=self.started_at,
-            resume_hash=self.master_hash,
-            jd_urls_hash=self.jd_urls_hash,
+            resume_hash=self.resume_hash,
+            jd_hash=self.jd_hash,
             model=self.model,
             draft_model=self.draft_model,
         )
@@ -548,8 +548,8 @@ class Run:
 class RunView:
     id: str
     started_at: str
-    master_hash: str
-    jd_urls_hash: str
+    resume_hash: str
+    jd_hash: str
     model: str
     draft_model: str | None
 

@@ -733,8 +733,8 @@ def apply(
     Entries listed in ``output.dropped`` are removed from the result.
     """
     dropped = frozenset(output.dropped)
-    experiences, exp_grounding = _apply_experiences(master, output, dropped)
-    projects, proj_grounding = _apply_projects(master, output, dropped)
+    experiences, exp_grounding = apply_experiences(master, output, dropped)
+    projects, proj_grounding = apply_projects(master, output, dropped)
     return Tailored(
         name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
         summary=output.summary,
@@ -743,7 +743,7 @@ def apply(
         projects=projects,
         education=master.education,
         awards=master.awards,
-        dropped=_drop_reasons(output),
+        dropped=drop_reasons(output),
         rationale=output.rationale,
         grounding=tuple(exp_grounding + proj_grounding),
         jobs=(),

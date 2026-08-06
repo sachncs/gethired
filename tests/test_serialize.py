@@ -176,8 +176,8 @@ def test_coerce_run_result_rebuilds_run() -> None:
         "run": {
             "id": "abc",
             "started_at": "2026-01-01T00:00:00.000Z",
-            "master_hash": "x",
-            "jd_urls_hash": "y",
+            "resume_hash": "x",
+            "jd_hash": "y",
             "model": "m",
             "draft_model": None,
         },

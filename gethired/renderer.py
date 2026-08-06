@@ -122,8 +122,8 @@ def run_description(run: Run) -> list[str]:
         "## Run Description",
         f"- Run.id: `{run.id}`",
         f"- started_at: {run.started_at}",
-        f"- master_hash: `{run.master_hash}`",
-        f"- jd_urls_hash: `{run.jd_urls_hash}`",
+        f"- resume_hash: `{run.resume_hash}`",
+        f"- jd_hash: `{run.jd_hash}`",
         f"- model: `{run.model}`",
     ]
     if run.draft_model:
