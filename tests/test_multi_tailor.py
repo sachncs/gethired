@@ -66,7 +66,7 @@ def test_tailor_accepts_multiple_job_descriptions(resume) -> None:
         model_instance=TestModel())
     result = tailor.run()
     # Contact must round-trip from master
-    assert result.contact.email == resume.email
+    assert result.email == resume.email
     # The run must have a UUID-shaped run-id
     assert len(result.run.id) == 36
     # The writer's Step trail must include the TAILOR step
@@ -141,7 +141,7 @@ def test_tailor_run_with_multiple_jds_persists_artifacts(resume, tmp_path) -> No
     assert (run_dir / "match_report.md").exists()
     # The on-disk JSON must round-trip to the same model
     on_disk = json.loads((run_dir / "tailored.json").read_text())
-    assert on_disk["contact"]["name"] == result.contact.name
+    assert on_disk["contact"]["name"] == result.name
     # Tailored carries the JD tuple and merged analysis for downstream CLI use
     assert result.jds == (SAMPLE_JD_A, SAMPLE_JD_B)
     assert result.analysis is not None

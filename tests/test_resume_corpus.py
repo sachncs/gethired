@@ -102,8 +102,8 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
     result = tailor.run()
 
     # 1. The contact must round-trip exactly
-    assert result.contact.name == master.name
-    assert result.contact.email == master.email
+    assert result.name == master.name
+    assert result.email == master.email
     # 2. The Step trail must include the core kinds
     job_kinds = {j.type.value for j in result.jobs}
     expected_kinds = {

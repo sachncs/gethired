@@ -79,10 +79,10 @@ def test_end_to_end_pipeline_runs() -> None:
     # Run-id must be a UUID
     assert len(result.run.id) == 36, f"run.id must be UUID-shaped, got {result.run.id!r}"
     # The master's contact must round-trip
-    assert result.contact.name == "Placeholder Name", (
-        f"contact.name not preserved: {result.contact.name!r}"
+    assert result.name == "Placeholder Name", (
+        f"contact.name not preserved: {result.name!r}"
     )
-    assert result.contact.email == "placeholder@example.com"
+    assert result.email == "placeholder@example.com"
     # All four artefacts must be persisted with non-empty content
     run_dir = Path("tailored") / result.run.id
     for name in ("tailored.tex", "tailored.txt", "tailored.json", "match_report.md"):

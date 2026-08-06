@@ -131,7 +131,7 @@ def test_load_master_from_json_reads_disk(tmp_path: Path) -> None:
     path = tmp_path / "master.json"
     path.write_text(render_json(snap))
     loaded = load_master(path)
-    assert loaded.contact.name == "Test User"
+    assert loaded.name == "Test User"
     assert loaded.experiences[0].company == "Acme"
 
 

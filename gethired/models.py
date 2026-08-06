@@ -225,12 +225,12 @@ class Resume:
 
     def to_markdown(self) -> str:
         """Render the resume as Markdown for human inspection."""
-        lines: list[str] = [f"# {self.contact.name}", ""]
-        contact_bits = [self.contact.city, self.contact.phone, self.contact.email]
-        if self.contact.github:
-            contact_bits.append(self.contact.github)
-        if self.contact.linkedin:
-            contact_bits.append(self.contact.linkedin)
+        lines: list[str] = [f"# {self.name}", ""]
+        contact_bits = [self.city, self.phone, self.email]
+        if self.github:
+            contact_bits.append(self.github)
+        if self.linkedin:
+            contact_bits.append(self.linkedin)
         lines.append(" · ".join(bit for bit in contact_bits if bit))
         lines.append("")
         lines.append("## Summary")

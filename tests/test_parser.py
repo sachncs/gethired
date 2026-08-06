@@ -91,7 +91,7 @@ def test_content_hash_is_deterministic(resume) -> None:
 def test_parse_tex_with_string_input(resume, resume_tex_text) -> None:
     """Passing raw TeX text should work too."""
     parsed = tex(resume_tex_text)
-    assert parsed.contact.name == resume.name
+    assert parsed.name == resume.name
 
 
 def test_parse_tex_with_invalid_source_raises(tmp_path) -> None:
