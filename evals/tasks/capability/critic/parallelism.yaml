@@ -1,0 +1,49 @@
+task:
+  id: critic_cap_parallelism
+  desc: "Critic detects parallelism: 3+ bullets in same role open with same verb"
+  category: critic
+  type: code
+  tags: [capability]
+  input:
+    __output__:
+      master:
+        contact:
+          name: "Test"
+          city: Test City
+          phone: "0"
+          email: "x@y.z"
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      tailored:
+        contact:
+          name: "Test"
+          city: Test City
+          phone: "0"
+          email: "x@y.z"
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      grounding: []
+      style:
+        - path: tailored
+          detail: "3 bullets open with the same verb 'built'; vary opening verbs"
+      plagiarism: []
+  graders:
+    - name: code.text_contains
+      args:
+        name: parallelism_detected
+        text: parallelism
+        substring: parallelism

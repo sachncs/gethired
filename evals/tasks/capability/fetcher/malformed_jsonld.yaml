@@ -1,0 +1,31 @@
+task:
+  id: fetcher_cap_malformed_jsonld
+  desc: Fetcher handles JSON-LD with missing optional fields gracefully
+  category: fetcher
+  type: code
+  tags: [capability]
+  input:
+    __output__:
+      url: https://example.com/jd-malformed
+      title: ML Engineer
+      company: Example Co
+      text: We need Python experience. Distributed systems a plus.
+      keywords:
+        - python
+        - distributed systems
+      must_have_keywords:
+        - python
+      nice_to_have_keywords:
+        - distributed systems
+      content_hash: malformed-001
+  graders:
+    - name: code.text_contains
+      args:
+        name: title_present
+        text: ML Engineer
+        substring: ML Engineer
+    - name: code.text_contains
+      args:
+        name: must_have_extracted
+        text: python
+        substring: python

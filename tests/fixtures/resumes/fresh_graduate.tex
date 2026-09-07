@@ -1,0 +1,118 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{microtype}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{5pt}]
+
+\pdfgentounicode=1
+
+\newcommand{\resumeItem}[1]{%
+  \item\small{#1 \vspace{-1pt}}%
+}
+
+\newcommand{\resumeSubheading}[3]{%
+  \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1}, #2 & #3 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeProjectHeading}[2]{%
+    \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=4pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in, parsep=0pt, topsep=2pt, itemsep=3pt, label=$\bullet$]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
+
+\definecolor{LinkColor}{rgb}{0,0.2,0.6}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=LinkColor,
+    filecolor=LinkColor,
+    urlcolor=LinkColor,
+}
+
+\begin{document}
+
+\begin{center}
+{\Huge \scshape Priya Sharma} \\ \vspace{5pt}
+\small Test City $\cdot$ 9812345678 $\cdot$ \href{mailto:priya.sharma@example.com}{priya.sharma@example.com}
+\end{center}
+
+\section{Summary}
+{\small Computer Science graduate with internship experience in machine learning and backend engineering.}
+
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=0pt]
+    \small{\item{
+     \textbf{Languages:} Python, Java, SQL
+     \textbf{Frameworks:} PyTorch, FastAPI
+    }}
+\end{itemize}
+
+\section{Experience}
+\resumeSubHeadingListStart
+\resumeSubheading{Machine Learning Intern}{Nova Labs}{May 2024 -- August 2024}
+\resumeItemListStart
+\resumeItem{Built a text-classification model reaching 87\% accuracy on 50K reviews.}
+\resumeItem{Designed a data pipeline that reduced preprocessing time by 40\%.}
+\resumeItemListEnd
+\resumeSubheading{Software Engineering Intern}{CloudKite}{January 2024 -- April 2024}
+\resumeItemListStart
+\resumeItem{Developed REST APIs serving 5K requests per day.}
+\resumeItem{Implemented unit tests covering 80\% of new code.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Selected Projects}
+\resumeSubHeadingListStart
+\resumeProjectHeading{\href{https://github.com/priyasharma/course-recommender}{\textbf{Course Recommender}}}{2024}
+\resumeItemListStart
+\resumeItem{Built a recommender serving 2K students with 75\% click-through.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Education}
+\resumeSubHeadingListStart
+\resumeSubheading{Ramaiah Institute of Technology}{Test City}{July 2025}
+\vspace{-15pt}
+\resumeSubheading{Bachelor of Engineering}{Computer Science}{CGPA: 9.1}
+\resumeSubHeadingListEnd
+
+\end{document}

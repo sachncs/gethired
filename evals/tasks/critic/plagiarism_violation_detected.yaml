@@ -1,0 +1,49 @@
+task:
+  id: critic_plagiarism_violation_detected_001
+  desc: Critic detects plagiarism (5-gram overlap with JD)
+  category: critic
+  type: code
+  tags: [regression]
+  input:
+    __output__:
+      master:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      tailored:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer who designed and deployed isolated ai platforms for enterprise customers in fintech"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      grounding: []
+      style: []
+      plagiarism:
+        - path: tailored
+          ngram: "designed and deployed isolated ai"
+  graders:
+    - name: code.text_contains
+      args:
+        name: plagiarism_detected
+        text: designed and deployed isolated ai
+        substring: designed and deployed isolated ai

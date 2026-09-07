@@ -1,0 +1,22 @@
+task:
+  id: fetcher_cache_hit_001
+  desc: Cached JDs are served without re-fetching
+  category: fetcher
+  type: code
+  tags: [regression]
+  input:
+    __output__:
+      url: https://example.com/cached-jd
+      content_hash: cached-hash-001
+      text: "Cached body"
+  graders:
+    - name: code.text_contains
+      args:
+        name: cached_body_present
+        text: Cached body
+        substring: Cached body
+    - name: code.text_contains
+      args:
+        name: url_preserved
+        text: "https://example.com/cached-jd"
+        substring: cached-jd

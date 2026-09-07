@@ -1,0 +1,49 @@
+task:
+  id: critic_cap_borderline_quantification
+  desc: Critic flags resumes where quantification ratio is borderline (60% vs 70% threshold)
+  category: critic
+  type: code
+  tags: [capability]
+  input:
+    __output__:
+      master:
+        contact:
+          name: "Test"
+          city: Test City
+          phone: "0"
+          email: "x@y.z"
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      tailored:
+        contact:
+          name: "Test"
+          city: Test City
+          phone: "0"
+          email: "x@y.z"
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      grounding: []
+      style:
+        - path: tailored
+          detail: "Only 60% of bullets quantified; threshold 70%"
+      plagiarism: []
+  graders:
+    - name: code.text_contains
+      args:
+        name: borderline_quantification_detected
+        text: "60% of bullets quantified"
+        substring: "60% of bullets quantified"

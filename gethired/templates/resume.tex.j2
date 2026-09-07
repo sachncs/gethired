@@ -1,0 +1,152 @@
+{% raw -%}
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{microtype}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{5pt}]
+
+\pdfgentounicode=1
+
+\newcommand{\resumeItem}[1]{%
+  \item\small{#1 \vspace{-1pt}}%
+}
+
+\newcommand{\resumeSubheading}[3]{%
+  \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1}, #2 & #3 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeProjectHeading}[2]{%
+    \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=4pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in, parsep=0pt, topsep=2pt, itemsep=3pt, label=$\bullet$]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
+
+\definecolor{LinkColor}{rgb}{0,0.2,0.6}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=LinkColor,
+    filecolor=LinkColor,
+    urlcolor=LinkColor,
+}
+
+\begin{document}
+{% endraw -%}
+
+\begin{center}
+    {\Huge \scshape {{ resume.name | tex }}} \\ \vspace{5pt}
+    \small {{ resume.city | tex }} $\cdot$ {{ resume.phone | tex }} $\cdot$
+    \href{mailto:{{ resume.email | tex }}}{{ resume.email | tex }}
+    {%- if resume.github_url %}
+    $\cdot$ \href{ {{ resume.github_url | tex }} }{github.com/{{ resume.github_url | replace('https://github.com/', '') | tex }} }
+    {%- endif %}
+    {%- if resume.linkedin_url %}
+    $\cdot$ \href{ {{ resume.linkedin_url | tex }} }{linkedin.com/{{ resume.linkedin_url | replace('https://www.linkedin.com/in/', '/in/') | replace('https://linkedin.com/in/', '/in/') | tex }} }
+    {%- endif %}
+\end{center}
+
+\section{Summary}
+{\small {{ resume.summary | tex }}}
+
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=0pt]
+    \small{\item{
+    {%- for category, items in resume.skills.categories.items() %}
+    \textbf{ {{ category | tex }}:} {{ items | join(', ') | tex }} \\ \vspace{2pt}
+    {%- endfor %}
+    }}
+\end{itemize}
+
+\section{Experience}
+\resumeSubHeadingListStart
+{%- for exp in resume.experiences %}
+\resumeSubheading{ {{ exp.role | tex }} }{ {{ exp.company | tex }} }{ {{ exp.start_date | tex }} -- {{ exp.end_date | tex }} }
+\resumeItemListStart
+{%- for bullet in exp.bullets %}
+\resumeItem{ {{ bullet.text | tex }} }
+{%- endfor %}
+\resumeItemListEnd
+{%- endfor %}
+\resumeSubHeadingListEnd
+
+{%- if resume.projects %}
+
+\section{Selected Projects}
+\resumeSubHeadingListStart
+{%- for project in resume.projects %}
+\resumeProjectHeading{\href{ {{ project.url | tex }} }{\textbf{ {{ project.name | tex }} }}}{}
+\resumeItemListStart
+{%- for bullet in project.bullets %}
+\resumeItem{ {{ bullet.text | tex }} }
+{%- endfor %}
+\resumeItemListEnd
+{%- endfor %}
+\resumeSubHeadingListEnd
+{%- endif %}
+
+\section{Education}
+\resumeSubHeadingListStart
+{%- for edu in resume.education %}
+\resumeSubheading{ {{ edu.institution | tex }} }{ {{ edu.location | tex }} }{ {{ edu.graduation | tex }} }
+\vspace{-15pt}
+\resumeSubheading{ {{ edu.degree | tex }} }{ {{ edu.major | tex }} }{% if edu.gpa %}{CGPA: {{ edu.gpa | tex }}}{% endif %}
+{%- endfor %}
+\resumeSubHeadingListEnd
+
+{%- if resume.awards %}
+
+\section{Awards \& Recognition}
+\resumeSubHeadingListStart
+{%- for award in resume.awards %}
+\resumeProjectHeading{\textbf{ {{ award.title | tex }} }}{{ award.date | tex }}
+{%- if award.description %}
+\resumeItemListStart
+\resumeItem{ {{ award.description | tex }} }
+\resumeItemListEnd
+{%- endif %}
+{%- endfor %}
+\resumeSubHeadingListEnd
+{%- endif %}
+
+{% raw -%}
+\end{document}
+{% endraw -%}

@@ -1,0 +1,51 @@
+task:
+  id: tailor_e2e_platform_engineer_001
+  desc: End-to-end tailor pipeline handles platform engineer role
+  category: tailor
+  type: tailor
+  tags:
+  - capability
+  input:
+    __master__: __load_master__
+    use_test_model: true
+    jd_text: 'Platform Engineer role with Kubernetes, Go, distributed systems.
+
+      '
+    jd_title: Platform Engineer
+    jd_company: Platform Co
+    must_have_keywords:
+    - kubernetes
+    - distributed systems
+  graders:
+  - name: code.field_present
+    args:
+      name: tailored_present
+      resume: $tailored
+      path: contact
+  - name: code.field_length
+    args:
+      name: experiences_preserved
+      resume: $tailored
+      path: experiences
+      expected: 10
+  - name: code.task_completion
+    args:
+      name: agent_task_completion
+      trace_path: $trace_path
+      tailored: $tailored
+  - name: code.tool_correctness
+    args:
+      name: agent_tool_selection
+      trace_path: $trace_path
+      expected_tools:
+      - read_jd_summary
+      - list_skills
+  - name: code.argument_correctness
+    args:
+      name: tool_arguments_present
+      trace_path: $trace_path
+  - name: code.step_efficiency
+    args:
+      name: agent_step_budget
+      trace_path: $trace_path
+      max_tool_calls: 6

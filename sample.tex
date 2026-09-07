@@ -1,0 +1,185 @@
+\documentclass[letterpaper,11pt]{article}
+
+\usepackage{latexsym}
+\usepackage[empty]{fullpage}
+\usepackage{titlesec}
+\usepackage{marvosym}
+\usepackage[usenames,dvipsnames]{color}
+\usepackage{verbatim}
+\usepackage{enumitem}
+\usepackage[hidelinks]{hyperref}
+\usepackage{fancyhdr}
+\usepackage[english]{babel}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{microtype}
+\input{glyphtounicode}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyfoot{}
+\renewcommand{\headrulewidth}{0pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\addtolength{\oddsidemargin}{-0.5in}
+\addtolength{\evensidemargin}{-0.5in}
+\addtolength{\textwidth}{1.0in}
+\addtolength{\topmargin}{-0.5in}
+\addtolength{\textheight}{1.0in}
+
+\urlstyle{same}
+\raggedbottom
+\setlength{\tabcolsep}{0in}
+
+\titleformat{\section}{
+  \vspace{-4pt}\scshape\raggedright\large\bfseries
+}{}{0em}{}[\color{black}\titlerule \vspace{5pt}]
+
+\pdfgentounicode=1
+
+\newcommand{\resumeItem}[1]{%
+  \item\small{#1 \vspace{-1pt}}%
+}
+
+\newcommand{\resumeSubheading}[3]{%
+  \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}[t]{l@{\extracolsep{\fill}}r}
+      \textbf{#1}, #2 & #3 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeProjectHeading}[2]{%
+    \vspace{2pt}\item
+    \begin{tabular*}{\linewidth}{l@{\extracolsep{\fill}}r}
+      \small#1 & #2 \\
+    \end{tabular*}\vspace{-4pt}%
+}
+
+\newcommand{\resumeSubHeadingListStart}{\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=4pt]}
+\newcommand{\resumeSubHeadingListEnd}{\end{itemize}}
+\newcommand{\resumeItemListStart}{\begin{itemize}[leftmargin=0.15in, parsep=0pt, topsep=2pt, itemsep=3pt, label=$\bullet$]}
+\newcommand{\resumeItemListEnd}{\end{itemize}\vspace{-2pt}}
+
+\definecolor{LinkColor}{rgb}{0,0.2,0.6}
+\hypersetup{
+    colorlinks=true,
+    linkcolor=LinkColor,
+    filecolor=LinkColor,
+    urlcolor=LinkColor,
+}
+
+\begin{document}
+
+\begin{center}
+{\Huge \scshape Placeholder Name} \\ \vspace{5pt}
+\small Test City $\cdot$ 5555550100 $\cdot$ \href{mailto:placeholder@example.com}{placeholder@example.com} $\cdot$ \href{https://github.com/gethired}{github.com/gethired} $\cdot$ \href{https://linkedin.com/in/gethired}{linkedin.com/in/gethired}
+\end{center}
+
+\section{Summary}
+{\small Machine learning engineer with 6+ years of experience designing and shipping production ML platforms, LLM applications, and distributed systems across startups and enterprises.}
+
+\section{Technical Skills}
+\begin{itemize}[leftmargin=0.15in, label={}, parsep=0pt, topsep=0pt, itemsep=0pt]
+    \small{\item{
+     \textbf{Programming Languages:} Python, C++, Go
+     \textbf{Machine Learning \& AI:} PyTorch, TensorFlow, scikit-learn
+     \textbf{Cloud \& Infrastructure:} AWS, GCP, Kubernetes, Docker
+    }}
+\end{itemize}
+
+\section{Experience}
+\resumeSubHeadingListStart
+\resumeSubheading{Founder}{Promptsheon}{June 2025 -- May 2026}
+\resumeItemListStart
+\resumeItem{Built an LLM-based platform that reduced document-processing time by 60\%.}
+\resumeItem{Designed a multi-agent pipeline processing 1M+ tokens per day.}
+\resumeItem{Developed evaluation harnesses covering 100+ regression scenarios.}
+\resumeItem{Grew the user base to 500+ active users within the first quarter.}
+\resumeItemListEnd
+\resumeSubheading{Senior Machine Learning Engineer}{Quantiphi}{January 2024 -- June 2025}
+\resumeItemListStart
+\resumeItem{Led the design of a production RAG system serving 50K queries daily.}
+\resumeItem{Built LLM inference infrastructure on Kubernetes, cutting p95 latency by 40\%.}
+\resumeItem{Developed fine-tuning pipelines for 3 domain-specific models.}
+\resumeItemListEnd
+\resumeSubheading{Machine Learning Engineer}{Quantiphi}{June 2022 -- January 2024}
+\resumeItemListStart
+\resumeItem{Deployed 5 computer-vision models to production with 99.2\% uptime.}
+\resumeItem{Designed a feature store serving 2B feature rows per day.}
+\resumeItem{Built monitoring dashboards tracking 30+ model metrics.}
+\resumeItemListEnd
+\resumeSubheading{Software Engineer}{Quantiphi}{June 2021 -- June 2022}
+\resumeItemListStart
+\resumeItem{Built microservices handling 10K requests per second.}
+\resumeItem{Implemented CI/CD pipelines that cut release time by 50\%.}
+\resumeItem{Wrote integration tests covering 95\% of critical paths.}
+\resumeItemListEnd
+\resumeSubheading{Research Intern}{Indian Institute of Science}{May 2020 -- August 2020}
+\resumeItemListStart
+\resumeItem{Developed a time-series forecasting prototype with 15\% error reduction.}
+\resumeItem{Co-authored a peer-reviewed workshop paper on model robustness.}
+\resumeItemListEnd
+\resumeSubheading{Machine Learning Intern}{RIA Advisory}{January 2020 -- April 2020}
+\resumeItemListStart
+\resumeItem{Built a credit-risk model improving prediction accuracy by 8\%.}
+\resumeItem{Processed and cleaned 4M rows of financial data.}
+\resumeItemListEnd
+\resumeSubheading{Data Science Intern}{Target Corporation}{May 2019 -- July 2019}
+\resumeItemListStart
+\resumeItem{Designed demand-forecasting models for 1,200 store locations.}
+\resumeItem{Built analyst dashboards used by 200+ users weekly.}
+\resumeItemListEnd
+\resumeSubheading{Web Developer Intern}{Upstox}{May 2018 -- July 2018}
+\resumeItemListStart
+\resumeItem{Developed frontend features used by 1M+ retail investors.}
+\resumeItem{Reduced page load time by 30\% through lazy loading.}
+\resumeItemListEnd
+\resumeSubheading{Teaching Assistant}{Ramaiah Institute of Technology}{August 2019 -- December 2020}
+\resumeItemListStart
+\resumeItem{Taught Data Structures to 150+ undergraduate students.}
+\resumeItem{Designed lab assignments and graded 800+ submissions.}
+\resumeItemListEnd
+\resumeSubheading{Freelance Developer}{Self-employed}{June 2017 -- May 2018}
+\resumeItemListStart
+\resumeItem{Built 12 client websites for small businesses.}
+\resumeItem{Automated reporting pipelines saving clients 20 hours monthly.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Selected Projects}
+\resumeSubHeadingListStart
+\resumeProjectHeading{\href{https://github.com/gethired/promptsheon}{\textbf{Promptsheon}}}{2025}
+\resumeItemListStart
+\resumeItem{Built a multi-agent LLM platform that automates resume tailoring with 92\% user satisfaction.}
+\resumeItem{Reduced tailoring time from hours to under 2 minutes.}
+\resumeItemListEnd
+\resumeProjectHeading{\href{https://github.com/gethired/underwrite}{\textbf{Underwrite}}}{2024}
+\resumeItemListStart
+\resumeItem{Developed an underwriting engine processing 10K policies per day.}
+\resumeItemListEnd
+\resumeProjectHeading{\href{https://github.com/gethired/vehicle-routing-problem-with-resource-constraints}{\textbf{VRP with Resource Constraints}}}{2023}
+\resumeItemListStart
+\resumeItem{Built a genetic-algorithm solver achieving an 18\% cost reduction.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\section{Education}
+\resumeSubHeadingListStart
+\resumeSubheading{Ramaiah Institute of Technology}{Test City}{May 2021}
+\vspace{-15pt}
+\resumeSubheading{Bachelor of Engineering}{Electronics and Communication}{CGPA: 8.32}
+\resumeSubHeadingListEnd
+
+\section{Awards \& Recognition}
+\resumeSubHeadingListStart
+\resumeProjectHeading{\textbf{IEEE --- Best Paper Winner}}{September 2019}
+\resumeItemListStart
+\resumeItem{Won best paper among 400 submissions at an IEEE international conference.}
+\resumeItemListEnd
+\resumeProjectHeading{\textbf{Smart India Hackathon --- National Finalist}}{February 2020}
+\resumeItemListStart
+\resumeItem{Reached the national final round with a machine learning solution for civic infrastructure.}
+\resumeItemListEnd
+\resumeSubHeadingListEnd
+
+\end{document}

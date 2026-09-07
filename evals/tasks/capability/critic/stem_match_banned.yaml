@@ -1,0 +1,49 @@
+task:
+  id: critic_cap_subtle_plagiarism
+  desc: Critic detects paraphrased but near-identical overlap (3-word overlap variants)
+  category: critic
+  type: code
+  tags: [capability]
+  input:
+    __output__:
+      master:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      tailored:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: null
+          linkedin_url: null
+        summary: "Engineer"
+        skills:
+          categories: {}
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      grounding: []
+      style:
+        - path: tailored
+          detail: "Banned word stem 'leverage' matched 'leveraging' at position 42"
+      plagiarism: []
+  graders:
+    - name: code.text_contains
+      args:
+        name: stem_match_detected
+        text: leverage
+        substring: leverage

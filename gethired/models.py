@@ -1,0 +1,813 @@
+"""Data models for the gethired system.
+
+All models are frozen dataclasses with ``__slots__`` per AGENTS.md.
+Traceability is built on the ``Step`` value object: every pipeline step
+produces a ``Step`` whose ``.description()`` returns a serializable
+``JobData``.
+
+The factory function ``job(...)`` creates a ``Step`` with auto-generated
+``Run.id = uuid4()`` and UTC timestamps.
+"""
+
+from __future__ import annotations
+
+import hashlib
+from dataclasses import dataclass, field
+from dataclasses import fields as dc_fields
+from enum import StrEnum
+from typing import TYPE_CHECKING, Any
+from uuid import uuid4
+
+from gethired.exceptions import TailorError
+from gethired.observability import now as utcnow_iso
+
+if TYPE_CHECKING:
+    from gethired.description import Analysis
+
+
+def new_uuid() -> str:
+    return str(uuid4())
+
+
+def now() -> str:
+    return utcnow_iso()
+
+
+def sha256(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# Enumerations
+# ---------------------------------------------------------------------------
+
+
+class StepKind(StrEnum):
+    """Pipeline-level job type."""
+
+    PARSE = "dispatch"
+    FETCH = "fetch"
+    PROFILE = "profile"
+    TAILOR = "tailor"
+    WEBSEARCH = "websearch"
+    LOOKUP = "lookup"
+    VALIDATE_GROUNDING = "validate_grounding"
+    VALIDATE_STYLE = "validate_style"
+    VALIDATE_PLAGIARISM = "validate_plagiarism"
+    VALIDATE_ATS = "validate_ats"
+    RENDER = "render"
+    PERSIST = "persist"
+
+
+class StepStatus(StrEnum):
+    """Outcome status of a Step."""
+
+    SUCCESS = "success"
+    FAILED = "failed"
+    SKIPPED = "skipped"
+
+
+class Outcome(StrEnum):
+    """Outcome of a complete tailoring run."""
+
+    SUCCESS = "success"
+    GROUNDING_HARD_FAIL = "grounding_hard_fail"
+    STYLE_HARD_FAIL = "style_hard_fail"
+    PLAGIARISM_HARD_FAIL = "plagiarism_hard_fail"
+    ATS_HARD_FAIL = "ats_hard_fail"
+
+
+class GateStatus(StrEnum):
+    """Tri-state outcome of a single ATS gate evaluation.
+
+    ``SKIP`` is reserved for gates whose prerequisite artefacts are absent,
+    e.g. the PDF-dependent gates when ``LATEX_ENGINE=none``.
+    """
+
+    PASS = "pass"
+    FAIL = "fail"
+    SKIP = "skip"
+
+
+class GateTier(StrEnum):
+    """Blocking strength of an ATS gate."""
+
+    HARD = "hard"
+    ADVISORY = "advisory"
+
+
+class AtsGate(StrEnum):
+    """ATS compliance gates: 9 hard-blocking and 3 advisory."""
+
+    PDF_COMPILES = "pdf_compiles"
+    PDF_TEXT_EXTRACTABLE = "pdf_text_extractable"
+    PDF_TEXT_MATCHES_TXT = "pdf_text_matches_txt"
+    SECTION_HEADINGS_STANDARD = "section_headings_standard"
+    NO_TABLES_FOR_LAYOUT = "no_tables_for_layout"
+    NO_IMAGES = "no_images"
+    NO_COLORS = "no_colors"
+    FONT_SIZE_10_12 = "font_size_10_12"
+    LENGTH_WITHIN_LIMIT = "length_within_limit"
+    KEYWORDS_COVERED = "keywords_covered"
+    BULLETS_QUANTIFIED = "bullets_quantified"
+    ACTION_VERBS_FIRST = "action_verbs_first"
+
+    @property
+    def tier(self) -> GateTier:
+        """Blocking strength of this gate."""
+        if self in ADVISORY_GATES:
+            return GateTier.ADVISORY
+        return GateTier.HARD
+
+
+HARD_GATES: frozenset[AtsGate] = frozenset(
+    {
+        AtsGate.PDF_COMPILES,
+        AtsGate.PDF_TEXT_EXTRACTABLE,
+        AtsGate.PDF_TEXT_MATCHES_TXT,
+        AtsGate.SECTION_HEADINGS_STANDARD,
+        AtsGate.NO_TABLES_FOR_LAYOUT,
+        AtsGate.NO_IMAGES,
+        AtsGate.NO_COLORS,
+        AtsGate.FONT_SIZE_10_12,
+        AtsGate.LENGTH_WITHIN_LIMIT,
+    }
+)
+"""Gates that block the run when they fail."""
+
+ADVISORY_GATES: frozenset[AtsGate] = frozenset(
+    {
+        AtsGate.KEYWORDS_COVERED,
+        AtsGate.BULLETS_QUANTIFIED,
+        AtsGate.ACTION_VERBS_FIRST,
+    }
+)
+"""Gates that warn when they fail but do not block the run."""
+
+
+class KeywordTier(StrEnum):
+    """Tiering for JD keyword coverage checks."""
+
+    MUST_HAVE = "must_have"
+    NICE_TO_HAVE = "nice_to_have"
+
+
+# ---------------------------------------------------------------------------
+# Resume domain models
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Contact:
+    """Deprecated. Fields are flattened onto ``Resume`` and ``Tailored``.
+
+    Kept as an empty class during the Unit 1 alias transition so existing
+    ``isinstance(x, Contact)`` checks keep passing. Removed in commit 1.22.
+    """
+
+
+@dataclass(frozen=True, slots=True)
+class Bullet:
+    text: str
+
+
+@dataclass(frozen=True, slots=True)
+class Experience:
+    role: str
+    company: str
+    start_date: str
+    end_date: str
+    bullets: tuple[Bullet, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Project:
+    name: str
+    url: str
+    bullets: tuple[Bullet, ...]
+
+
+@dataclass(frozen=True, slots=True)
+class Education:
+    institution: str
+    location: str
+    degree: str
+    major: str
+    graduation: str
+    gpa: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class Award:
+    title: str
+    organization: str
+    date: str
+    description: str
+
+
+@dataclass(frozen=True, slots=True)
+class Skills:
+    categories: dict[str, tuple[str, ...]]
+
+
+@dataclass(frozen=True, slots=True)
+class Resume:
+    """Canonical resume model. Single source of truth for tailoring."""
+
+    contact: Contact
+    summary: str
+    skills: Skills
+    experiences: tuple[Experience, ...]
+    projects: tuple[Project, ...]
+    education: tuple[Education, ...]
+    awards: tuple[Award, ...]
+    schema_version: int = 1
+
+    def to_markdown(self) -> str:
+        """Render the resume as Markdown for human inspection."""
+        lines: list[str] = [f"# {self.name}", ""]
+        contact_bits = [self.city, self.phone, self.email]
+        if self.github:
+            contact_bits.append(self.github)
+        if self.linkedin:
+            contact_bits.append(self.linkedin)
+        lines.append(" · ".join(bit for bit in contact_bits if bit))
+        lines.append("")
+        lines.append("## Summary")
+        lines.append(self.summary)
+        lines.append("")
+        lines.append("## Technical Skills")
+        for category, items in self.skills.categories.items():
+            lines.append(f"- **{category}**: {', '.join(items)}")
+        lines.append("")
+        lines.append("## Experience")
+        for exp in self.experiences:
+            lines.append(f"### {exp.role} — {exp.company} ({exp.start_date} — {exp.end_date})")
+            for bullet in exp.bullets:
+                lines.append(f"- {bullet.text}")
+            lines.append("")
+        lines.append("## Selected Projects")
+        for project in self.projects:
+            lines.append(f"### [{project.name}]({project.url})")
+            for bullet in project.bullets:
+                lines.append(f"- {bullet.text}")
+            lines.append("")
+        lines.append("## Education")
+        for edu in self.education:
+            bits = [edu.institution, edu.location, edu.degree, edu.major, edu.graduation]
+            if edu.gpa:
+                bits.append(f"CGPA: {edu.gpa}")
+            lines.append("- " + ", ".join(bits))
+        lines.append("")
+        if self.awards:
+            lines.append("## Awards")
+            for award in self.awards:
+                lines.append(
+                    f"- **{award.title}** ({award.organization}, {award.date}): {award.description}"
+                )
+        return "\n".join(lines)
+
+    def content_hash(self) -> str:
+        """Deterministic sha256 over the resume's text content."""
+        return sha256(self.to_markdown())
+
+
+# Commit 1.1: Add Resume class as a flat field model; keep Resume as a backward-compat
+# alias that delegates to Resume. This carries every Unit 1 commit so the repo
+# stays green while importers catch up. The alias is removed in commit 1.22.
+@dataclass(frozen=True, slots=True)
+class Resume:
+    """Canonical resume model. Single source of truth for tailoring."""
+
+    name: str
+    email: str
+    city: str
+    phone: str
+    github: str | None
+    linkedin: str | None
+    summary: str
+    skills: Skills
+    experience: tuple[Experience, ...]
+    projects: tuple[Project, ...]
+    education: tuple[Education, ...]
+    awards: tuple[Award, ...]
+    version: int = 1
+
+    def to_markdown(self) -> str:
+        """Render the resume as Markdown for human inspection."""
+        lines: list[str] = [f"# {self.name}", ""]
+        contact_bits = [self.city, self.phone, self.email]
+        if self.github:
+            contact_bits.append(self.github)
+        if self.linkedin:
+            contact_bits.append(self.linkedin)
+        lines.append(" · ".join(bit for bit in contact_bits if bit))
+        lines.append("")
+        lines.append("## Summary")
+        lines.append(self.summary)
+        lines.append("")
+        lines.append("## Technical Skills")
+        for category, items in self.skills.categories.items():
+            lines.append(f"- **{category}**: {', '.join(items)}")
+        lines.append("")
+        lines.append("## Experience")
+        for exp in self.experience:
+            lines.append(f"### {exp.role} — {exp.company} ({exp.start_date} — {exp.end_date})")
+            for bullet in exp.bullets:
+                lines.append(f"- {bullet.text}")
+            lines.append("")
+        lines.append("## Selected Projects")
+        for project in self.projects:
+            lines.append(f"### [{project.name}]({project.url})")
+            for bullet in project.bullets:
+                lines.append(f"- {bullet.text}")
+            lines.append("")
+        lines.append("## Education")
+        for edu in self.education:
+            bits = [edu.institution, edu.location, edu.degree, edu.major, edu.graduation]
+            if edu.gpa:
+                bits.append(f"CGPA: {edu.gpa}")
+            lines.append("- " + ", ".join(bits))
+        lines.append("")
+        if self.awards:
+            lines.append("## Awards")
+            for award in self.awards:
+                lines.append(
+                    f"- **{award.title}** ({award.organization}, {award.date}): {award.description}"
+                )
+        return "\n".join(lines)
+
+    def content_hash(self) -> str:
+        """Deterministic sha256 over the resume's text content."""
+        return sha256(self.to_markdown())
+
+
+Resume = Resume  # type: ignore[misc]  # deprecated alias, removed in commit 1.22
+
+
+@dataclass(frozen=True, slots=True)
+class Voice:
+    avg_bullet_length: float
+    bullet_length_stddev: float
+    opening_verbs: tuple[str, ...]
+    punctuation_density: dict[str, float]
+    sentence_count_per_bullet: tuple[int, int]
+
+
+@dataclass(frozen=True, slots=True)
+class Reason:
+    item_id: str
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
+class Citation:
+    tailored_path: str
+    master_path: str
+    verbatim_span: str
+    job_id: str
+
+
+# ---------------------------------------------------------------------------
+# Job description model
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Job:
+    url: str
+    title: str
+    company: str
+    full_text: str
+    keywords: tuple[str, ...]
+    must_have_keywords: tuple[str, ...]
+    nice_to_have_keywords: tuple[str, ...]
+    content_hash: str
+
+
+# ---------------------------------------------------------------------------
+# Traceability: WebSearch + Job + Job
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class StepMeta:
+    """Typed metadata attached to a Step, replacing primitive dict[str, str].
+
+    Deprecated alias for Meta. Removed in commit 1.22.
+    """
+
+    url: str | None = None
+    gate: AtsGate | None = None
+    char_count: int | None = None
+    query: str | None = None
+    note: str | None = None
+
+    def as_dict(self) -> dict[str, str]:
+        result: dict[str, str] = {}
+        for f in dc_fields(self):
+            value = getattr(self, f.name)
+            if value is not None:
+                result[f.name] = str(value)
+        return result
+
+
+# Commit 1.5: Add Meta as the new single-word name for StepMeta.
+Meta = StepMeta
+
+
+@dataclass(frozen=True, slots=True)
+class Source:
+    """Pointer from a tailored claim back to a master span."""
+
+    master_path: str
+    verbatim_span: str
+    resume_hash: str
+
+    def description(self) -> Source:
+        return self
+
+
+@dataclass(frozen=True, slots=True)
+class SourceView:
+    """Serializable form of ``Source`` produced by ``.description()``."""
+
+    master_path: str
+    verbatim_span: str
+    resume_hash: str
+
+
+@dataclass(frozen=True, slots=True)
+class Step:
+    """A unit of work performed during a run."""
+
+    id: str
+    type: StepKind
+    started_at: str
+    completed_at: str
+    status: StepStatus
+    inputs: tuple[Source, ...]
+    outputs: tuple[str, ...]
+    rationale: str
+    model: str
+    tool_name: str | None
+    metadata: StepMeta
+
+    def description(self) -> JobData:
+        """Return the serializable view for traceability."""
+        return JobData(
+            id=self.id,
+            type=self.type,
+            started_at=self.started_at,
+            completed_at=self.completed_at,
+            status=self.status,
+            inputs=tuple(ref.description() for ref in self.inputs),
+            outputs=self.outputs,
+            rationale=self.rationale,
+            model=self.model,
+            tool_name=self.tool_name,
+            metadata=self.metadata.as_dict())
+
+
+@dataclass(frozen=True, slots=True)
+class JobData:
+    """Serializable description of a ``Step``, produced by ``Step.description()``."""
+
+    id: str
+    type: StepKind
+    started_at: str
+    completed_at: str
+    status: StepStatus
+    inputs: tuple[Source, ...]
+    outputs: tuple[str, ...]
+    rationale: str
+    model: str
+    tool_name: str | None
+    metadata: dict[str, str]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "type": self.type.value,
+            "started_at": self.started_at,
+            "completed_at": self.completed_at,
+            "status": self.status.value,
+            "inputs": [
+                {
+                    "master_path": ref.master_path,
+                    "verbatim_span": ref.verbatim_span,
+                    "resume_hash": ref.resume_hash,
+                }
+                for ref in self.inputs
+            ],
+            "outputs": list(self.outputs),
+            "rationale": self.rationale,
+            "model": self.model,
+            "tool_name": self.tool_name,
+            "metadata": dict(self.metadata),
+        }
+
+    def markdown(self) -> str:
+        inputs_repr = ", ".join(ref.master_path for ref in self.inputs) or "—"
+        outputs_repr = ", ".join(self.outputs) or "—"
+        return (
+            f"| {self.id[:8]} | `{self.type.value}` | {inputs_repr} | "
+            f"{outputs_repr} | {self.rationale} | `{self.status.value}` |"
+        )
+
+
+# ---------------------------------------------------------------------------
+# Run + RunResult
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Run:
+    """Identity of a single run. ``Run.id = uuid4()``."""
+
+    id: str
+    started_at: str
+    resume_hash: str
+    jd_hash: str
+    model: str
+    draft_model: str | None
+
+    def description(self) -> RunView:
+        return RunView(
+            id=self.id,
+            started_at=self.started_at,
+            resume_hash=self.resume_hash,
+            jd_hash=self.jd_hash,
+            model=self.model,
+            draft_model=self.draft_model)
+
+
+@dataclass(frozen=True, slots=True)
+class RunView:
+    id: str
+    started_at: str
+    resume_hash: str
+    jd_hash: str
+    model: str
+    draft_model: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class RunResult:
+    run: Run
+    completed_at: str
+    duration_seconds: float
+    total_input_tokens: int
+    total_output_tokens: int
+    retry_attempts: int
+    final_outcome: Outcome
+    jobs: tuple[Step, ...]
+
+    @property
+    def websearch_calls(self) -> tuple[Step, ...]:
+        """Derived property: jobs of type ``WEBSEARCH``."""
+        return tuple(job_ for job_ in self.jobs if job_.type == StepKind.WEBSEARCH)
+
+    def describe(self) -> RunFull:
+        return RunFull(
+            run=self.run.description(),
+            completed_at=self.completed_at,
+            duration_seconds=self.duration_seconds,
+            total_input_tokens=self.total_input_tokens,
+            total_output_tokens=self.total_output_tokens,
+            retry_attempts=self.retry_attempts,
+            final_outcome=self.final_outcome,
+            jobs=tuple(j.description() for j in self.jobs))
+
+
+@dataclass(frozen=True, slots=True)
+class RunFull:
+    run: RunView
+    completed_at: str
+    duration_seconds: float
+    total_input_tokens: int
+    total_output_tokens: int
+    retry_attempts: int
+    final_outcome: Outcome
+    jobs: tuple[JobData, ...]
+
+
+# ---------------------------------------------------------------------------
+# Cover letter
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Paragraph:
+    """A single paragraph in a cover letter."""
+
+    text: str
+    opening: bool = False
+    closing: bool = False
+
+
+@dataclass(frozen=True, slots=True)
+class CoverLetter:
+    """A tailored cover letter for a specific job description."""
+
+    salutation: str
+    paragraphs: tuple[Paragraph, ...]
+    signoff: str
+    sender_name: str
+    recipient: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class Report:
+    """Result of a Tailor preflight check (no LLM call)."""
+
+    tokens_estimate: int
+    expected_gates: tuple[str, ...]
+    jd_keyword_coverage: dict[str, float]
+    voice_drift_risk: float
+    missing_must_haves: tuple[str, ...]
+
+
+# ---------------------------------------------------------------------------
+# Tailored resume
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class Tailored:
+    """The tailored output plus full traceability."""
+
+    name: str
+    email: str
+    city: str
+    phone: str
+    github: str | None
+    linkedin: str | None
+    summary: str
+    skills: Skills
+    experience: tuple[Experience, ...]
+    projects: tuple[Project, ...]
+    education: tuple[Education, ...]
+    awards: tuple[Award, ...]
+    dropped: tuple[Reason, ...]
+    rationale: str
+    grounding: tuple[Citation, ...]
+    jobs: tuple[Step, ...]
+    run_result: RunResult | None = None
+
+    @property
+    def run(self) -> Run:
+        """Canonical access to the run identity via ``run_result.run``.
+
+        Raises:
+            TailorError: If ``run_result`` was not set.
+        """
+        if self.run_result is None:
+            raise TailorError("run_result not set on Tailored")
+        return self.run_result.run
+
+
+# ---------------------------------------------------------------------------
+# Job factories
+# ---------------------------------------------------------------------------
+
+
+@dataclass(frozen=True, slots=True)
+class StepEnv:
+    """Shared fields across all job types.
+
+    Per AGENTS.md §980-993 (configuration objects over long parameter lists),
+    the factory functions below accept only the envelope specific to their
+    kind plus a single ``StepEnv`` carrying the common metadata.
+    """
+
+    model: str = ""
+    tool_name: str | None = None
+    metadata: StepMeta = field(default_factory=StepMeta)
+    status: StepStatus = StepStatus.SUCCESS
+    started_at: str | None = None
+    completed_at: str | None = None
+    job_id: str | None = None
+
+
+def job(
+    kind: StepKind,
+    inputs: tuple[Source, ...] = (),
+    outputs: tuple[str, ...] = (),
+    rationale: str = "",
+    envelope: StepEnv | None = None) -> Step:
+    """Construct a generic ``Step`` from a kind + envelope.
+
+    For most call sites, prefer one of the focused factories below
+    (``job_tailor``, ``job_validate``, ``job_lookup``). Use this generic
+    factory only for kinds that don't yet have a dedicated builder.
+
+    Args:
+        kind: The pipeline stage or capability this Step represents.
+        inputs: Source references consumed by this step.
+        outputs: Stable identifiers of produced artefacts.
+        rationale: One-sentence explanation of why this step ran.
+        envelope: Shared metadata (model, status, timestamps, tool name).
+
+    Returns:
+        A fully-populated ``Step`` with auto-generated id and timestamps.
+    """
+    env = envelope or StepEnv()
+    timestamp = now()
+    return Step(
+        id=env.job_id if env.job_id is not None else new_uuid(),
+        type=kind,
+        started_at=env.started_at or timestamp,
+        completed_at=env.completed_at or timestamp,
+        status=env.status,
+        inputs=inputs,
+        outputs=outputs,
+        rationale=rationale,
+        model=env.model,
+        tool_name=env.tool_name,
+        metadata=env.metadata)
+
+
+def job_tailor(
+    outputs: tuple[str, ...],
+    rationale: str,
+    *,
+    inputs: tuple[Source, ...] = (),
+    envelope: StepEnv | None = None) -> Step:
+    """Construct a TAILOR-kind Step."""
+    return job(
+        StepKind.TAILOR,
+        inputs=inputs,
+        outputs=outputs,
+        rationale=rationale,
+        envelope=envelope)
+
+
+def job_validate(
+    kind: StepKind,
+    outputs: tuple[str, ...],
+    rationale: str,
+    *,
+    inputs: tuple[Source, ...] = (),
+    envelope: StepEnv | None = None) -> Step:
+    """Construct a VALIDATE_*-kind Step.
+
+    Args:
+        kind: Must be one of VALIDATE_GROUNDING, VALIDATE_STYLE,
+            VALIDATE_PLAGIARISM, VALIDATE_ATS.
+    """
+    return job(kind, inputs=inputs, outputs=outputs, rationale=rationale, envelope=envelope)
+
+
+def job_lookup(
+    tool_name: str,
+    outputs: tuple[str, ...],
+    rationale: str,
+    *,
+    inputs: tuple[Source, ...] = (),
+    envelope: StepEnv | None = None) -> Step:
+    """Construct a LOOKUP-kind Step (read-only tool call)."""
+    env = envelope or StepEnv(tool_name=tool_name)
+    return job(StepKind.LOOKUP, inputs=inputs, outputs=outputs, rationale=rationale, envelope=env)
+
+
+__all__ = [
+    "ADVISORY_GATES",
+    "AtsGate",
+    "Award",
+    "Bullet",
+    "Contact",
+    "CoverLetter",
+    "Paragraph",
+    "StepEnv",
+    "Report",
+    "Reason",
+    "Education",
+    "Experience",
+    "Outcome",
+    "Citation",
+    "HARD_GATES",
+    "GateStatus",
+    "GateTier",
+    "Job",
+    "JobData",
+    "Resume",  # deprecated alias for Master, removed in commit 1.22
+    "Project",
+    "Resume",
+    "Run",
+    "RunView",
+    "RunFull",
+    "RunResult",
+    "Skills",
+    "SourceView",
+    "Source",
+    "Step",
+    "StepMeta",  # deprecated alias for Meta, removed in Unit 1
+    "StepStatus",
+    "StepKind",
+    "KeywordTier",
+    "Meta",
+    "Tailored",
+    "Voice",
+    "job",
+]

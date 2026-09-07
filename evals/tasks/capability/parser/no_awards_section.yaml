@@ -1,0 +1,27 @@
+task:
+  id: parser_cap_no_awards_section
+  desc: Parser correctly handles a resume with no Awards section
+  category: parser
+  type: parser
+  tags: [capability]
+  input:
+    tex_path: tests/fixtures/capability_no_awards.tex
+  graders:
+    - name: code.field_length
+      args:
+        name: awards_empty
+        resume: $output
+        path: master.awards
+        expected: 0
+    - name: code.field_length
+      args:
+        name: experiences_present
+        resume: $output
+        path: master.experiences
+        expected: 1
+    - name: code.field_length
+      args:
+        name: education_present
+        resume: $output
+        path: master.education
+        expected: 1

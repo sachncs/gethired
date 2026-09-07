@@ -1,0 +1,27 @@
+task:
+  id: critic_ats_gate_evaluation_001
+  desc: Critic produces a complete ATS gate report with all 12 gates
+  category: critic
+  type: code
+  tags: [regression]
+  input:
+    __output__:
+      ats_report:
+        n_gates: 12
+        passed: 8
+        failed_gates:
+          - pdf_compiles
+          - pdf_text_extractable
+          - pdf_text_matches_txt
+          - bullets_quantified
+  graders:
+    - name: code.text_contains
+      args:
+        name: pdf_compiles_in_failed
+        text: pdf_compiles
+        substring: pdf_compiles
+    - name: code.text_contains
+      args:
+        name: bullets_quantified_in_failed
+        text: bullets_quantified
+        substring: bullets_quantified

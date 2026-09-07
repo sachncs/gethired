@@ -1,0 +1,28 @@
+Senior Machine Learning Engineer — Acme AI
+
+We are hiring a Senior Machine Learning Engineer to join our platform team. You will design and deploy large-scale ML infrastructure, build distributed training pipelines, and lead architecture decisions across our Kubernetes-based serving stack.
+
+Responsibilities:
+- Design and implement ML platform components using Python, Kubernetes, and Docker
+- Build distributed training and inference systems on AWS (EC2, EKS, S3)
+- Lead code reviews and mentor junior engineers
+- Collaborate with research teams to productionize models
+- Improve observability and reliability of ML services
+
+Requirements:
+- 5+ years of experience in machine learning engineering
+- Strong Python programming skills
+- Experience with Kubernetes and Docker in production
+- Hands-on experience with PyTorch or TensorFlow
+- Familiarity with AWS or GCP
+- Experience with distributed systems
+
+Nice to have:
+- Experience with LLM inference optimisation (vLLM, TensorRT)
+- Familiarity with retrieval-augmented generation
+- Open-source contributions
+
+What we offer:
+- Competitive salary and equity
+- Remote-first culture
+- Annual learning budget

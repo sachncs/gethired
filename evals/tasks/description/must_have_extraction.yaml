@@ -1,0 +1,19 @@
+task:
+  id: description_must_have_extraction_001
+  desc: Description agent extracts must-have skills from JD
+  category: description
+  type: description
+  tags:
+  - regression
+  input:
+    jd_text: 'Required: Python, Kubernetes, PyTorch.
+
+      Nice to have: TensorRT, vLLM.
+
+      '
+  graders:
+  - name: code.field_present
+    args:
+      name: analysis_present
+      resume: $analysis
+      path: role

@@ -1,0 +1,17 @@
+task:
+  id: description_role_extraction_001
+  desc: Description agent extracts role title from JD
+  category: description
+  type: description
+  tags:
+  - capability
+  input:
+    jd_text: 'Senior Machine Learning Engineer at Acme AI. Build ML platforms.
+
+      '
+  graders:
+  - name: code.text_contains
+    args:
+      name: role_in_text
+      text: Senior Machine Learning Engineer
+      substring: Machine Learning

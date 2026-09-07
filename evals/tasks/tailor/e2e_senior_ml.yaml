@@ -1,0 +1,69 @@
+task:
+  id: tailor_e2e_senior_ml_001
+  desc: End-to-end tailor pipeline produces grounded TailoredResume for Senior ML
+    role
+  category: tailor
+  type: tailor
+  tags:
+  - capability
+  - regression
+  input:
+    __master__: __load_master__
+    use_test_model: true
+    jd_text: 'Senior Machine Learning Engineer role. Need Python, Kubernetes,
+
+      PyTorch, and AWS experience. You will design and deploy ML
+
+      platforms.
+
+      '
+    jd_title: Senior Machine Learning Engineer
+    jd_company: Acme AI
+    must_have_keywords:
+    - python
+    - kubernetes
+    - pytorch
+  graders:
+  - name: code.field_present
+    args:
+      name: tailored_present
+      resume: $tailored
+      path: contact
+  - name: code.no_banned_words
+    args:
+      name: no_ai_tell
+      text: $text
+      banned:
+      - leverage
+      - leveraging
+      - robust
+      - seamless
+      - comprehensive
+  - name: code.text_contains
+    args:
+      name: python_mentioned
+      text: $text
+      substring: Python
+      case_insensitive: true
+  - name: code.task_completion
+    args:
+      name: agent_task_completion
+      trace_path: $trace_path
+      tailored: $tailored
+  - name: code.tool_correctness
+    args:
+      name: agent_tool_selection
+      trace_path: $trace_path
+      expected_tools:
+      - read_jd_summary
+      - list_skills
+      - list_projects
+  - name: code.argument_correctness
+    args:
+      name: tool_arguments_present
+      trace_path: $trace_path
+  - name: code.step_efficiency
+    args:
+      name: agent_step_budget
+      trace_path: $trace_path
+      max_tool_calls: 6

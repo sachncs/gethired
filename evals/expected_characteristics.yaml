@@ -1,0 +1,37 @@
+must_have_keywords:
+  - python
+  - kubernetes
+  - machine learning
+  - distributed systems
+  - kubernetes
+  - docker
+  - aws
+
+nice_to_have_keywords:
+  - rust
+  - golang
+  - terraform
+  - pytorch
+  - tensorflow
+  - llm
+  - retrieval
+
+required_role_signal:
+  - Senior
+  - Machine Learning
+  - Engineer
+
+forbidden_in_summary:
+  - leverage
+  - robust
+  - seamless
+  - comprehensive
+
+must_appear_in_skills:
+  - Python
+  - Kubernetes
+  - Docker
+
+must_not_appear:
+  - References available upon request
+  - responsible for

@@ -1,0 +1,52 @@
+task:
+  id: critic_grounding_violation_detected_001
+  desc: Critic detects grounding violations (invented skills)
+  category: critic
+  type: code
+  tags: [regression]
+  input:
+    __output__:
+      master:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: "https://github.com/gethired"
+          linkedin_url: "https://linkedin.com/in/gethired"
+        summary: "Engineer"
+        skills:
+          categories:
+            "Programming Languages": ("Python", "Golang")
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      tailored:
+        contact:
+          name: "Placeholder Name"
+          city: Test City
+          phone: "5555550100"
+          email: placeholder@example.com
+          github_url: "https://github.com/gethired"
+          linkedin_url: "https://linkedin.com/in/gethired"
+        summary: "Engineer"
+        skills:
+          categories:
+            "Programming Languages": ("Python", "QuantumScript")
+        experiences: ()
+        projects: ()
+        education: ()
+        awards: ()
+      grounding:
+        - path: "skills.categories[Programming Languages]"
+          detail: "Skill 'QuantumScript' not found in master"
+      style: []
+      plagiarism: []
+      jd_text: ""
+  graders:
+    - name: code.text_contains
+      args:
+        name: violation_detected
+        text: QuantumScript not found in master
+        substring: QuantumScript

@@ -1,0 +1,49 @@
+task:
+  id: writer_grounding_no_invention_001
+  desc: Writer never invents skills, companies, or numbers not in master
+  category: writer
+  type: writer
+  tags:
+  - capability
+  - regression
+  input:
+    __master__: __load_master__
+    jd_text: 'Need Python and Kubernetes experience. ML platform engineering.
+
+      '
+    jd_title: Senior ML Engineer
+    jd_company: Acme
+    must_have_keywords:
+    - python
+    - kubernetes
+    use_test_model: true
+  graders:
+  - name: code.no_banned_words
+    args:
+      name: no_invented_skill_text
+      text: $text
+      banned:
+      - QuantumScript
+      - AILayer
+      - CloudForge
+  - name: code.text_not_contains
+    args:
+      name: no_invented_number
+      text: $text
+      forbidden: '99999999'
+  - name: code.tool_correctness
+    args:
+      name: agent_tool_selection
+      trace_path: $trace_path
+      expected_tools:
+      - list_skills
+      - list_projects
+  - name: code.argument_correctness
+    args:
+      name: tool_arguments_present
+      trace_path: $trace_path
+  - name: code.step_efficiency
+    args:
+      name: agent_step_budget
+      trace_path: $trace_path
+      max_tool_calls: 4
