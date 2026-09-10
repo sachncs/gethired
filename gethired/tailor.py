@@ -195,7 +195,13 @@ class Tailor:
             pdf_path=None)
 
         all_jobs = writer_jobs + critic_jobs
-        tailored_with_jobs = replace(tailored, jobs=all_jobs)
+        tailored_with_jobs = replace(
+            tailored,
+            jobs=all_jobs,
+            master=master,
+            jds=jds,
+            analysis=analysis,
+        )
 
         run_result = RunResult(
             run=run,

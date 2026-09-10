@@ -563,7 +563,7 @@ def resume_for_tailored(tailored):
 
 def jobs_for_tailored(tailored) -> tuple[Job, ...]:
     """Return the JD tuple attached to a ``Tailored`` by the orchestrator."""
-    return tailored.jds  # type: ignore[no-any-return]
+    return tailored.jds
 
 
 def merged_analysis_for_tailored(tailored):

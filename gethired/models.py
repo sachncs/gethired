@@ -586,6 +586,9 @@ class Tailored:
     grounding: tuple[Citation, ...]
     jobs: tuple[Step, ...]
     run_result: RunResult | None = None
+    master: Resume | None = None
+    jds: tuple[Job, ...] = ()
+    analysis: Analysis | None = None
 
     @property
     def run(self) -> Run:
