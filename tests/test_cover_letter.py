@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import re
 
-from gethired.cover_letter import (
-    compose,
-    markdown)
+from gethired.cover_letter import compose, markdown
 from gethired.description import Analysis
 from gethired.profiler import build as build_profile
 

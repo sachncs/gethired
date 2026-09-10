@@ -13,11 +13,10 @@ from gethired.cli import app
 from gethired.description import consolidate
 from gethired.exceptions import AntiBotError
 from gethired.models import (
-    Contact,
     Job,
-Resume,
     Outcome,
     Report,
+    Resume,
     Run,
     RunResult,
     Skills,
@@ -25,7 +24,8 @@ Resume,
     StepKind,
     StepMeta,
     StepStatus,
-    Tailored)
+    Tailored,
+)
 
 runner = CliRunner()
 

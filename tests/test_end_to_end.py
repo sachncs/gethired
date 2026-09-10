@@ -27,7 +27,6 @@ from gethired.models import (
     StepStatus,
     Tailored,
     job_validate,
-    Resume,
 )
 from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
@@ -256,7 +255,7 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                     rationale="ok",
                     model="test",
                     tool_name=None,
-                    metadata=Meta()))
+                    metadata=StepMeta()))
             return Tailored(
                 name=master.name,email=master.email,city=master.city,phone=master.phone,github=master.github,linkedin=master.linkedin,
                 summary="",

@@ -13,7 +13,6 @@ from pathlib import Path
 import pytest
 
 from gethired.models import (
-    Contact,
     Resume,
     Skills,
     Step,
@@ -31,7 +30,8 @@ from gethired.serialize import (
     from_tailored_dict,
     load_master,
     render_json,
-    snapshot)
+    snapshot,
+)
 
 
 def _sample_resume() -> Resume:

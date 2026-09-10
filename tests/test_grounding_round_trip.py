@@ -10,7 +10,7 @@ from __future__ import annotations
 import pytest
 from pydantic_ai.models.test import TestModel
 
-from gethired.models import Citation, Job, Tailored
+from gethired.models import Citation, Job, Resume, Tailored
 from gethired.tailor import Tailor
 from gethired.validator import grounding
 

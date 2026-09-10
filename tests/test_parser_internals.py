@@ -14,11 +14,12 @@ from gethired.parser import (
     extract_body,
     extract_bullets,
     extract_contact,
-    extract_skills,
     extract_render_summary,
+    extract_skills,
     find_balanced_args,
     find_macro_invocations,
-    strip_comments)
+    strip_comments,
+)
 
 
 def test_strip_comments_removes_percent_lines() -> None:

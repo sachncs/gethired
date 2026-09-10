@@ -26,7 +26,8 @@ from gethired.validator import (
     grounding,
     pdf_guard,
     plagiarism,
-    style)
+    style,
+)
 
 
 def make_tailored(master: Resume) -> Tailored:

@@ -14,7 +14,6 @@ from gethired.models import (
     Award,
     Bullet,
     Citation,
-    Contact,
     Education,
     Experience,
     Project,
@@ -31,7 +30,8 @@ from gethired.serialize import (
     from_tailored_dict,
     load_master,
     render_json,
-    snapshot)
+    snapshot,
+)
 
 
 def _sample_resume() -> Resume:
