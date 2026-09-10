@@ -74,7 +74,6 @@ def from_master_dict(raw: dict[str, Any]) -> Resume:
     ``projects``, ``education``, and ``awards``. Optional ``version`` (or
     legacy ``schema_version``) is ignored.
     """
-    contact = raw.get("contact", {})
     skills_data = Skills(categories={k: tuple(v) for k, v in raw["skills"]["categories"].items()})
     experience_data = tuple(
         Experience(
@@ -95,12 +94,12 @@ def from_master_dict(raw: dict[str, Any]) -> Resume:
     education_data = tuple(Education(**edu) for edu in raw["education"])
     award_data = tuple(Award(**award) for award in raw["awards"])
     return Resume(
-        name=contact.get("name", ""),
-        email=contact.get("email", ""),
-        city=contact.get("city", ""),
-        phone=contact.get("phone", ""),
-        github=contact.get("github") or contact.get("github_url"),
-        linkedin=contact.get("linkedin") or contact.get("linkedin_url"),
+        name=raw.get("name", ""),
+        email=raw.get("email", ""),
+        city=raw.get("city", ""),
+        phone=raw.get("phone", ""),
+        github=raw.get("github"),
+        linkedin=raw.get("linkedin"),
         summary=raw["summary"],
         skills=skills_data,
         experience=experience_data,
@@ -123,7 +122,7 @@ def experiences_from(raw: dict[str, Any]) -> tuple[Experience, ...]:
             start_date=exp["start_date"],
             end_date=exp["end_date"],
             bullets=from_bullets(exp["bullets"]))
-        for exp in raw["experiences"]
+        for exp in raw["experience"]
     )
 
 
@@ -149,14 +148,13 @@ def from_tailored_dict(raw: dict[str, Any]) -> Tailored:
     Tolerates a missing ``run_result`` (legacy snapshots) by returning
     ``run_result=None``.
     """
-    contact = raw.get("contact", {})
     return Tailored(
-        name=contact.get("name", ""),
-        email=contact.get("email", ""),
-        city=contact.get("city", ""),
-        phone=contact.get("phone", ""),
-        github=contact.get("github") or contact.get("github_url"),
-        linkedin=contact.get("linkedin") or contact.get("linkedin_url"),
+        name=raw.get("name", ""),
+        email=raw.get("email", ""),
+        city=raw.get("city", ""),
+        phone=raw.get("phone", ""),
+        github=raw.get("github"),
+        linkedin=raw.get("linkedin"),
         summary=raw["summary"],
         skills=skills_from(raw),
         experience=experiences_from(raw),

@@ -36,7 +36,7 @@ from gethired.serialize import (
 
 def _sample_resume() -> Resume:
     return Resume(name="Jane Doe", city="Austin", phone="555-0100", email="jane@example.com", github=None, linkedin=None, summary="Engineer.",
-        skills=Skills(categories={"Languages": ("Python")}),
+        skills=Skills(categories={"Languages": ("Python",)}),
         experience=(),
         projects=(),
         education=(),
@@ -168,8 +168,8 @@ def test_as_dict_returns_python_dict_not_string() -> None:
     master = _sample_resume()
     payload = as_dict(master)
     assert isinstance(payload, dict)
-    assert payload["contact"]["name"] == "Jane Doe"
-    assert payload["contact"]["email"] == "jane@example.com"
+    assert payload["name"] == "Jane Doe"
+    assert payload["email"] == "jane@example.com"
 
 
 def test_snapshot_has_master_model_label() -> None:
