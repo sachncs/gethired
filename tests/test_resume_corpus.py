@@ -98,7 +98,7 @@ def test_corpus_fixture_runs_tailor_pipeline(fixture_path: Path) -> None:
         debug=False,
         model="test",
         model_instance=TestModel())
-    master = tailor.master
+    master = tailor.resume
     result = tailor.run()
 
     # 1. The contact must round-trip exactly
