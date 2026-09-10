@@ -41,7 +41,8 @@ if TYPE_CHECKING:
         ParseError,
         PlagiarismError,
         StyleError,
-        TailorError)
+        TailorError,
+    )
     from gethired.fetch import fetch
     from gethired.models import (
         Citation,
@@ -49,7 +50,7 @@ if TYPE_CHECKING:
         Job,
         Resume,
         Tailored,
-)
+    )
     from gethired.parse import parse
     from gethired.tailor import Tailor
     from gethired.version import __version__

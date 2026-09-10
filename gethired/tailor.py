@@ -15,19 +15,11 @@ from pathlib import Path
 from typing import Final
 from uuid import uuid4
 
-from gethired.constants import (
-    DRIFT_SCALE,
-    MODEL_VAR,
-    TOKENS_BASE,
-    TOKENS_BULLET)
-from gethired.cover_letter import (
-    compose,
-    markdown)
+from gethired.constants import DRIFT_SCALE, MODEL_VAR, TOKENS_BASE, TOKENS_BULLET
+from gethired.cover_letter import compose, markdown
 from gethired.critic import Critic
 from gethired.description import analyze_description
-from gethired.exceptions import (
-    ConfigError,
-    TailorError)
+from gethired.exceptions import ConfigError, TailorError
 from gethired.fetcher import Fetcher
 from gethired.merger import safe_merge
 from gethired.models import (
@@ -45,18 +37,10 @@ from gethired.observability import configure, logger, now
 from gethired.parser import parse_tex
 from gethired.profiler import build as build_profile
 from gethired.render_pdf import compile_pdf
-from gethired.renderer import (
-    report as render_report)
-from gethired.renderer import (
-    tex as render_tex)
-from gethired.renderer import (
-    text as render_text)
-from gethired.serialize import (
-    from_bullets,
-    from_tailored_dict,
-    load_master,
-    render_json,
-    snapshot)
+from gethired.renderer import report as render_report
+from gethired.renderer import tex as render_tex
+from gethired.renderer import text as render_text
+from gethired.serialize import from_bullets, from_tailored_dict, load_master, render_json, snapshot
 from gethired.tracing import Tracer, tracer
 from gethired.validator import AtsReport, ats
 from gethired.writer import Writer, current_tracer

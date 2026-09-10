@@ -17,7 +17,8 @@ from collections.abc import Iterator
 from dataclasses import asdict
 from typing import (  # Any: Pydantic AI model/result types are duck-typed across providers
     TYPE_CHECKING,
-    Any)
+    Any,
+)
 
 if TYPE_CHECKING:
     from gethired.streaming import Callback, ProgressEvent
@@ -25,10 +26,7 @@ if TYPE_CHECKING:
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent, RunContext
 
-from gethired.constants import (
-    DROP_CHARS,
-    MODEL_VAR,
-    RATIONALE_CHARS)
+from gethired.constants import DROP_CHARS, MODEL_VAR, RATIONALE_CHARS
 from gethired.description import Analysis
 from gethired.exceptions import ConfigError
 from gethired.models import (

@@ -26,7 +26,6 @@ from gethired.models import (
     Award,
     Bullet,
     Citation,
-    Contact,
     Education,
     Experience,
     Outcome,

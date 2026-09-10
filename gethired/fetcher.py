@@ -20,11 +20,7 @@ from typing import Final
 import httpx
 import trafilatura
 
-from gethired.constants import (
-    CACHE_DAYS,
-    KEYWORDS_FALLBACK,
-    KEYWORDS_MAX,
-    RETRIES)
+from gethired.constants import CACHE_DAYS, KEYWORDS_FALLBACK, KEYWORDS_MAX, RETRIES
 from gethired.exceptions import AntiBotError, FetchError
 from gethired.models import Job
 from gethired.observability import Logger, logger

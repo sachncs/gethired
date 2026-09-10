@@ -27,7 +27,6 @@ from gethired.exceptions import ParseError
 from gethired.models import (
     Award,
     Bullet,
-    Contact,
     Education,
     Experience,
     Project,
@@ -45,7 +44,8 @@ from gethired.text_util import (
     LINKEDIN_RE,
     PHONE_RE,
     clean,
-    require_contact)
+    require_contact,
+)
 
 __all__ = [
     "parse",

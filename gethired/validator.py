@@ -22,18 +22,9 @@ from gethired.models import (
     Resume,
     Tailored,
 )
-from gethired.normalize import (
-    flatten as normalize_flatten)
-from gethired.normalize import (
-    ngrams,
-    numbers,
-    tokenize,
-    verb)
-from gethired.rubric import (
-    ALLOWLIST,
-    BANNED,
-    CONSTRUCTIONS,
-    SECTIONS)
+from gethired.normalize import flatten as normalize_flatten
+from gethired.normalize import ngrams, numbers, tokenize, verb
+from gethired.rubric import ALLOWLIST, BANNED, CONSTRUCTIONS, SECTIONS
 
 
 @dataclass(frozen=True, slots=True)
