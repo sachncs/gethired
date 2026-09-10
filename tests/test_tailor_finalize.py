@@ -62,17 +62,15 @@ def test_finalize_rejects_json_without_run_result(tmp_path: Path) -> None:
     source.write_text(
         json.dumps(
             {
-                "contact": {
-                    "name": "x",
-                    "city": "x",
-                    "phone": "x",
-                    "email": "x@x",
-                    "github_url": None,
-                    "linkedin_url": None,
-                },
+                "name": "x",
+                "city": "x",
+                "phone": "x",
+                "email": "x@x",
+                "github": None,
+                "linkedin": None,
                 "summary": "x",
                 "skills": {"categories": {}},
-                "experiences": [],
+                "experience": [],
                 "projects": [],
                 "education": [],
                 "awards": [],

@@ -119,7 +119,12 @@ def test_tailor_runner_surfaces_trace_path(tmp_path: Path, monkeypatch: pytest.M
 
         def run(self) -> Any:
             return Tailored(
-                contact=Resume(name="x", city="x", phone="x", email="x", github=None, linkedin=None),
+                name="x",
+                city="x",
+                phone="x",
+                email="x",
+                github=None,
+                linkedin=None,
                 summary="x",
                 skills=Skills(categories={}),
                 experience=(),

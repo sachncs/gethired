@@ -53,8 +53,8 @@ def test_fetch_all_jds_returns_tuple_of_jobs(
             title=f"Title for {url}",
             company="Acme",
             full_text="body",
-            keywords=("python"),
-            must_have_keywords=("python"),
+            keywords=("python",),
+            must_have_keywords=("python",),
             nice_to_have_keywords=(),
             content_hash=url)
 
@@ -91,8 +91,8 @@ def _two_jds() -> list[Job]:
             title="Senior ML Engineer",
             company="Acme",
             full_text="Senior ML Engineer at Acme. You will design platforms.",
-            keywords=("python"),
-            must_have_keywords=("python", "kubernetes"),
+            keywords=("python",),
+            must_have_keywords=("python", "kubernetes",),
             nice_to_have_keywords=("pytorch",),
             content_hash="a"),
         Job(
@@ -100,7 +100,7 @@ def _two_jds() -> list[Job]:
             title="Staff ML Engineer",
             company="Beta",
             full_text="Staff ML Engineer at Beta. You will lead reviews.",
-            keywords=("python"),
+            keywords=("python",),
             must_have_keywords=("python", "aws"),
             nice_to_have_keywords=("kubernetes", "pytorch"),
             content_hash="b"),
@@ -434,6 +434,9 @@ def test_cli_cover_single_url_writes_cover_letter_md(
                 rationale="",
                 grounding=(),
                 jobs=steps,
+                master=master,
+                jds=(jd,),
+                analysis=analysis,
                 run_result=RunResult(
                     run=Run(
                         id="rid1",
@@ -450,7 +453,7 @@ def test_cli_cover_single_url_writes_cover_letter_md(
                     final_outcome=Outcome.SUCCESS,
                     jobs=steps))
 
-    monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: (jd))
+    monkeypatch.setattr(cli_module, "fetch_all_jds", lambda _urls: (jd,))
     monkeypatch.setattr(cli_module, "Tailor", FakeTailor)
 
     result = runner.invoke(
@@ -481,8 +484,8 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
             title="Senior ML Engineer",
             company="Acme",
             full_text="Senior ML Engineer at Acme. You will design platforms.",
-            keywords=("python"),
-            must_have_keywords=("python"),
+            keywords=("python",),
+            must_have_keywords=("python",),
             nice_to_have_keywords=(),
             content_hash="a"),
         Job(
@@ -490,8 +493,8 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
             title="Staff Backend Engineer",
             company="Beta",
             full_text="Staff Backend Engineer at Beta. You will lead API design.",
-            keywords=("aws"),
-            must_have_keywords=("aws"),
+            keywords=("aws",),
+            must_have_keywords=("aws",),
             nice_to_have_keywords=(),
             content_hash="b"),
         Job(
@@ -499,8 +502,8 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
             title="Lead Platform Engineer",
             company="Gamma",
             full_text="Lead Platform Engineer at Gamma. You will drive strategy.",
-            keywords=("kubernetes"),
-            must_have_keywords=("kubernetes"),
+            keywords=("kubernetes",),
+            must_have_keywords=("kubernetes",),
             nice_to_have_keywords=(),
             content_hash="c"),
     ]
@@ -537,6 +540,9 @@ def test_cli_cover_three_urls_writes_three_per_jd_letters(
                 rationale="",
                 grounding=(),
                 jobs=steps,
+                master=master,
+                jds=tuple(jds),
+                analysis=analysis,
                 run_result=RunResult(
                     run=Run(
                         id="rid3",
