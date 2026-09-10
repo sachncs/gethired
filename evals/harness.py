@@ -457,7 +457,7 @@ def load_shared_master() -> Resume | None:
     canonical = Path("sample.tex")
     if canonical.exists():
         return tex(canonical)
-    cached = Path("data/master.json")
+    cached = Path("data/resume.json")
     if cached.exists():
         return load_master(cached)
     return None
