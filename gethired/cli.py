@@ -10,7 +10,6 @@ import hashlib
 import json
 import re
 import sys
-from datetime import UTC, datetime  # noqa: F401  # legacy imports retained for backward compat
 from pathlib import Path
 
 import typer
