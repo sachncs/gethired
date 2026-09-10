@@ -104,6 +104,29 @@ print(result.summary)      # rewritten, JD-targeted
 
 Always requires an LLM. Set `MODEL` (e.g. `MiniMax-M3`) and `API_KEY` (or `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`) — otherwise `Tailor(...)` raises `ConfigError` immediately. Tests inject a `TestModel` via `Tailor(..., model_instance=TestModel())`.
 
+### Supported input formats
+
+`gethired.parse(path)` dispatches by extension. Image and PDF paths need extra configuration:
+
+| Format | Function        | Requires                                          |
+|--------|-----------------|---------------------------------------------------|
+| `.tex` | `parse(path)`   | nothing                                           |
+| `.txt` | `parse(path)`   | nothing                                           |
+| `.pdf` | `parse(path)`   | `pymupdf` (already in deps)                       |
+| image  | `parse(path)`   | `IMAGE_MODEL` env var pointing to a vision model  |
+
+```python
+from gethired import parse
+
+master = parse("sample.tex")        # .tex — no setup
+master = parse("resume.pdf")        # .pdf — PyMuPDF extraction
+master = parse("resume.png")        # .png/.jpg/.jpeg/.tiff/.bmp — IMAGE_MODEL required
+```
+
+If `IMAGE_MODEL` (or `MODEL`) is unset and you call `parse("resume.png")`,
+`parse_image` raises a `ParseError` immediately, before any LLM call, so
+the failure mode is clear rather than buried inside `pydantic_ai`.
+
 ### Library API (plug-and-play, no orchestrator required)
 
 You don't need `Tailor` if you only need one piece of the pipeline. Every agent is independently importable:
@@ -132,9 +155,11 @@ tex_source = tex(tailored)
 txt_source = text(tailored)
 ```
 
-All imports are lazy — `import gethired` does not require `pymupdf`,
+Top-level imports are lazy — `import gethired` does not require `pymupdf`,
 `trafilatura`, or `pydantic_ai` to be installed. The heavy dependencies
-are only imported when you access a public symbol that needs them.
+are only imported when you access a public symbol that needs them. Note
+that the CLI entry point (`gethired.cli`) loads the full dependency
+graph at startup; subcommands do not re-defer module imports.
 
 ### Tracing
 
