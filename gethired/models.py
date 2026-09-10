@@ -214,71 +214,6 @@ class Skills:
 class Resume:
     """Canonical resume model. Single source of truth for tailoring."""
 
-    contact: Contact
-    summary: str
-    skills: Skills
-    experiences: tuple[Experience, ...]
-    projects: tuple[Project, ...]
-    education: tuple[Education, ...]
-    awards: tuple[Award, ...]
-    schema_version: int = 1
-
-    def to_markdown(self) -> str:
-        """Render the resume as Markdown for human inspection."""
-        lines: list[str] = [f"# {self.name}", ""]
-        contact_bits = [self.city, self.phone, self.email]
-        if self.github:
-            contact_bits.append(self.github)
-        if self.linkedin:
-            contact_bits.append(self.linkedin)
-        lines.append(" · ".join(bit for bit in contact_bits if bit))
-        lines.append("")
-        lines.append("## Summary")
-        lines.append(self.summary)
-        lines.append("")
-        lines.append("## Technical Skills")
-        for category, items in self.skills.categories.items():
-            lines.append(f"- **{category}**: {', '.join(items)}")
-        lines.append("")
-        lines.append("## Experience")
-        for exp in self.experiences:
-            lines.append(f"### {exp.role} — {exp.company} ({exp.start_date} — {exp.end_date})")
-            for bullet in exp.bullets:
-                lines.append(f"- {bullet.text}")
-            lines.append("")
-        lines.append("## Selected Projects")
-        for project in self.projects:
-            lines.append(f"### [{project.name}]({project.url})")
-            for bullet in project.bullets:
-                lines.append(f"- {bullet.text}")
-            lines.append("")
-        lines.append("## Education")
-        for edu in self.education:
-            bits = [edu.institution, edu.location, edu.degree, edu.major, edu.graduation]
-            if edu.gpa:
-                bits.append(f"CGPA: {edu.gpa}")
-            lines.append("- " + ", ".join(bits))
-        lines.append("")
-        if self.awards:
-            lines.append("## Awards")
-            for award in self.awards:
-                lines.append(
-                    f"- **{award.title}** ({award.organization}, {award.date}): {award.description}"
-                )
-        return "\n".join(lines)
-
-    def content_hash(self) -> str:
-        """Deterministic sha256 over the resume's text content."""
-        return sha256(self.to_markdown())
-
-
-# Commit 1.1: Add Resume class as a flat field model; keep Resume as a backward-compat
-# alias that delegates to Resume. This carries every Unit 1 commit so the repo
-# stays green while importers catch up. The alias is removed in commit 1.22.
-@dataclass(frozen=True, slots=True)
-class Resume:
-    """Canonical resume model. Single source of truth for tailoring."""
-
     name: str
     email: str
     city: str
@@ -328,7 +263,7 @@ class Resume:
             if edu.gpa:
                 bits.append(f"CGPA: {edu.gpa}")
             lines.append("- " + ", ".join(bits))
-        lines.append("")
+            lines.append("")
         if self.awards:
             lines.append("## Awards")
             for award in self.awards:
@@ -340,9 +275,6 @@ class Resume:
     def content_hash(self) -> str:
         """Deterministic sha256 over the resume's text content."""
         return sha256(self.to_markdown())
-
-
-Resume = Resume  # type: ignore[misc]  # deprecated alias, removed in commit 1.22
 
 
 @dataclass(frozen=True, slots=True)
@@ -791,7 +723,6 @@ __all__ = [
     "GateTier",
     "Job",
     "JobData",
-    "Resume",  # deprecated alias for Master, removed in commit 1.22
     "Project",
     "Resume",
     "Run",
