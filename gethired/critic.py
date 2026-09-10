@@ -11,13 +11,12 @@ from pathlib import Path
 from gethired.constants import QUANTIFY
 from gethired.models import (
     Job,
-Resume,
+    Resume,
     Step,
     StepEnv,
     StepKind,
     Tailored,
     job_validate,
-    Resume,
 )
 from gethired.observability import logger
 from gethired.validator import (

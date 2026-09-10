@@ -10,13 +10,12 @@ from gethired.models import (
     Bullet,
     Experience,
     Job,
-Resume,
     Outcome,
+    Resume,
     Run,
     RunResult,
     Skills,
     Tailored,
-    Resume,
 )
 from gethired.renderer import tex, text
 from gethired.validator import (

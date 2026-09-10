@@ -19,9 +19,8 @@ from gethired.models import (
     GateStatus,
     GateTier,
     Job,
-Resume,
-    Tailored,
     Resume,
+    Tailored,
 )
 from gethired.normalize import (
     flatten as normalize_flatten)

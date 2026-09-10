@@ -52,17 +52,5 @@ def resume(resume_tex_path: Path):
 
 
 @pytest.fixture(scope="session")
-def resume(resume_tex_path: Path):
-    """Deprecated alias for :func:`resume`. Removed in Unit 11."""
-    return tex(resume_tex_path)
-
-
-@pytest.fixture(scope="session")
 def resume_content_hash(resume) -> str:
     return resume.content_hash()
-
-
-@pytest.fixture(scope="session")
-def resume_content_hash(resume_content_hash: str) -> str:
-    """Deprecated alias for :func:`resume_content_hash`. Removed in Unit 11."""
-    return resume_content_hash

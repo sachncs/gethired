@@ -29,10 +29,10 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-Resume,
     Outcome,
     Project,
     Reason,
+    Resume,
     Run,
     RunResult,
     Skills,
@@ -41,7 +41,6 @@ Resume,
     StepMeta,
     StepStatus,
     Tailored,
-    Resume,
 )
 from gethired.observability import now
 

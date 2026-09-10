@@ -12,10 +12,9 @@ from dataclasses import dataclass
 from gethired.description import Analysis
 from gethired.models import (
     CoverLetter,
-Resume,
     Paragraph,
-    Voice,
     Resume,
+    Voice,
 )
 
 

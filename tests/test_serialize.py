@@ -17,11 +17,10 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-Resume,
     Project,
     Reason,
-    Skills,
     Resume,
+    Skills,
 )
 from gethired.serialize import (
     MasterSnapshot,
