@@ -51,7 +51,7 @@ class Critic:
         jobs.append(
             job_validate(
                 StepKind.VALIDATE_GROUNDING,
-                outputs=("grounding_violations"),
+                outputs=("grounding_violations",),
                 rationale="Validated that every claim traces to master",
                 envelope=StepEnv(model="deterministic"))
         )
@@ -60,7 +60,7 @@ class Critic:
         jobs.append(
             job_validate(
                 StepKind.VALIDATE_STYLE,
-                outputs=("style_violations"),
+                outputs=("style_violations",),
                 rationale="Validated banned words, parallelism, quantification",
                 envelope=StepEnv(model="deterministic"))
         )
@@ -69,7 +69,7 @@ class Critic:
         jobs.append(
             job_validate(
                 StepKind.VALIDATE_PLAGIARISM,
-                outputs=("plagiarism_violations"),
+                outputs=("plagiarism_violations",),
                 rationale="Validated no verbatim JD phrase overlap",
                 envelope=StepEnv(model="deterministic"))
         )
@@ -78,7 +78,7 @@ class Critic:
         jobs.append(
             job_validate(
                 StepKind.VALIDATE_ATS,
-                outputs=("ats_gates"),
+                outputs=("ats_gates",),
                 rationale="Ran all 12 ATS gates (9 hard-blocking, 3 advisory)",
                 envelope=StepEnv(model="deterministic"))
         )

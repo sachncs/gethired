@@ -271,7 +271,8 @@ def parallelism(role: str, bullets: tuple[Bullet, ...]) -> tuple[StyleFault, ...
                 detail=(
                     f"{common[0][1]} bullets open with the same verb "
                     f"{common[0][0]!r}; vary opening verbs"
-                )))
+                )),
+        )
     return ()
 
 

@@ -399,7 +399,7 @@ class Tailor:
             return tuple(retriever.retrieve(url) for url in urls)
         retriever = Fetcher(self.cache_dir)
         jd = retriever.retrieve(self.jd_input)
-        return (jd)
+        return (jd,)
 
     def __persist(
         self,
