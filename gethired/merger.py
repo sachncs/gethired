@@ -18,9 +18,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import BaseModel, Field
 from pydantic_ai import Agent
 
-from gethired.description import (
-    Analysis,
-    consolidate)
+from gethired.description import Analysis, consolidate
 from gethired.exceptions import TailorError
 from gethired.provider import resolve_model
 

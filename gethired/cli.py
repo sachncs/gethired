@@ -16,41 +16,30 @@ import typer
 from dotenv import load_dotenv
 
 import gethired.audit as audit_module
-from gethired.audit import (
-    audit_json,
-    audit_markdown)
+from gethired.audit import audit_json, audit_markdown
 from gethired.consent import require
-from gethired.constants import (
-    DATA_DIR,
-    RESUME,
-    OUTPUT_DIR)
-from gethired.cover_letter import (
-    compose as compose_cover_letter)
-from gethired.cover_letter import (
-    markdown as render_cover_markdown)
-from gethired.description import (
-    overlay_for_jd)
+from gethired.constants import DATA_DIR, OUTPUT_DIR, RESUME
+from gethired.cover_letter import compose as compose_cover_letter
+from gethired.cover_letter import markdown as render_cover_markdown
+from gethired.description import overlay_for_jd
 from gethired.exceptions import (
     AntiBotError,
     AtsError,
     FetchError,
     GroundingError,
     PlagiarismError,
-    StyleError)
+    StyleError,
+)
 from gethired.fetcher import Fetcher, from_text
 from gethired.models import (
     Job,
-    Resume,
 )
 from gethired.observability import configure
 from gethired.parser import parse_tex as parse_tex_func
 from gethired.profiler import build as build_profile
 from gethired.renderer import tex as render_tex
 from gethired.renderer import text as render_text
-from gethired.serialize import (
-    from_tailored_dict,
-    render_json,
-    snapshot)
+from gethired.serialize import from_tailored_dict, render_json, snapshot
 from gethired.tailor import Tailor
 from gethired.validator import ats
 

@@ -17,7 +17,6 @@ from gethired.models import (
     Run,
     RunResult,
     Tailored,
-    Resume,
 )
 from gethired.validator import AtsReport
 

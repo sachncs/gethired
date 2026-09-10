@@ -15,12 +15,12 @@ from typing import Any
 
 from gethired.critic import Critic
 from gethired.exceptions import TailorError
-from gethired.models import (Resume, Skills, Tailored,)
+from gethired.models import (
+    Resume,
+    Tailored,
+)
 from gethired.serialize import from_master_dict, from_tailored_dict
-from gethired.validator import (
-    grounding,
-    plagiarism,
-    style)
+from gethired.validator import grounding, plagiarism, style
 
 
 @dataclass(frozen=True, slots=True)

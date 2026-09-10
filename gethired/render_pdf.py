@@ -11,11 +11,7 @@ import shutil
 import subprocess
 from pathlib import Path
 
-from gethired.constants import (
-    COMPILE_TIMEOUT,
-    LATEX_VAR,
-    PDFLATEX,
-    TECTONIC)
+from gethired.constants import COMPILE_TIMEOUT, LATEX_VAR, PDFLATEX, TECTONIC
 from gethired.exceptions import CompileError
 
 

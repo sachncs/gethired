@@ -19,12 +19,7 @@ from gethired.models import (
     job_validate,
 )
 from gethired.observability import logger
-from gethired.validator import (
-    AtsReport,
-    ats,
-    grounding,
-    plagiarism,
-    style)
+from gethired.validator import AtsReport, ats, grounding, plagiarism, style
 
 
 class Critic:
