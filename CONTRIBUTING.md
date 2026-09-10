@@ -36,8 +36,8 @@ The coverage gate is 85% (`fail_under = 85` in `pyproject.toml`).
 
 ## Coding conventions
 
-gethired follows the conventions in `AGENTS.md` at the repo root. The
-short version:
+gethired follows the conventions in [`AGENTS.md`](AGENTS.md) at the
+repo root. The short version:
 
 - **Single-word public names.** No multi-word `snake_case` for public
   functions, methods, classes, or constants. Internal helpers may keep
