@@ -66,8 +66,9 @@ coverage.xml
 
 # ── User-personal files (per user directive) ─────────────────────────
 todo.md
-AGENTS.md
 agents.md
+# Public AGENTS.md documents the project conventions and is committed.
+!AGENTS.md
 
 # ── Project runtime data ─────────────────────────────────────────────
 data/
