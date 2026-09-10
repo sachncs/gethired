@@ -41,9 +41,12 @@ class Critic:
         jds: tuple[Job, ...],
         tex_source: str,
         txt_source: str,
-        pdf_path: Path | None,
-        quantification_threshold: float = QUANTIFY) -> tuple[AtsReport, tuple[Step, ...]]:
+        pdf_path: Path | None) -> tuple[AtsReport, tuple[Step, ...]]:
         """Run all four validators and emit Step records.
+
+        Quantification is enforced by ``style_check`` and
+        ``gate_bullets_quantified`` using the ``QUANTIFY`` constant; no
+        threshold parameter is accepted here.
 
         Returns:
             Tuple of ``(AtsReport, jobs)``.
@@ -66,7 +69,7 @@ class Critic:
                 rationale="Validated banned words, parallelism, quantification",
                 envelope=StepEnv(model="deterministic"))
         )
-        style_result = style(tailored, quantification_threshold)
+        style_result = style(tailored, QUANTIFY)
 
         jobs.append(
             job_validate(
@@ -90,7 +93,7 @@ class Critic:
             pdf_path=pdf_path,
             txt_source=txt_source,
             jds=jds,
-            quantification_threshold=quantification_threshold)
+            quantification_threshold=QUANTIFY)
 
         if grounding_result:
             self.logger.warning("grounding violations detected", count=len(grounding_result))
