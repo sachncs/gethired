@@ -9,6 +9,7 @@ import difflib
 import hashlib
 import json
 import os
+import warnings
 from dataclasses import replace
 from pathlib import Path
 from typing import Final
@@ -379,6 +380,11 @@ class Tailor:
     @property
     def master(self) -> Resume:
         """The parsed resume (read-only). Deprecated alias for :attr:`resume`."""
+        warnings.warn(
+            "Tailor.master is deprecated; use Tailor.resume instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if self.cached_resume is None:
             self.cached_resume = self.__load_resume()
         return self.cached_resume
