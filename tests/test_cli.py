@@ -48,7 +48,7 @@ def test_ingest_writes_master_json(
 def test_show_master_prints_json(
     tmp_path: Path, resume_tex_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    """``show master`` reads ``data/master.json`` and prints it."""
+    """``show master`` reads ``data/resume.json`` and prints it."""
     # First, ingest to populate the default path
     data_dir = tmp_path / "data"
     out = data_dir / "master.json"

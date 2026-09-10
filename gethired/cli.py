@@ -81,7 +81,7 @@ def ensure_consent(force_prompt: bool = False) -> None:
 def ingest(
     tex_path: Path = typer.Argument(..., exists=True, readable=True),
     out: Path = typer.Option(DEFAULT_RESUME_JSON_PATH, "--out", "-o")) -> None:
-    """Parse master resume into data/master.json."""
+    """Parse master resume into data/resume.json."""
     configure()
     ensure_consent()
     master = parse_tex_func(tex_path)

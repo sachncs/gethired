@@ -212,13 +212,13 @@ Precedence: constructor arguments → `.env` → built-in defaults. Without `MOD
 
 | Command | Purpose |
 |---|---|
-| `gethired ingest <tex>` | parse master resume into `data/master.json` |
+| `gethired ingest <tex>` | parse master resume into `data/resume.json` |
 | `gethired fetch <urls>` | fetch + cache JDs (sync httpx, content-hash invalidation); multiple URLs supported |
 | `gethired run <urls>` | full pipeline: parser → fetcher → description → profiler → writer → critic → renderer; multiple URLs consolidated via the LLM merger |
 | `gethired cover <urls>` | full pipeline + cover-letter production (`cover_letter.md` for N=1, one `cover_letter_<index>_<slug>.md` per JD for N≥2) |
 | `gethired preflight <urls>` | dry-run: cost + gate prediction, no LLM call |
 | `gethired plan <urls>` | cost estimate only (no LLM call) |
-| `gethired show master` | print `data/master.json` |
+| `gethired show master` | print `data/resume.json` |
 | `gethired show jd --url URL` | print a cached JD |
 | `gethired validate <path>` | run ATS gates against a `tailored.json` |
 | `gethired trace <run-id>` | pretty-print Job trail from a previous run |
