@@ -103,7 +103,7 @@ def test_end_to_end_atg_gates_all_evaluated() -> None:
     result = tailor.run()
     t = tex(result)
     t2 = text(result)
-    report = ats(result, t, None, t2, (SAMPLE_JD))
+    report = ats(result, t, None, t2, (SAMPLE_JD,))
     assert isinstance(report, AtsReport)
     assert len(report.results) == len(list(AtsGate))
     for gate_result in report.results:
@@ -268,6 +268,9 @@ def test_end_to_end_multi_jd_cover_letters_write_per_jd(tmp_path: Path) -> None:
                 rationale="",
                 grounding=(),
                 jobs=steps,
+                master=master,
+                jds=(SAMPLE_JD, jd_b),
+                analysis=analysis,
                 run_result=RunResult(
                     run=Run(
                         id="run-multi-cover",

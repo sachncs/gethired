@@ -141,7 +141,7 @@ def test_tailor_run_with_multiple_jds_persists_artifacts(resume, tmp_path) -> No
     assert (run_dir / "match_report.md").exists()
     # The on-disk JSON must round-trip to the same model
     on_disk = json.loads((run_dir / "tailored.json").read_text())
-    assert on_disk["contact"]["name"] == result.name
+    assert on_disk["name"] == result.name
     # Tailored carries the JD tuple and merged analysis for downstream CLI use
     assert result.jds == (SAMPLE_JD_A, SAMPLE_JD_B)
     assert result.analysis is not None

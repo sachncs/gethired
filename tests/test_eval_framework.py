@@ -82,12 +82,6 @@ def test_code_text_contains_case_insensitive() -> None:
 def test_code_text_contains_case_sensitive() -> None:
     result = code_text_contains(
         "test", text="Hello World", substring="WORLD", case_insensitive=False,
-    summary='',
-    skills=Skills(categories={}),
-    experience=(),
-    projects=(),
-    education=(),
-    awards=(),
     )
     assert not result.passed
 
