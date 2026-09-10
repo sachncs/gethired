@@ -18,7 +18,8 @@ from gethired.writer import (
     apply,
     enumerate_bullet_paths,
     lookup_bullet_text,
-    rephrase_missing_bullets)
+    rephrase_missing_bullets,
+)
 
 
 def _sample_analysis() -> Analysis:

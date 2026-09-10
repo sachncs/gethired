@@ -13,17 +13,11 @@ from hypothesis import strategies as st
 
 from gethired.models import (
     Bullet,
-    Contact,
     Experience,
     Resume,
     Skills,
 )
-from gethired.normalize import (
-    flatten,
-    ngrams,
-    numbers,
-    strip_latex,
-    tokenize)
+from gethired.normalize import flatten, ngrams, numbers, strip_latex, tokenize
 
 
 @given(st.text(min_size=0, max_size=200))

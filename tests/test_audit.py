@@ -7,11 +7,7 @@ from pathlib import Path
 
 import pytest
 
-from gethired.audit import (
-    AuditReport,
-    audit,
-    audit_json,
-    audit_markdown)
+from gethired.audit import AuditReport, audit, audit_json, audit_markdown
 from gethired.exceptions import TailorError
 
 

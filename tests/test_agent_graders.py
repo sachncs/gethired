@@ -13,13 +13,13 @@ from evals.graders.code import (
     code_plan_quality,
     code_step_efficiency,
     code_task_completion,
-    code_tool_correctness)
+    code_tool_correctness,
+)
 from gethired.models import (
-    Contact,
     Experience,
+    Resume,
     Skills,
     Tailored,
-    Resume,
 )
 
 

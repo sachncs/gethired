@@ -7,7 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from gethired.constants import DATA_DIR, RESUME as RESUME_PATH
+from gethired.constants import DATA_DIR
+from gethired.constants import RESUME as RESUME_PATH
 from gethired.parser import parse_tex as tex
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent

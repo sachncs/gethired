@@ -6,11 +6,7 @@ import json
 import tempfile
 from pathlib import Path
 
-from gethired.tracing import (
-    Tracer,
-    TraceSpan,
-    span_id,
-    tracer)
+from gethired.tracing import Tracer, TraceSpan, span_id, tracer
 
 
 def test_span_id_is_hex_uuid4() -> None:

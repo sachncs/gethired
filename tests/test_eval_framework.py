@@ -16,13 +16,14 @@ from evals.graders.code import (
     code_no_jd_plagiarism,
     code_numbers_in_master,
     code_text_contains,
-    code_text_not_contains)
+    code_text_not_contains,
+)
 from evals.graders.registry import GraderRegistry
-from evals.harness import (
-    EvalHarness,
-    load_suite,
-    load_task)
-from gethired.models import (Resume, Skills, Tailored,)
+from evals.harness import EvalHarness, load_suite, load_task
+from gethired.models import (
+    Resume,
+    Skills,
+)
 
 # ---------------------------------------------------------------------------
 # Grader tests

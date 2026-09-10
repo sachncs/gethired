@@ -8,11 +8,7 @@ import pytest
 from pydantic_ai.models.test import TestModel
 
 from gethired.description import consolidate
-from gethired.merger import (
-    MergeError,
-    MergeResult,
-    merge_job_descriptions,
-    safe_merge)
+from gethired.merger import MergeError, MergeResult, merge_job_descriptions, safe_merge
 from gethired.models import Job
 
 SAMPLE_JD_A = Job(
@@ -76,7 +72,7 @@ def test_merge_two_jds_unions_must_haves_and_intersects_nice() -> None:
 
 def test_merge_single_jd_invokes_llm_with_one_input() -> None:
     """Single-JD path also runs the LLM merger (always-merge policy)."""
-    test_model = custom_test_model((SAMPLE_JD_A))
+    test_model = custom_test_model(SAMPLE_JD_A)
     merged = merge_job_descriptions((SAMPLE_JD_A), model_instance=test_model)
     assert isinstance(merged.role, str) and merged.role
     assert "python" in merged.must_have

@@ -2,13 +2,7 @@
 
 from __future__ import annotations
 
-from gethired.normalize import (
-    flatten,
-    ngrams,
-    numbers,
-    strip_latex,
-    tokenize,
-    verb)
+from gethired.normalize import flatten, ngrams, numbers, strip_latex, tokenize, verb
 
 
 def test_canonicalize_numeric_handles_plain_digits() -> None:

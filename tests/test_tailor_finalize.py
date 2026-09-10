@@ -14,7 +14,10 @@ from unittest import mock
 import pytest
 
 from gethired.exceptions import TailorError
-from gethired.models import (Resume, Skills, Tailored,)
+from gethired.models import (
+    Resume,
+    Skills,
+)
 from gethired.serialize import render_json, snapshot
 from gethired.tailor import Tailor
 
