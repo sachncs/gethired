@@ -473,7 +473,7 @@ def gate_colors(tex_source: str) -> AtsResult:
 
 
 def gate_font(tex_source: str) -> AtsResult:
-    match = re.search(r"\\documentclass\[(?:[^]]*)?(\d+)pt(?:,[^]]*)?\]", tex_source)
+    match = re.search(r"\\documentclass\[[^\]]*?(\d+)pt[^\]]*?\]", tex_source)
     if match is None:
         return AtsResult(
             AtsGate.FONT_SIZE_10_12,

@@ -186,7 +186,7 @@ def test_code_task_completion_requires_tailor_span(tmp_path: Path) -> None:
     """TaskCompletion: tailor.run span + summary + experiences required."""
     trace = tmp_path / "trace.jsonl"
     write_trace(trace, [agent_span("tailor.run")])
-    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
+    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None, summary="", skills=Skills(categories={}), experience=(), projects=(), education=(), awards=())
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="Engineer.",
@@ -208,7 +208,7 @@ def test_code_task_completion_fails_when_summary_blank(tmp_path: Path) -> None:
     """TaskCompletion: blank summary is a structural failure."""
     trace = tmp_path / "trace.jsonl"
     write_trace(trace, [agent_span("tailor.run")])
-    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
+    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None, summary="", skills=Skills(categories={}), experience=(), projects=(), education=(), awards=())
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="",
@@ -229,7 +229,12 @@ def test_code_task_completion_fails_when_experiences_empty(tmp_path: Path) -> No
     """TaskCompletion: missing experiences is a structural failure."""
     trace = tmp_path / "trace.jsonl"
     write_trace(trace, [agent_span("tailor.run")])
-    contact = Resume(name="a", city="b", phone="c", email="d", github=None, linkedin=None)
+    contact = Resume(
+        name="a", city="b", phone="c", email="d", github=None, linkedin=None,
+        summary="", skills=Skills(categories={}),
+        experience=(), projects=(), education=(),
+        awards=(),
+    )
     tailored = Tailored(
         name=contact.name,email=contact.email,city=contact.city,phone=contact.phone,github=contact.github,linkedin=contact.linkedin,
         summary="Engineer.",
