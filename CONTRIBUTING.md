@@ -12,7 +12,7 @@ uv sync
 
 ## Development workflow
 
-1. Create a branch from `master`.
+1. Create a branch from `main`.
 2. Make focused commits. Each commit should pass `ruff check`, `mypy`,
    and `pytest` independently.
 3. Add tests for any new behaviour. Tests are the contract — if a test
