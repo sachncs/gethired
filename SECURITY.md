@@ -14,7 +14,7 @@ versions are best-effort.
 
 Please report security issues privately via GitHub's private
 vulnerability reporting on the
-[gethired security tab](https://github.com/gethired/gethired/security).
+[gethired security tab](https://github.com/sachncs/gethired/security).
 
 Do not file a public issue for suspected vulnerabilities. Include:
 

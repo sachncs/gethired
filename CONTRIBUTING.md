@@ -5,7 +5,7 @@ Thanks for your interest in contributing! This document covers the basics.
 ## Setup
 
 ```bash
-git clone https://github.com/gethired/gethired.git
+git clone https://github.com/sachncs/gethired.git
 cd gethired
 uv sync
 ```
