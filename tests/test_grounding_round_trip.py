@@ -34,8 +34,8 @@ def test_grounding_citation_round_trip_passes(resume: Resume) -> None:
     """
     master_span = resume.experience[0].bullets[0].text
     citation = Citation(
-        tailored_path="experiences[0].bullets[0]",
-        master_path="experiences[0].bullets[0]",
+        tailored_path="experience[0].bullets[0]",
+        master_path="experience[0].bullets[0]",
         verbatim_span=master_span,
         job_id="writer")
     tailored = Tailored(
@@ -48,7 +48,7 @@ def test_grounding_citation_round_trip_passes(resume: Resume) -> None:
         awards=resume.awards,
         dropped=(),
         rationale="test",
-        grounding=(citation),
+        grounding=(citation,),
         jobs=())
     violations = grounding(tailored, resume)
     # The real master span should produce zero violations
@@ -66,8 +66,8 @@ def test_grounding_citation_with_fabricated_span_fails(resume: Resume) -> None:
     """
     fabricated_span = "This text was never in the master resume, ever."
     citation = Citation(
-        tailored_path="experiences[0].bullets[0]",
-        master_path="experiences[0].bullets[0]",
+        tailored_path="experience[0].bullets[0]",
+        master_path="experience[0].bullets[0]",
         verbatim_span=fabricated_span,
         job_id="writer")
     tailored = Tailored(
@@ -80,7 +80,7 @@ def test_grounding_citation_with_fabricated_span_fails(resume: Resume) -> None:
         awards=resume.awards,
         dropped=(),
         rationale="test",
-        grounding=(citation),
+        grounding=(citation,),
         jobs=())
     violations = grounding(tailored, resume)
     assert violations, "grounding() did not flag a fabricated citation span"
@@ -102,8 +102,8 @@ def test_grounding_citation_partial_span_still_passes(resume: Resume) -> None:
         pytest.skip("master bullet is too short to substring")
     partial_span = full_bullet[:30]
     citation = Citation(
-        tailored_path="experiences[0].bullets[0]",
-        master_path="experiences[0].bullets[0]",
+        tailored_path="experience[0].bullets[0]",
+        master_path="experience[0].bullets[0]",
         verbatim_span=partial_span,
         job_id="writer")
     tailored = Tailored(
@@ -116,7 +116,7 @@ def test_grounding_citation_partial_span_still_passes(resume: Resume) -> None:
         awards=resume.awards,
         dropped=(),
         rationale="test",
-        grounding=(citation),
+        grounding=(citation,),
         jobs=())
     violations = grounding(tailored, resume)
     assert not violations, f"grounding() should accept a substring span, got {violations}"

@@ -54,7 +54,7 @@ def test_show_master_existing_file(
     """
     data_dir = tmp_path / "data"
     data_dir.mkdir()
-    out = data_dir / "master.json"
+    out = data_dir / "resume.json"
     result = runner.invoke(app, ["ingest", str(resume_tex_path), "--out", str(out)])
     assert result.exit_code == 0, result.stderr
     assert out.exists()
@@ -64,7 +64,7 @@ def test_show_master_existing_file(
         result = runner.invoke(app, ["show", "master"])
         assert result.exit_code == 0, result.stderr
         payload = json.loads(result.stdout)
-        assert payload["contact"]["name"] == "Placeholder Name"
+        assert payload["name"] == "Placeholder Name"
     finally:
         os.chdir(cwd)
 

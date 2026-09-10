@@ -190,7 +190,8 @@ def test_plagiarism_detects_5gram_overlap(resume) -> None:
                 company="Acme",
                 start_date="Jan 2020",
                 end_date="Dec 2020",
-                bullets=(Bullet(text=f"Worked on {shared_phrase} for enterprise customers.")))),
+                bullets=(Bullet(text=f"Worked on {shared_phrase} for enterprise customers."),)),
+        ),
         projects=resume.projects,
         education=resume.education,
         awards=resume.awards,
@@ -312,7 +313,7 @@ def test_advisory_gate_failure_is_not_blocking(resume) -> None:
         must_have_keywords=("terraform", "kafka"),
         nice_to_have_keywords=(),
         content_hash="jd")
-    report = ats(tailored, t, None, t2, (jd))
+    report = ats(tailored, t, None, t2, (jd,))
     assert AtsGate.KEYWORDS_COVERED in report.advisory_failed_gates
     assert AtsGate.KEYWORDS_COVERED.tier is GateTier.ADVISORY
     assert report.hard_failed_gates == ()

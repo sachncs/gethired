@@ -19,22 +19,20 @@ def write_run(run_dir: Path, master: dict[str, object], tailored: dict[str, obje
 
 def sample_run_payloads() -> tuple[dict[str, object], dict[str, object]]:
     master = {
-        "contact": {
-            "name": "Placeholder Name",
-            "city": "Test City",
-            "phone": "5555550100",
-            "email": "placeholder@example.com",
-            "github_url": None,
-            "linkedin_url": None,
-        },
+        "name": "Placeholder Name",
+        "city": "Test City",
+        "phone": "5555550100",
+        "email": "placeholder@example.com",
+        "github": None,
+        "linkedin": None,
         "summary": "Engineer with Python and Kubernetes experience.",
         "skills": {
             "categories": {
-                "Languages": ("python"),
-                "Cloud": ("kubernetes"),
+                "Languages": ("python",),
+                "Cloud": ("kubernetes",),
             }
         },
-        "experiences": [
+        "experience": [
             {
                 "role": "Senior Engineer",
                 "company": "Acme",
@@ -48,13 +46,20 @@ def sample_run_payloads() -> tuple[dict[str, object], dict[str, object]]:
         "awards": [],
     }
     tailored = {
-        "contact": master["contact"],
+        "name": master["name"],
+        "city": master["city"],
+        "phone": master["phone"],
+        "email": master["email"],
+        "github": master["github"],
+        "linkedin": master["linkedin"],
         "summary": "Engineer with Python and Kubernetes experience.",
         "skills": master["skills"],
-        "experiences": master["experiences"],
+        "experience": master["experience"],
         "projects": [],
         "education": [],
         "awards": [],
+        "dropped": [],
+        "grounding": [],
         "run_result": {
             "run": {
                 "id": "test-run-id",

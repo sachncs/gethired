@@ -159,11 +159,21 @@ class KeywordTier(StrEnum):
 
 @dataclass(frozen=True, slots=True)
 class Contact:
-    """Deprecated. Fields are flattened onto ``Resume`` and ``Tailored``.
+    """Deprecated container for the flattened contact fields on ``Resume``.
 
-    Kept as an empty class during the Unit 1 alias transition so existing
-    ``isinstance(x, Contact)`` checks keep passing. Removed in commit 1.22.
+    Kept as a backward-compat type during the Unit 1 alias transition so
+    existing ``isinstance(x, Contact)`` checks and ``parser.extract_contact``
+    call sites keep working. The fields mirror the contact section of
+    ``Resume`` (``name``, ``email``, ``city``, ``phone``, ``github``,
+    ``linkedin``). Removed in commit 1.22.
     """
+
+    name: str
+    email: str
+    city: str
+    phone: str
+    github: str | None
+    linkedin: str | None
 
 
 @dataclass(frozen=True, slots=True)
