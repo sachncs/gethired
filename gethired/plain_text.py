@@ -184,19 +184,13 @@ def extract_contact(text: str, header_block: str) -> Contact:
 
     require_contact(name, city, phone, email)
 
-    return Resume(
+    return Contact(
         name=name,
         city=city,
         phone=phone,
         email=email,
         github=github_url,
         linkedin=linkedin_url,
-        summary="",
-        skills=Skills(categories={}),
-        experience=(),
-        projects=(),
-        education=(),
-        awards=(),
     )
 
 

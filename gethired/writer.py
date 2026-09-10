@@ -465,7 +465,7 @@ def from_tools(result: Any) -> tuple[Step, ...]:
                 jobs.append(
                     job_lookup(
                         tool_name=tool_name,
-                        outputs=(f"tool:{tool_name}"),
+                        outputs=(f"tool:{tool_name}",),
                         rationale=f"Called read-only tool {tool_name}",
                         envelope=StepEnv(
                             model=str(

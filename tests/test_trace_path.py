@@ -11,7 +11,6 @@ import yaml
 
 from evals.harness import GraderSpec, TaskDefinition, resolve_args, tailor_runner
 from gethired.models import (
-    Resume,
     Skills,
     Tailored,
 )

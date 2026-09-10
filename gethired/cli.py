@@ -33,6 +33,7 @@ from gethired.exceptions import (
 from gethired.fetcher import Fetcher, from_text
 from gethired.models import (
     Job,
+    Tailored,
 )
 from gethired.observability import configure
 from gethired.parser import parse_tex as parse_tex_func
@@ -550,7 +551,7 @@ def resume_for_tailored(tailored):
     return master_obj
 
 
-def jobs_for_tailored(tailored) -> tuple[Job, ...]:
+def jobs_for_tailored(tailored: Tailored) -> tuple[Job, ...]:
     """Return the JD tuple attached to a ``Tailored`` by the orchestrator."""
     return tailored.jds
 
