@@ -21,10 +21,9 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-Resume,
     Project,
-    Skills,
     Resume,
+    Skills,
 )
 from gethired.text_util import (
     EMAIL_RE,

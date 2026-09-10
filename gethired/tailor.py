@@ -32,15 +32,14 @@ from gethired.fetcher import Fetcher
 from gethired.merger import safe_merge
 from gethired.models import (
     Job,
-Resume,
     Outcome,
     Report,
+    Resume,
     Run,
     RunResult,
     Step,
     StepKind,
     Tailored,
-    Resume,
 )
 from gethired.observability import configure, logger, now
 from gethired.parser import parse_tex

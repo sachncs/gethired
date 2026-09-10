@@ -35,9 +35,9 @@ from gethired.models import (
     Bullet,
     Citation,
     Experience,
-Resume,
     Project,
     Reason,
+    Resume,
     Skills,
     Step,
     StepEnv,
@@ -45,7 +45,6 @@ Resume,
     Voice,
     job_lookup,
     job_tailor,
-    Resume,
 )
 from gethired.observability import logger
 from gethired.provider import resolve_model

@@ -47,9 +47,8 @@ if TYPE_CHECKING:
         Citation,
         Contact,
         Job,
-Resume,
+        Resume,
         Tailored,
-    Resume,
 )
     from gethired.parse import parse
     from gethired.tailor import Tailor

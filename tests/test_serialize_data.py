@@ -14,14 +14,13 @@ import pytest
 
 from gethired.models import (
     Contact,
-Resume,
+    Resume,
     Skills,
     Step,
     StepKind,
     StepMeta,
     StepStatus,
     Tailored,
-    Resume,
 )
 from gethired.serialize import (
     as_dict,

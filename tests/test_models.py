@@ -21,10 +21,10 @@ from gethired.models import (
     Job,
     JobData,
     KeywordTier,
-Resume,
     Outcome,
     Project,
     Reason,
+    Resume,
     Run,
     RunResult,
     RunView,
@@ -38,7 +38,6 @@ Resume,
     Tailored,
     Voice,
     job,
-    Resume,
 )
 
 

@@ -30,10 +30,9 @@ from gethired.models import (
     Contact,
     Education,
     Experience,
-Resume,
     Project,
-    Skills,
     Resume,
+    Skills,
 )
 from gethired.plain_text import parse_plain_text as plain
 from gethired.provider import resolve_model
