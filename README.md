@@ -7,6 +7,7 @@
 [![Python](https://img.shields.io/badge/python-3.12%20%7C%203.13-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/sachncs/gethired/ci.yml?branch=master)](https://github.com/sachncs/gethired/actions)
+[![Docs](https://img.shields.io/badge/docs-sachncs.github.io-blue)](https://sachncs.github.io/gethired/)
 [![Stars](https://img.shields.io/github/stars/sachncs/gethired)](https://github.com/sachncs/gethired/stargazers)
 
 </div>
