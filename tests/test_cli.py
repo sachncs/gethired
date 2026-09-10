@@ -41,8 +41,8 @@ def test_ingest_writes_master_json(
     assert result.exit_code == 0, result.stderr or result.stdout
     assert out.exists()
     payload = json.loads(out.read_text())
-    assert "contact" in payload
-    assert "experiences" in payload
+    assert "name" in payload
+    assert "experience" in payload
 
 
 def test_show_master_prints_json(
@@ -51,7 +51,7 @@ def test_show_master_prints_json(
     """``show master`` reads ``data/resume.json`` and prints it."""
     # First, ingest to populate the default path
     data_dir = tmp_path / "data"
-    out = data_dir / "master.json"
+    out = data_dir / "resume.json"
     ingest = runner.invoke(app, ["ingest", str(resume_tex_path), "--out", str(out)])
     assert ingest.exit_code == 0
 
@@ -60,7 +60,7 @@ def test_show_master_prints_json(
     result = runner.invoke(app, ["show", "master"])
     assert result.exit_code == 0, result.stderr or result.stdout
     payload = json.loads(result.stdout)
-    assert "experiences" in payload
+    assert "experience" in payload
 
 
 def test_show_master_missing_file_reports_error(

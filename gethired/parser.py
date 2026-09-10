@@ -27,6 +27,7 @@ from gethired.exceptions import ParseError
 from gethired.models import (
     Award,
     Bullet,
+    Contact,
     Education,
     Experience,
     Project,
@@ -158,7 +159,7 @@ def find_macro_invocations(
     return results
 
 
-def extract_contact(body: str) -> tuple[str, str, str, str, str | None, str | None]:
+def extract_contact(body: str) -> Contact:
     name_match = HUGE_NAME_RE.search(body)
     name = clean(name_match.group(1)) if name_match else ""
 
@@ -191,7 +192,14 @@ def extract_contact(body: str) -> tuple[str, str, str, str, str | None, str | No
 
     require_contact(name, city, phone, email)
 
-    return (name, city, phone, email, github_url, linkedin_url)
+    return Contact(
+        name=name,
+        city=city,
+        phone=phone,
+        email=email,
+        github=github_url,
+        linkedin=linkedin_url,
+    )
 
 
 def extract_render_summary(body: str) -> str:
@@ -424,12 +432,12 @@ def tex(source: str | Path) -> Resume:
     award_data = extract_awards(body_text)
 
     return Resume(
-        name=contact_info[0],
-        city=contact_info[1],
-        phone=contact_info[2],
-        email=contact_info[3],
-        github=contact_info[4],
-        linkedin=contact_info[5],
+        name=contact_info.name,
+        city=contact_info.city,
+        phone=contact_info.phone,
+        email=contact_info.email,
+        github=contact_info.github,
+        linkedin=contact_info.linkedin,
         summary=summary_text,
         skills=skills_data,
         experience=experience_data,
