@@ -145,7 +145,7 @@ def resolve_jds(
         typer.echo("error: pass either <urls> or --pasted-jd, not both", err=True)
         raise typer.Exit(code=2)
     if pasted_jd is not None:
-        return (load_pasted_jd(pasted_jd))
+        return (load_pasted_jd(pasted_jd),)
     if not urls:
         typer.echo("error: at least one <url> or --pasted-jd is required", err=True)
         raise typer.Exit(code=2)
